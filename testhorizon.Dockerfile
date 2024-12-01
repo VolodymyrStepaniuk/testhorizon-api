@@ -21,7 +21,4 @@ WORKDIR /app
 # Copy the JAR from the build stage
 COPY --from=build /workspace/build/libs/*.jar testhorizon.jar
 
-# Set execution permissions for the entrypoint script if needed
-# RUN chmod +x ./start-app.sh
-
 ENTRYPOINT ["java", "-jar", "testhorizon.jar"]
