@@ -1,32 +1,27 @@
 # syntax=docker/dockerfile:experimental
 FROM eclipse-temurin:17-jdk-alpine AS build
-WORKDIR /workspace/all
+WORKDIR /workspace
 
-COPY ./gradle /workspace/all/gradle
-COPY ./gradlew /workspace/all/gradlew
-COPY ./settings.gradle /workspace/all/settings.gradle
-COPY ./projects /workspace/all/projects
-COPY ./libs /workspace/all/libs
-COPY ./lombok.config /workspace/all/lombok.config
-RUN --mount=type=cache,target=/root/.gradle ./gradlew :testhorizon:clean :testhorizon:build -x :testhorizon:test
+# Copy Gradle wrapper and project files
+COPY gradle gradle
+COPY gradlew .
+COPY settings.gradle .
+COPY build.gradle .
+COPY src src
+COPY lombok.config lombok.config
 
-WORKDIR /workspace/all/testhorizon
-RUN mkdir -p target/extracted
-#RUN java -Djarmode=layertools -jar build/libs/*-all.jar extract --destination target/extracted
-#RUN apk add openssl
-#WORKDIR /workspace/all/projects/workshop/target/extracted/application/BOOT-INF/classes/certs
-#RUN openssl genrsa -out keypair.pem 2048
-#RUN openssl rsa -in keypair.pem -pubout -out public.pem
-#RUN openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out private.pem
+# Use Gradle to build the project and generate the JAR
+RUN chmod +x gradlew
+RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build -x test
 
-FROM eclipse-temurin:17-jdk-alpine
-VOLUME /tmp
-ARG APP=/workspace/all/testhorizon
-ARG EXTRACTED=${APP}/target/extracted
-COPY --from=build ${APP}/start-app.sh ./
-COPY --from=build ${EXTRACTED}/dependencies/ ./
-COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
-COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
-COPY --from=build ${EXTRACTED}/application/ ./
-RUN chmod +x ./start-app.sh
-ENTRYPOINT ["./start-app.sh"]
+# Prepare the runtime image
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+
+# Copy the JAR from the build stage
+COPY --from=build /workspace/build/libs/*.jar testhorizon.jar
+
+# Set execution permissions for the entrypoint script if needed
+# RUN chmod +x ./start-app.sh
+
+ENTRYPOINT ["java", "-jar", "testhorizon.jar"]
