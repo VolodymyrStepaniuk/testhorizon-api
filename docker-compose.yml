@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+
+  testhorizon-api:
+    image: testhorizon-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testhorizon-api
+      SPRING_DATASOURCE_USERNAME: postgres_container
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_GENERATE_DDL: false
+    depends_on:
+      - postgres
+      - kafka
+      - zookeeper
+#    volumes:
+#      - certs_data:/BOOT-INF/classes/certs
+
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432" # Expose Postgres port
+    environment:
+      TESTHORIZON_API_DB: testhorizon-api
+      POSTGRES_USER: postgres_container
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/sql:/data/sql
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    ports:
+      - "6060:80" # Expose pgAdmin port
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - postgres
+    volumes:
+      - ./database/servers.json:/pgadmin4/servers.json
+      - pgadmin_data:/var/lib/pgadmin
+
+  kafka:
+    image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"  # Expose Kafka port
+      - "29092:29092"  # Expose Kafka port
+    environment:
+      KAFKA_CFG_LISTENERS: INTERNAL://0.0.0.0:29092, EXTERNAL://0.0.0.0:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: INTERNAL://kafka:29092, EXTERNAL://localhost:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka_data:/bitnami
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    ports:
+      - "2181:2181"  # Expose Zookeeper port
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    volumes:
+      - zookeeper_data:/bitnami
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  zookeeper_data:
+  kafka_data:
+#  certs_data:
