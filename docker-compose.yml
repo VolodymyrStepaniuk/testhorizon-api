@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testhorizon-api
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/testhorizon
       SPRING_DATASOURCE_USERNAME: postgres_container
       SPRING_DATASOURCE_PASSWORD: admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
@@ -17,15 +17,13 @@ services:
       - postgres
       - kafka
       - zookeeper
-#    volumes:
-#      - certs_data:/BOOT-INF/classes/certs
 
   postgres:
     image: postgres:latest
     ports:
       - "5432:5432" # Expose Postgres port
     environment:
-      TESTHORIZON_API_DB: testhorizon-api
+      TESTHORIZON_API_DB: testhorizon
       POSTGRES_USER: postgres_container
       POSTGRES_PASSWORD: admin
     volumes:
@@ -33,7 +31,7 @@ services:
       - ./database/sql:/data/sql
 
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8.5
     ports:
       - "6060:80" # Expose pgAdmin port
     environment:
@@ -75,4 +73,3 @@ volumes:
   pgadmin_data:
   zookeeper_data:
   kafka_data:
-#  certs_data:
