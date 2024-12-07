@@ -1,5 +1,7 @@
 package com.stepaniuk.testhorizon.shared;
 
+import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
 import com.stepaniuk.testhorizon.user.exceptions.*;
@@ -73,6 +75,24 @@ public class GeneralControllerExceptionHandler {
                 "User with email " + e.getEmail() + " is not verified");
         problemDetail.setTitle("User not verified");
         problemDetail.setInstance(URI.create("/users"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchProjectByIdException.class})
+    public ProblemDetail handleNoSuchProjectByIdException(NoSuchProjectByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No project with id " + e.getId());
+        problemDetail.setTitle("No such project");
+        problemDetail.setInstance(URI.create("/projects"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchProjectStatusByNameException.class})
+    public ProblemDetail handleNoSuchProjectStatusByNameException(NoSuchProjectStatusByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No project status with name " + e.getName());
+        problemDetail.setTitle("No such project status");
+        problemDetail.setInstance(URI.create("/projects"));
         return problemDetail;
     }
 
