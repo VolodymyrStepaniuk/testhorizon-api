@@ -10,6 +10,6 @@ import lombok.*;
 public class AuthenticationResponse {
     @JsonProperty("access_token")
     private String accessToken;
-    @JsonProperty("expires_in")
-    private Long expiresIn;
+    @JsonProperty("refresh_token")
+    private String refreshToken;
 }

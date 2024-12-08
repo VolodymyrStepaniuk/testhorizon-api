@@ -32,7 +32,7 @@ public class AuthenticationService {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final EmailCodeRepository emailCodeRepository;
-    private final JwtService jwtService;
+    private final JwtTokenService jwtTokenService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -83,9 +83,13 @@ public class AuthenticationService {
         );
 
         return AuthenticationResponse.builder()
-                .accessToken(jwtService.generateToken(user))
-                .expiresIn(jwtService.getJwtExpiration())
+                .accessToken(jwtTokenService.generateAccessToken(user))
+                .refreshToken(jwtTokenService.generateRefreshToken(user))
                 .build();
+    }
+
+    public AuthenticationResponse refreshToken(String refreshToken) {
+        return jwtTokenService.refreshToken(refreshToken);
     }
 
     public void verifyUser(VerificationRequest request) {

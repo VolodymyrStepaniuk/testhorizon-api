@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.security.config;
 
-import com.stepaniuk.testhorizon.security.JwtService;
+import com.stepaniuk.testhorizon.security.JwtProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 
@@ -22,9 +21,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final HandlerExceptionResolver handlerExceptionResolver;
-
-    private final JwtService jwtService;
+    private final JwtProvider jwtProvider;
 
     private final UserDetailsService userDetailsService;
 
@@ -44,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         try {
             final String jwt = extractJwtFromHeader(authHeader);
-            final String userEmail = jwtService.extractUsername(jwt);
+            final String userEmail = jwtProvider.extractUsername(jwt);
 
             if (userEmail != null && isAuthenticationAbsent()) {
                 authenticateUser(request, jwt, userEmail);
@@ -52,7 +49,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (Exception exception) {
-            handlerExceptionResolver.resolveException(request, response, null, exception);
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Invalid or expired token\"}");
+            response.getWriter().flush();
         }
     }
 
@@ -71,7 +71,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void authenticateUser(HttpServletRequest request, String jwt, String userEmail) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-        if (jwtService.isTokenValid(jwt, userDetails)) {
+        if (jwtProvider.isTokenValid(jwt, userDetails)) {
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails,
                     null,

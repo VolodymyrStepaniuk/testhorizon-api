@@ -1,8 +1,6 @@
 package com.stepaniuk.testhorizon.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
@@ -17,13 +15,17 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
-public class JwtService {
+public class JwtProvider {
     @Value("${spring.security.jwt.secret-key}")
     private String secretKey;
 
     @Getter
-    @Value("${spring.security.jwt.expiration-time}")
-    private Long jwtExpiration;
+    @Value("${spring.security.jwt.access-expiration-time}")
+    private Long accessTokenExpiration;
+
+    @Getter
+    @Value("${spring.security.jwt.refresh-expiration-time}")
+    private Long refreshTokenExpiration;
 
     public String extractUsername(String token){
         return extractClaim(token, Claims::getSubject);
@@ -34,19 +36,30 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails){
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateAccessToken(UserDetails userDetails){
+        return generateAccessToken(new HashMap<>(), userDetails);
     }
 
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails){
-        return buildToken(extraClaims, userDetails, jwtExpiration);
+    public String generateAccessToken(Map<String, Object> extraClaims, UserDetails userDetails){
+        return buildToken(extraClaims, userDetails, accessTokenExpiration, TokenType.ACCESS);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails){
+        return generateRefreshToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateRefreshToken(Map<String, Object> extraClaims, UserDetails userDetails){
+        return buildToken(extraClaims, userDetails, refreshTokenExpiration, TokenType.REFRESH);
     }
 
     private String buildToken(
             Map<String, Object> extraClaims,
             UserDetails userDetails,
-            Long expiration
+            Long expiration,
+            TokenType tokenType
     ){
+        extraClaims.put("type", tokenType.name());
+
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
@@ -62,18 +75,24 @@ public class JwtService {
         return (username.equals(details.getUsername()) && !isTokenExpired(token));
     }
 
+    public TokenType getTokenType(String token){
+        token = token.substring(7);
+        String type = extractClaim(token, claims -> claims.get("type", String.class));
+        return TokenType.valueOf(type);
+    }
+
     private boolean isTokenExpired(String token){
         return extractClaim(token, Claims::getExpiration)
                 .before(new Date());
     }
 
     private Claims extractAllClaims(String token){
-        return  Jwts
-                .parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
     }
 
     private Key getSignKey(){

@@ -13,7 +13,8 @@ spring:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
-      expiration-time: 3600000
+      access-expiration-time: 3600000
+      refresh-expiration-time: 86400000
 
   mail:
     host: smtp.gmail.com
