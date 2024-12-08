@@ -37,4 +37,11 @@ public class AuthenticationController {
         authenticationService.resendVerificationCode(email);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthenticationResponse> refreshToken(@RequestHeader("Authorization") String refreshToken) {
+        AuthenticationResponse response = authenticationService.refreshToken(refreshToken);
+
+        return ResponseEntity.ok(response);
+    }
 }
