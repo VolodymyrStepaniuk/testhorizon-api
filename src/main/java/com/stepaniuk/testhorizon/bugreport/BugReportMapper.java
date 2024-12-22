@@ -14,11 +14,11 @@ public interface BugReportMapper {
 
     @AfterMapping
     @Named("addLinks")
-    default BugReportResponse addLinks(@MappingTarget BugReportResponse response) {
+    default BugReportResponse addLinks(BugReport bugReport, @MappingTarget BugReportResponse response) {
 
-        response.add(Link.of("/bug-reports/{id}").withSelfRel());
-        response.add(Link.of("/bug-reports/{id}").withRel("update"));
-        response.add(Link.of("/bug-reports/{id}").withRel("delete"));
+        response.add(Link.of("/bug-reports/" + bugReport.getId()).withSelfRel());
+        response.add(Link.of("/bug-reports/"  + bugReport.getId()).withRel("update"));
+        response.add(Link.of("/bug-reports/"  + bugReport.getId()).withRel("delete"));
 
         return response;
     }

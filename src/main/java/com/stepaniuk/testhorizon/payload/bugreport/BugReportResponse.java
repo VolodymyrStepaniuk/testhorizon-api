@@ -22,6 +22,9 @@ import java.util.List;
 public class BugReportResponse extends RepresentationModel<BugReportResponse> {
 
     @NotNull
+    private Long id;
+
+    @NotNull
     private Long projectId;
 
     @NotNull

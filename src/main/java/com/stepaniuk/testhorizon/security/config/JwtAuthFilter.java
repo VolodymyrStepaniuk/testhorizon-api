@@ -1,6 +1,8 @@
 package com.stepaniuk.testhorizon.security.config;
 
 import com.stepaniuk.testhorizon.security.JwtProvider;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +34,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
+        boolean isAuthSuccessful = true;
+
         final String authHeader = request.getHeader("Authorization");
 
         if (isInvalidAuthHeader(authHeader)) {
@@ -46,13 +50,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (userEmail != null && isAuthenticationAbsent()) {
                 authenticateUser(request, jwt, userEmail);
             }
+        } catch (ExpiredJwtException | MalformedJwtException e) {
+            isAuthSuccessful = false;
 
-            filterChain.doFilter(request, response);
-        } catch (Exception exception) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"Invalid or expired token\"}");
             response.getWriter().flush();
+        }
+
+        if (isAuthSuccessful) {
+            filterChain.doFilter(request, response);
         }
     }
 

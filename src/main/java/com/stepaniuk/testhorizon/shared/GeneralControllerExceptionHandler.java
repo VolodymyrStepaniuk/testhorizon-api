@@ -1,7 +1,12 @@
 package com.stepaniuk.testhorizon.shared;
 
+import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdException;
+import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
+import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
+import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
 import com.stepaniuk.testhorizon.user.exceptions.*;
@@ -93,6 +98,51 @@ public class GeneralControllerExceptionHandler {
                 "No project status with name " + e.getName());
         problemDetail.setTitle("No such project status");
         problemDetail.setInstance(URI.create("/projects"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchBugReportByIdException.class})
+    public ProblemDetail handleNoSuchBugReportByIdException(NoSuchBugReportByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No bug report with id " + e.getId());
+        problemDetail.setTitle("No such bug report");
+        problemDetail.setInstance(URI.create("/bug-reports"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchBugReportSeverityByNameException.class})
+    public ProblemDetail handleNoSuchBugReportSeverityByNameException(NoSuchBugReportSeverityByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No bug report severity with name " + e.getName());
+        problemDetail.setTitle("No such bug report severity");
+        problemDetail.setInstance(URI.create("/bug-reports"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchBugReportStatusByNameException.class})
+    public ProblemDetail handleNoSuchBugReportStatusByNameException(NoSuchBugReportStatusByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No bug report status with name " + e.getName());
+        problemDetail.setTitle("No such bug report status");
+        problemDetail.setInstance(URI.create("/bug-reports"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchTestCaseByIdException.class})
+    public ProblemDetail handleNoSuchTestCaseByIdException(NoSuchTestCaseByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No test case with id " + e.getId());
+        problemDetail.setTitle("No such test case");
+        problemDetail.setInstance(URI.create("/test-cases"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchTestCasePriorityByNameException.class})
+    public ProblemDetail handleNoSuchTestCasePriorityByNameException(NoSuchTestCasePriorityByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No test case priority with name " + e.getName());
+        problemDetail.setTitle("No such test case priority");
+        problemDetail.setInstance(URI.create("/test-cases"));
         return problemDetail;
     }
 

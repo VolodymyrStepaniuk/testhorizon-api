@@ -13,11 +13,11 @@ public interface ProjectMapper {
 
     @AfterMapping
     @Named("addLinks")
-    default ProjectResponse addLinks(@MappingTarget ProjectResponse response) {
+    default ProjectResponse addLinks(Project project, @MappingTarget ProjectResponse response) {
 
-        response.add(Link.of("/projects/{id}").withSelfRel());
-        response.add(Link.of("/projects/{id}").withRel("update"));
-        response.add(Link.of("/projects/{id}").withRel("delete"));
+        response.add(Link.of("/projects/" + project.getId()).withSelfRel());
+        response.add(Link.of("/projects/" + project.getId()).withRel("update"));
+        response.add(Link.of("/projects/" + project.getId()).withRel("delete"));
 
         return response;
     }

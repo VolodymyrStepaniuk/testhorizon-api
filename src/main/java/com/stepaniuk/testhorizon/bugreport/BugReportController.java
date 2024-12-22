@@ -22,10 +22,10 @@ public class BugReportController {
 
     private final BugReportService bugReportService;
 
-    @PostMapping("/{projectId}")
-    public ResponseEntity<BugReportResponse> createBugReport(@RequestBody BugReportCreateRequest bugReportCreateRequest, Authentication authentication, @PathVariable Long projectId) {
+    @PostMapping
+    public ResponseEntity<BugReportResponse> createBugReport(@RequestBody BugReportCreateRequest bugReportCreateRequest, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        return new ResponseEntity<>(bugReportService.createBugReport(bugReportCreateRequest, user.getId(),projectId), HttpStatus.CREATED);
+        return new ResponseEntity<>(bugReportService.createBugReport(bugReportCreateRequest, user.getId()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")

@@ -32,10 +32,10 @@ public class BugReportService {
     private final BugReportStatusRepository bugReportStatusRepository;
     private final BugReportSeverityRepository bugReportSeverityRepository;
 
-    public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId, Long projectId){
+    public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId){
         BugReport bugReport = new BugReport();
 
-        bugReport.setProjectId(projectId);
+        bugReport.setProjectId(bugReportCreateRequest.getProjectId());
         bugReport.setTitle(bugReportCreateRequest.getTitle());
         bugReport.setDescription(bugReportCreateRequest.getDescription());
         bugReport.setEnvironment(bugReportCreateRequest.getEnvironment());

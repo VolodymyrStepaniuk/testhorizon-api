@@ -16,6 +16,9 @@ import java.util.List;
 public class BugReportCreateRequest {
 
     @NotNull
+    private Long projectId;
+
+    @NotNull
     private String title;
 
     @NotNull
