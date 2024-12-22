@@ -1,13 +1,16 @@
-package com.stepaniuk.testhorizon.security;
+package com.stepaniuk.testhorizon.security.auth;
 
 import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
 import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
 import com.stepaniuk.testhorizon.payload.auth.VerificationRequest;
 import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
+import com.stepaniuk.testhorizon.security.EmailService;
+import com.stepaniuk.testhorizon.security.JwtTokenService;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapper;
 import com.stepaniuk.testhorizon.user.UserRepository;
+import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCode;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
@@ -22,7 +25,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +36,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final AuthorityRepository authorityRepository;
     private final EmailCodeRepository emailCodeRepository;
     private final JwtTokenService jwtTokenService;
     private final UserMapper userMapper;
@@ -52,6 +58,15 @@ public class AuthenticationService {
         newUser.setAccountNonExpired(true);
         newUser.setAccountNonLocked(true);
         newUser.setCredentialsNonExpired(true);
+
+        var authorityName = request.getAuthorityName();
+
+        var userAuthority = authorityRepository.findByName(authorityName)
+                .orElseThrow(() -> new NoSuchAuthorityException(authorityName));
+
+        var authorities = new HashSet<>(Set.of(userAuthority));
+
+        newUser.setAuthorities(authorities);
 
         EmailCode emailCode = new EmailCode();
         emailCode.setUser(newUser);

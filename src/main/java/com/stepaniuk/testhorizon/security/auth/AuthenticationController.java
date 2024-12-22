@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.security;
+package com.stepaniuk.testhorizon.security.auth;
 
 import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
 import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
@@ -19,7 +19,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/register")
+    @PostMapping(path = "/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserCreateRequest userCreateRequest) {
         return ResponseEntity.ok(authenticationService.register(userCreateRequest));
     }
