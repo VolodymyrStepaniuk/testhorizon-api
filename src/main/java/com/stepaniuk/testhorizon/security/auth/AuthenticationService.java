@@ -17,6 +17,7 @@ import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeEx
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
 import com.stepaniuk.testhorizon.user.exceptions.*;
 import jakarta.mail.MessagingException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -107,6 +108,7 @@ public class AuthenticationService {
         return jwtTokenService.refreshToken(refreshToken);
     }
 
+    @Transactional
     public void verifyUser(VerificationRequest request) {
         String email = request.getEmail();
         User user = userRepository.findByEmail(email)
