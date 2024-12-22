@@ -20,6 +20,9 @@ import java.util.List;
 public class TestCaseResponse extends RepresentationModel<TestCaseResponse> {
 
     @NotNull
+    private Long id;
+
+    @NotNull
     private Long projectId;
 
     @NotNull

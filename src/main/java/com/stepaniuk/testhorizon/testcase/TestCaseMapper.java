@@ -13,11 +13,11 @@ public interface TestCaseMapper {
 
     @AfterMapping
     @Named("addLinks")
-    default TestCaseResponse addLinks(@MappingTarget TestCaseResponse response) {
+    default TestCaseResponse addLinks(TestCase testCase, @MappingTarget TestCaseResponse response) {
 
-        response.add(Link.of("/test-cases/{id}").withSelfRel());
-        response.add(Link.of("/test-cases/{id}").withRel("update"));
-        response.add(Link.of("/test-cases/{id}").withRel("delete"));
+        response.add(Link.of("/test-cases/" + testCase.getId()).withSelfRel());
+        response.add(Link.of("/test-cases/" + testCase.getId()).withRel("update"));
+        response.add(Link.of("/test-cases/" + testCase.getId()).withRel("delete"));
 
         return response;
     }

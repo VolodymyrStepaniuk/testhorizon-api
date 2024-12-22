@@ -22,6 +22,9 @@ import java.util.List;
 public class ProjectResponse extends RepresentationModel<UserResponse> {
 
     @NotNull
+    private Long id;
+
+    @NotNull
     private Long ownerId;
 
     @NotNull
