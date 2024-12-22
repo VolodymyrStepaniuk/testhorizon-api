@@ -50,8 +50,8 @@ public class BugReportController {
                                                                           @Nullable @RequestParam(required = false) String title,
                                                                           @Nullable @RequestParam(required = false) Long reporterId,
                                                                           @Nullable @RequestParam(required = false) BugReportSeverityName severityName,
-                                                                          @Nullable @RequestParam(required = false) BugReportStatusName statusName) {
+                                                                          @Nullable @RequestParam(required = false) BugReportStatusName status) {
 
-        return ResponseEntity.ok(bugReportService.getAllBugReports(pageable, projectId, title, reporterId, severityName, statusName));
+        return ResponseEntity.ok(bugReportService.getAllBugReports(pageable, projectId, title, reporterId, severityName, status));
     }
 }
