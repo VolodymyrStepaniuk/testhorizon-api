@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.payload.user;
 
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import com.stepaniuk.testhorizon.validation.shared.Email;
 import com.stepaniuk.testhorizon.validation.shared.password.Password;
 import com.stepaniuk.testhorizon.validation.user.FirstName;
@@ -27,4 +28,7 @@ public class UserCreateRequest {
     @LastName
     @NotNull
     private final String lastName;
+
+    @NotNull
+    private final AuthorityName authorityName;
 }

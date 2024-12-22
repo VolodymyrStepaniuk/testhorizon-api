@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.user;
 
+import com.stepaniuk.testhorizon.user.authority.Authority;
 import com.stepaniuk.testhorizon.user.email.EmailCode;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,12 +9,12 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -56,6 +57,12 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private EmailCode emailCode;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_has_authorities",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "authority_id"))
+    private Set<Authority> authorities = new LinkedHashSet<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
     private Instant createdAt;
@@ -66,7 +73,9 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return authorities.stream()
+                .map(authority -> new SimpleGrantedAuthority(authority.getName().name()))
+                .collect(Collectors.toSet());
     }
 
     @Override
