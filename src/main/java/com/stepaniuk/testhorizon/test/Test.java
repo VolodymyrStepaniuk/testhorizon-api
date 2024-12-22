@@ -85,6 +85,7 @@ public class Test {
                 "authorId = " + authorId + ", " +
                 "title = " + title + ", " +
                 "description = " + description + ", " +
+                "instructions = " + instructions + ", " +
                 "githubUrl = " + githubUrl + ", " +
                 "type = " + type + ", " +
                 "createdAt = " + createdAt + ", " +

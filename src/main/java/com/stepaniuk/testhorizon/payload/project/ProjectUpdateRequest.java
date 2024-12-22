@@ -1,6 +1,10 @@
 package com.stepaniuk.testhorizon.payload.project;
 
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
+import com.stepaniuk.testhorizon.validation.shared.Description;
+import com.stepaniuk.testhorizon.validation.shared.ImageUrl;
+import com.stepaniuk.testhorizon.validation.shared.Instructions;
+import com.stepaniuk.testhorizon.validation.shared.Title;
 import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -14,18 +18,22 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 public class ProjectUpdateRequest {
-    @Nullable
-    private String name;
 
+    @Title
+    @Nullable
+    private String title;
+
+    @Description
     @Nullable
     private String description;
 
     @Nullable
     private ProjectStatusName status;
 
+    @Instructions
     @Nullable
-    private String instruction;
+    private String instructions;
 
     @Nullable
-    private List<String> imageUrls;
+    private List<@ImageUrl String> imageUrls;
 }

@@ -31,12 +31,9 @@ public class ProjectService {
         Project project = new Project();
 
         project.setOwnerId(ownerId);
-        project.setName(projectCreateRequest.getName());
+        project.setTitle(projectCreateRequest.getTitle());
         project.setDescription(projectCreateRequest.getDescription());
-
-        if(projectCreateRequest.getInstruction() != null && !projectCreateRequest.getInstruction().isEmpty())
-            project.setInstruction(projectCreateRequest.getInstruction());
-
+        project.setInstructions(projectCreateRequest.getInstructions());
         project.setGithubUrl(projectCreateRequest.getGithubUrl());
         project.setImageUrls(projectCreateRequest.getImageUrls());
         project.setStatus(
@@ -66,14 +63,14 @@ public class ProjectService {
         var project = projectRepository.findById(id)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
 
-        if(projectUpdateRequest.getName() != null)
-            project.setName(projectUpdateRequest.getName());
+        if(projectUpdateRequest.getTitle() != null)
+            project.setTitle(projectUpdateRequest.getTitle());
 
         if(projectUpdateRequest.getDescription() != null)
             project.setDescription(projectUpdateRequest.getDescription());
 
-        if(projectUpdateRequest.getInstruction() != null)
-            project.setInstruction(projectUpdateRequest.getInstruction());
+        if(projectUpdateRequest.getInstructions() != null)
+            project.setInstructions(projectUpdateRequest.getInstructions());
 
         if(projectUpdateRequest.getImageUrls() != null)
             project.setImageUrls(projectUpdateRequest.getImageUrls());
@@ -91,7 +88,7 @@ public class ProjectService {
 
     public PagedModel<ProjectResponse> getAllProjects(Pageable pageable,
                                                       @Nullable Long ownerId,
-                                                      @Nullable String name,
+                                                      @Nullable String title,
                                                       @Nullable ProjectStatusName statusName){
 
         Specification<Project> specification = Specification.where(null);
@@ -102,9 +99,9 @@ public class ProjectService {
             );
         }
 
-        if(name != null){
+        if(title != null){
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
-                    .like(criteriaBuilder.lower(root.get("name")), "%" + name.toLowerCase() + "%")
+                    .like(criteriaBuilder.lower(root.get("title")), "%" + title.toLowerCase() + "%")
             );
         }
 
