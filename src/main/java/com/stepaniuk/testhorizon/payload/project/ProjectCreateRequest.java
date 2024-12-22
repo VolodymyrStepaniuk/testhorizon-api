@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.payload.project;
 
+import com.stepaniuk.testhorizon.validation.shared.*;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,18 +16,22 @@ import java.util.List;
 @EqualsAndHashCode
 public class ProjectCreateRequest {
 
+    @Title
     @NotNull
-    private String name;
+    private String title;
 
+    @Description
     @NotNull
     private String description;
 
+    @Instructions
     @Nullable
-    private String instruction;
+    private String instructions;
 
+    @GithubUrl
     @NotNull
     private String githubUrl;
 
     @NotNull
-    private List<String> imageUrls;
+    private List<@ImageUrl String> imageUrls;
 }

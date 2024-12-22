@@ -34,14 +34,14 @@ public class Project {
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
-    @Column(name = "name", nullable = false)
-    private String name;
+    @Column(name = "title", nullable = false)
+    private String title;
 
     @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "instruction")
-    private String instruction;
+    @Column(name = "instructions")
+    private String instructions;
 
     @Column(name = "github_url", nullable = false)
     private String githubUrl;
@@ -84,9 +84,9 @@ public class Project {
     public String toString() {
         return getClass().getSimpleName() + "(" +
                 "ownerId = " + ownerId + ", " +
-                "name = " + name + ", " +
+                "title = " + title + ", " +
                 "description = " + description + ", " +
-                "instruction = " + instruction + ", " +
+                "instructions = " + instructions + ", " +
                 "githubUrl = " + githubUrl + ", " +
                 "imageUrls = " + imageUrls + ", " +
                 "status = " + status + ", " +
