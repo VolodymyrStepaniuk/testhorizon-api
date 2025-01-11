@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.test.exceptions;
 
+import com.stepaniuk.testhorizon.test.type.TestTypeName;
 import lombok.Getter;
 
 /**
@@ -7,9 +8,9 @@ import lombok.Getter;
  */
 @Getter
 public class NoSuchTestTypeByNameException extends RuntimeException {
-    private final String name;
+    private final TestTypeName name;
 
-    public NoSuchTestTypeByNameException(String name) {
+    public NoSuchTestTypeByNameException(TestTypeName name) {
         super("Test type with name " + name + " does not exist.");
         this.name = name;
     }

@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.testcase.exceptions;
 
+import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
 import lombok.Getter;
 
 /**
@@ -7,9 +8,9 @@ import lombok.Getter;
  */
 @Getter
 public class NoSuchTestCasePriorityByNameException extends RuntimeException {
-    private final String name;
+    private final TestCasePriorityName name;
 
-    public NoSuchTestCasePriorityByNameException(String name) {
+    public NoSuchTestCasePriorityByNameException(TestCasePriorityName name) {
         super("Priority with name " + name + " not found");
         this.name = name;
     }

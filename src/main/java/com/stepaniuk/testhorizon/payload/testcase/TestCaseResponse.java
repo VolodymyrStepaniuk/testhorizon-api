@@ -34,6 +34,10 @@ public class TestCaseResponse extends RepresentationModel<TestCaseResponse> {
     @NotNull
     private Long projectId;
 
+    @Id
+    @NotNull
+    private Long authorId;
+
     @Title
     @NotNull
     private String title;

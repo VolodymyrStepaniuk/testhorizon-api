@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.payload.user;
 
 import com.stepaniuk.testhorizon.validation.shared.Email;
+import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.user.FirstName;
 import com.stepaniuk.testhorizon.validation.user.LastName;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,9 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 @Relation(collectionRelation = "users", itemRelation = "users")
 public class UserResponse extends RepresentationModel<UserResponse> {
+    @Id
+    @NotNull
+    private final Long id;
     @Email
     @NotNull
     private final String email;
@@ -28,5 +32,5 @@ public class UserResponse extends RepresentationModel<UserResponse> {
     @NotNull
     private final Instant createdAt;
     @NotNull
-    private final Instant lastModifiedAt;
+    private final Instant updatedAt;
 }

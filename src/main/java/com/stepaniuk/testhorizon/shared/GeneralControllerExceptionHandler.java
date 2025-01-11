@@ -5,6 +5,9 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByN
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
+import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
+import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
@@ -143,6 +146,42 @@ public class GeneralControllerExceptionHandler {
                 "No test case priority with name " + e.getName());
         problemDetail.setTitle("No such test case priority");
         problemDetail.setInstance(URI.create("/test-cases"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchAuthorityException.class})
+    public ProblemDetail handleNoSuchAuthorityException(NoSuchAuthorityException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No authority with name " + e.getAuthorityName());
+        problemDetail.setTitle("No such authority");
+        problemDetail.setInstance(URI.create("/users"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {InvalidTokenException.class})
+    public ProblemDetail handleInvalidTokenException(InvalidTokenException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Invalid token: " + e.getToken());
+        problemDetail.setTitle("Invalid token");
+        problemDetail.setInstance(URI.create("/auth/refresh"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchTestTypeByNameException.class})
+    public ProblemDetail handleNoSuchTestTypeByNameException(NoSuchTestTypeByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No test type with name " + e.getName());
+        problemDetail.setTitle("No such test type");
+        problemDetail.setInstance(URI.create("/tests"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchTestByIdException.class})
+    public ProblemDetail handleNoSuchTestByIdException(NoSuchTestByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No test with id " + e.getId());
+        problemDetail.setTitle("No such test");
+        problemDetail.setInstance(URI.create("/tests"));
         return problemDetail;
     }
 

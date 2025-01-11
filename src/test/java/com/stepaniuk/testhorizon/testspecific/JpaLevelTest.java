@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.testspecific;
 
+import com.stepaniuk.testhorizon.audit.JpaAuditConfig;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -18,7 +19,7 @@ import java.lang.annotation.*;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @AutoConfigureTestDatabaseContainer
 @ImportAutoConfiguration
-//@Import({JpaAuditConfig.class})
+@Import({JpaAuditConfig.class})
 public @interface JpaLevelTest {
 
 }

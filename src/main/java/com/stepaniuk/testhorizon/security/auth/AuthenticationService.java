@@ -114,8 +114,12 @@ public class AuthenticationService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
 
+        if(user.isEnabled()) {
+            throw new UserAlreadyVerifiedException(email);
+        }
+
         if(user.getEmailCode().getExpiresAt().isBefore(Instant.now())) {
-            throw new VerificationCodeExpiredException(email);
+            throw new VerificationCodeExpiredException(request.getVerificationCode());
         }
 
         EmailCode emailCode = user.getEmailCode();

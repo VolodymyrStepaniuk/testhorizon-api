@@ -13,7 +13,7 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +26,7 @@ public class BugReportController {
     private final BugReportService bugReportService;
 
     @PostMapping
-    public ResponseEntity<BugReportResponse> createBugReport(@Valid @RequestBody BugReportCreateRequest bugReportCreateRequest, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
+    public ResponseEntity<BugReportResponse> createBugReport(@Valid @RequestBody BugReportCreateRequest bugReportCreateRequest, @AuthenticationPrincipal User user) {
         return new ResponseEntity<>(bugReportService.createBugReport(bugReportCreateRequest, user.getId()), HttpStatus.CREATED);
     }
 

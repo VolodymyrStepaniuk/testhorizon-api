@@ -67,9 +67,9 @@ public class User implements UserDetails {
     @CreatedDate
     private Instant createdAt;
 
-    @Column(name = "last_modified_at", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
-    private Instant lastModifiedAt;
+    private Instant updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -126,6 +126,6 @@ public class User implements UserDetails {
                 "lastName = " + lastName + ", " +
                 "email = " + email + ", " +
                 "createdAt = " + createdAt + ", " +
-                "lastModifiedAt = " + lastModifiedAt + ")";
+                "lastModifiedAt = " + updatedAt + ")";
     }
 }

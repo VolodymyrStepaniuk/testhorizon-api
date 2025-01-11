@@ -40,7 +40,7 @@ public class TestService {
 
         test.setType(
                 testTypeRepository.findByName(testCreateRequest.getType())
-                        .orElseThrow(() -> new NoSuchTestTypeByNameException(testCreateRequest.getType().name()))
+                        .orElseThrow(() -> new NoSuchTestTypeByNameException(testCreateRequest.getType()))
         );
 
         var savedTest = testRepository.save(test);
@@ -90,7 +90,7 @@ public class TestService {
         if (testUpdateRequest.getType() != null){
             test.setType(
                     testTypeRepository.findByName(testUpdateRequest.getType())
-                            .orElseThrow(() -> new NoSuchTestTypeByNameException(testUpdateRequest.getType().name()))
+                            .orElseThrow(() -> new NoSuchTestTypeByNameException(testUpdateRequest.getType()))
             );
         }
 
@@ -127,7 +127,7 @@ public class TestService {
 
         if(typeName != null){
             TestType type = testTypeRepository.findByName(typeName)
-                    .orElseThrow(() -> new NoSuchTestTypeByNameException(typeName.name()));
+                    .orElseThrow(() -> new NoSuchTestTypeByNameException(typeName));
 
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
                     .equal(root.get("type"), type)

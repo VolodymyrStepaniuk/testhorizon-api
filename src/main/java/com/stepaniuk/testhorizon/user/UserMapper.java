@@ -12,11 +12,11 @@ public interface UserMapper {
 
     @AfterMapping
     @Named("addLinks")
-    default UserResponse addLinks(@MappingTarget UserResponse response) {
+    default UserResponse addLinks(User user, @MappingTarget UserResponse response) {
 
-        response.add(Link.of("/users/{id}").withSelfRel());
-        response.add(Link.of("/users/{id}").withRel("update"));
-        response.add(Link.of("/users/{id}").withRel("delete"));
+        response.add(Link.of("/users/" + user.getId()).withSelfRel());
+        response.add(Link.of("/users/" + user.getId()).withRel("update"));
+        response.add(Link.of("/users/" + user.getId()).withRel("delete"));
 
         return response;
     }

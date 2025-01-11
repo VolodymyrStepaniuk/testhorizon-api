@@ -40,7 +40,7 @@ public class TestCaseService {
 
         testCase.setPriority(
                 testCasePriorityRepository.findByName(testCaseCreateRequest.getPriority())
-                        .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(testCaseCreateRequest.getPriority().name()))
+                        .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(testCaseCreateRequest.getPriority()))
         );
 
         var savedTestCase = testCaseRepository.save(testCase);
@@ -89,7 +89,7 @@ public class TestCaseService {
         if (testCaseUpdateRequest.getPriority() != null){
             testCase.setPriority(
                     testCasePriorityRepository.findByName(testCaseUpdateRequest.getPriority())
-                            .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(testCaseUpdateRequest.getPriority().name()))
+                            .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(testCaseUpdateRequest.getPriority()))
             );
         }
 
@@ -119,7 +119,7 @@ public class TestCaseService {
 
         if (priorityName != null) {
             TestCasePriority priority = testCasePriorityRepository.findByName(priorityName)
-                    .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(priorityName.name()));
+                    .orElseThrow(() -> new NoSuchTestCasePriorityByNameException(priorityName));
 
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
                     .equal(root.get("priority"), priority)
