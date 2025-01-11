@@ -70,9 +70,9 @@ public class BugReportService {
         bugReportRepository.delete(bugReport);
     }
 
-    public BugReportResponse updateBugReport(Long bugId, BugReportUpdateRequest bugReportUpdateRequest){
-        var bugReport = bugReportRepository.findById(bugId)
-                .orElseThrow(() -> new NoSuchBugReportByIdException(bugId));
+    public BugReportResponse updateBugReport(Long bugReportId, BugReportUpdateRequest bugReportUpdateRequest){
+        var bugReport = bugReportRepository.findById(bugReportId)
+                .orElseThrow(() -> new NoSuchBugReportByIdException(bugReportId));
 
         if (bugReportUpdateRequest.getTitle() != null && !bugReportUpdateRequest.getTitle().isEmpty())
             bugReport.setTitle(bugReportUpdateRequest.getTitle());
@@ -106,7 +106,7 @@ public class BugReportService {
     public PagedModel<BugReportResponse> getAllBugReports(Pageable pageable,
                                                           @Nullable Long projectId,
                                                           @Nullable String title,
-                                                          @Nullable Long reportId,
+                                                          @Nullable Long reporterId,
                                                           @Nullable BugReportSeverityName severityName,
                                                           @Nullable BugReportStatusName statusName){
 
@@ -124,9 +124,9 @@ public class BugReportService {
             );
         }
 
-        if (reportId != null) {
+        if (reporterId != null) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
-                    .equal(root.get("reporterId"), reportId)
+                    .equal(root.get("reporterId"), reporterId)
             );
         }
 

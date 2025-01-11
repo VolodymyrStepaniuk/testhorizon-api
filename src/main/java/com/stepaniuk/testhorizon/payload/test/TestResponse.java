@@ -16,7 +16,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode(callSuper = true)
-@Relation(collectionRelation = "testCases", itemRelation = "testCases")
+@Relation(collectionRelation = "tests", itemRelation = "tests")
 public class TestResponse extends RepresentationModel<TestResponse> {
 
     @NotNull

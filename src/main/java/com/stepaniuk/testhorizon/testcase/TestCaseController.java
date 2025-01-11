@@ -12,7 +12,7 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,8 +25,7 @@ public class TestCaseController {
     private final TestCaseService testCaseService;
 
     @PostMapping
-    public ResponseEntity<TestCaseResponse> createTestCase(@Valid @RequestBody TestCaseCreateRequest testCaseCreateRequest, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
+    public ResponseEntity<TestCaseResponse> createTestCase(@Valid @RequestBody TestCaseCreateRequest testCaseCreateRequest, @AuthenticationPrincipal User user) {
         return new ResponseEntity<>(testCaseService.createTestCase(testCaseCreateRequest, user.getId()), HttpStatus.CREATED);
     }
 
