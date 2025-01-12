@@ -48,11 +48,12 @@ class BugReportServiceTest {
     private BugReportStatusRepository bugReportStatusRepository;
 
     @Test
-    void shouldReturnBugReportResponseWhenCreatingBugReport(){
+    void shouldReturnBugReportResponseWhenCreatingBugReport() {
         // given
         BugReportSeverity bugReportSeverity = new BugReportSeverity(1L, BugReportSeverityName.HIGH);
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
-                1L, "title", "description", "environment", List.of("image1", "image2"), bugReportSeverity.getName()
+                1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
+                List.of("https://video.com"), bugReportSeverity.getName()
         );
 
         when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -70,6 +71,7 @@ class BugReportServiceTest {
         assertEquals(bugReportCreateRequest.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportCreateRequest.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportCreateRequest.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportCreateRequest.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportSeverity.getName(), bugReportResponse.getSeverity());
         assertEquals(BugReportStatusName.OPENED, bugReportResponse.getStatus());
         assertTrue(bugReportResponse.hasLinks());
@@ -78,10 +80,11 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReport(){
+    void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReport() {
         // given
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
-                1L, "title", "description", "environment", List.of("image1", "image2"), BugReportSeverityName.HIGH
+                1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
+                List.of("https://video.com"), BugReportSeverityName.HIGH
         );
 
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.empty());
@@ -91,10 +94,11 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportStatusByNameExceptionWhenCreatingBugReport(){
+    void shouldThrowNoSuchBugReportStatusByNameExceptionWhenCreatingBugReport() {
         // given
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
-                1L, "title", "description", "environment", List.of("image1", "image2"), BugReportSeverityName.HIGH
+                1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
+                List.of("https://video.com"), BugReportSeverityName.HIGH
         );
 
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.of(new BugReportSeverity(1L, BugReportSeverityName.HIGH)));
@@ -105,7 +109,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnBugReportResponseWhenGettingBugReportById(){
+    void shouldReturnBugReportResponseWhenGettingBugReportById() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
 
@@ -123,6 +127,7 @@ class BugReportServiceTest {
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReport.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReport.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReport.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReport.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReport.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -131,7 +136,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportByIdExceptionWhenGettingBugReportById(){
+    void shouldThrowNoSuchBugReportByIdExceptionWhenGettingBugReportById() {
         // given
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -140,10 +145,10 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldUpdateAndReturnBugReportResponseWhenChangingBugReportTitle(){
+    void shouldUpdateAndReturnBugReportResponseWhenChangingBugReportTitle() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null);
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -160,6 +165,7 @@ class BugReportServiceTest {
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReport.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReport.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReport.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReport.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReport.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -170,9 +176,9 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportByIdExceptionWhenUpdatingBugReport(){
+    void shouldThrowNoSuchBugReportByIdExceptionWhenUpdatingBugReport() {
         // given
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null);
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -181,10 +187,10 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenUpdatingBugReport(){
+    void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenUpdatingBugReport() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null,  BugReportSeverityName.HIGH,null);
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, BugReportSeverityName.HIGH, null);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportSeverityRepository.findByName(bugReportUpdateRequest.getSeverity())).thenReturn(Optional.empty());
@@ -194,10 +200,10 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportStatusByNameExceptionWhenUpdatingBugReport(){
+    void shouldThrowNoSuchBugReportStatusByNameExceptionWhenUpdatingBugReport() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, BugReportStatusName.OPENED);
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, null, BugReportStatusName.OPENED);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
@@ -207,7 +213,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldDeleteAndReturnVoidWhenDeletingExistingBugReport(){
+    void shouldDeleteAndReturnVoidWhenDeletingExistingBugReport() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
 
@@ -221,7 +227,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchBugReportByIdExceptionWhenDeletingBugReport(){
+    void shouldThrowNoSuchBugReportByIdExceptionWhenDeletingBugReport() {
         // given
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -230,7 +236,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReports(){
+    void shouldReturnPagedModelWhenGettingAllBugReports() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
 
@@ -257,6 +263,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportToFind.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReportToFind.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -265,7 +272,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReportsByProjectId(){
+    void shouldReturnPagedModelWhenGettingAllBugReportsByProjectId() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
         Long projectId = 1L;
@@ -292,6 +299,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportToFind.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReportToFind.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -300,7 +308,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReportsByTitle(){
+    void shouldReturnPagedModelWhenGettingAllBugReportsByTitle() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
         String title = "title";
@@ -327,6 +335,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportToFind.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReportToFind.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -335,7 +344,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReportsByReporterId(){
+    void shouldReturnPagedModelWhenGettingAllBugReportsByReporterId() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
         Long reporterId = 1L;
@@ -362,6 +371,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportToFind.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReportToFind.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -370,7 +380,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReportsBySeverityName(){
+    void shouldReturnPagedModelWhenGettingAllBugReportsBySeverityName() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
         BugReportSeverityName severityName = BugReportSeverityName.HIGH;
@@ -398,6 +408,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(severityName, bugReportResponse.getSeverity());
         assertEquals(bugReportToFind.getStatus().getName(), bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -406,7 +417,7 @@ class BugReportServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllBugReportsByStatusName(){
+    void shouldReturnPagedModelWhenGettingAllBugReportsByStatusName() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
         BugReportStatusName statusName = BugReportStatusName.OPENED;
@@ -434,6 +445,7 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
         assertEquals(bugReportToFind.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReportToFind.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReportToFind.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(statusName, bugReportResponse.getStatus());
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
@@ -441,13 +453,14 @@ class BugReportServiceTest {
         assertTrue(bugReportResponse.hasLinks());
     }
 
-    private BugReport getNewBugReportWithAllFields(){
+    private BugReport getNewBugReportWithAllFields() {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
         BugReportStatus bugReportStatus = new BugReportStatus(1L, BugReportStatusName.OPENED);
         BugReportSeverity bugReportSeverity = new BugReportSeverity(1L, BugReportSeverityName.HIGH);
 
-        return new BugReport(1L, 1L, "title", "description", "environment",1L, List.of("image1", "image2"),
+        return new BugReport(1L, 1L, "title", "description", "environment", 1L,
+                List.of("https://image.com", "https://image2.com"), List.of("https://video.com"),
                 bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
     }
 }

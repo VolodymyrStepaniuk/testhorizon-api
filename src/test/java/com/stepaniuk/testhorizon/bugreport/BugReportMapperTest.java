@@ -32,7 +32,8 @@ class BugReportMapperTest {
         BugReportSeverity bugReportSeverity = new BugReportSeverity(1L, BugReportSeverityName.CRITICAL);
         BugReportStatus bugReportStatus = new BugReportStatus(1L, BugReportStatusName.OPENED);
         BugReport bugReport = new BugReport(null, 1L,  "Bug report title", "Bug report description",
-                "Bug report environment", 1L, List.of(), bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
+                "Bug report environment", 1L, List.of("https://image.com"), List.of("https://video.com"),
+                bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
 
         // when
         BugReportResponse bugReportResponse = bugReportMapper.toResponse(bugReport);
@@ -47,6 +48,8 @@ class BugReportMapperTest {
         assertEquals(bugReport.getReporterId(), bugReportResponse.getReporterId());
         assertEquals(bugReport.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReport.getStatus().getName(), bugReportResponse.getStatus());
+        assertEquals(bugReport.getImageUrls(), bugReportResponse.getImageUrls());
+        assertEquals(bugReport.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReport.getCreatedAt(), bugReportResponse.getCreatedAt());
         assertEquals(bugReport.getUpdatedAt(), bugReportResponse.getUpdatedAt());
         assertTrue(bugReportResponse.hasLinks());
