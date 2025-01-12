@@ -52,6 +52,10 @@ public class BugReport {
     @Column(name = "image_urls", columnDefinition = "text[]", nullable = false)
     private List<String> imageUrls;
 
+    @Type(ListArrayType.class)
+    @Column(name = "video_urls", columnDefinition = "text[]", nullable = false)
+    private List<String> videoUrls;
+
     @ManyToOne
     @JoinColumn(name = "severity_id")
     private BugReportSeverity severity;

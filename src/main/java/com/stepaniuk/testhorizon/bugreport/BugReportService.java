@@ -41,6 +41,7 @@ public class BugReportService {
         bugReport.setEnvironment(bugReportCreateRequest.getEnvironment());
         bugReport.setReporterId(reporterId);
         bugReport.setImageUrls(bugReportCreateRequest.getImageUrls());
+        bugReport.setVideoUrls(bugReportCreateRequest.getVideoUrls());
 
         bugReport.setSeverity(
                 bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())
@@ -85,6 +86,9 @@ public class BugReportService {
 
         if (bugReportUpdateRequest.getImageUrls() != null && !bugReportUpdateRequest.getImageUrls().isEmpty())
             bugReport.setImageUrls(bugReportUpdateRequest.getImageUrls());
+
+        if (bugReportUpdateRequest.getVideoUrls() != null && !bugReportUpdateRequest.getVideoUrls().isEmpty())
+            bugReport.setVideoUrls(bugReportUpdateRequest.getVideoUrls());
 
         if (bugReportUpdateRequest.getSeverity() != null)
             bugReport.setSeverity(
