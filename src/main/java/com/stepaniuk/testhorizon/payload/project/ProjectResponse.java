@@ -1,6 +1,5 @@
 package com.stepaniuk.testhorizon.payload.project;
 
-import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.validation.shared.*;
 import jakarta.annotation.Nullable;
@@ -20,7 +19,7 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode(callSuper = true)
 @Relation(collectionRelation = "projects", itemRelation = "projects")
-public class ProjectResponse extends RepresentationModel<UserResponse> {
+public class ProjectResponse extends RepresentationModel<ProjectResponse> {
 
     @Id
     @NotNull

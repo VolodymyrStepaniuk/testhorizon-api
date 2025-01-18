@@ -1,20 +1,17 @@
-package com.stepaniuk.testhorizon.project;
+package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.project.status.ProjectStatus;
-import io.hypersistence.utils.hibernate.type.array.ListArrayType;
+import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -23,38 +20,27 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "projects")
-public class Project {
+@Table(name = "comments")
+public class Comment {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "projects_id_gen")
-    @SequenceGenerator(name = "projects_id_gen", sequenceName = "projects_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comments_id_gen")
+    @SequenceGenerator(name = "comments_id_gen", sequenceName = "comments_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    @Column(name = "author_id", nullable = false)
+    private Long authorId;
 
-    @Column(name = "title", nullable = false)
-    private String title;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "entity_type", nullable = false)
+    private CommentEntityType entityType;
 
-    @Column(name = "description", nullable = false)
-    private String description;
+    @Column(name = "entity_id", nullable = false)
+    private Long entityId;
 
-    @Column(name = "instructions")
-    private String instructions;
-
-    @Column(name = "github_url", nullable = false)
-    private String githubUrl;
-
-    // Add tags
-
-    @Type(ListArrayType.class)
-    @Column(name = "image_urls", columnDefinition = "text[]", nullable = false)
-    private List<String> imageUrls;
-
-    @ManyToOne
-    @JoinColumn(name = "status_id")
-    private ProjectStatus status;
+    @Column(name = "content", nullable = false)
+    private String content;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
@@ -71,8 +57,8 @@ public class Project {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Project project = (Project) o;
-        return getId() != null && Objects.equals(getId(), project.getId());
+        Comment comment = (Comment) o;
+        return getId() != null && Objects.equals(getId(), comment.getId());
     }
 
     @Override
@@ -83,13 +69,10 @@ public class Project {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" +
-                "ownerId = " + ownerId + ", " +
-                "title = " + title + ", " +
-                "description = " + description + ", " +
-                "instructions = " + instructions + ", " +
-                "githubUrl = " + githubUrl + ", " +
-                "imageUrls = " + imageUrls + ", " +
-                "status = " + status + ", " +
+                "authorId = " + authorId + ", " +
+                "entityType = " + entityType + ", " +
+                "entityId = " + entityId + ", " +
+                "content = " + content + ", " +
                 "createdAt = " + createdAt + ", " +
                 "updatedAt = " + updatedAt + ")";
     }

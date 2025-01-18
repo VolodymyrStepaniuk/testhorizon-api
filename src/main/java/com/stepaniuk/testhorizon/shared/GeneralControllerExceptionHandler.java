@@ -3,6 +3,8 @@ package com.stepaniuk.testhorizon.shared;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
+import com.stepaniuk.testhorizon.payload.comment.exception.CommentAuthorMismatchException;
+import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
@@ -182,6 +184,24 @@ public class GeneralControllerExceptionHandler {
                 "No test with id " + e.getId());
         problemDetail.setTitle("No such test");
         problemDetail.setInstance(URI.create("/tests"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchCommentByIdException.class})
+    public ProblemDetail handleNoSuchCommentByIdException(NoSuchCommentByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No comment with id " + e.getCommentId());
+        problemDetail.setTitle("No such comment");
+        problemDetail.setInstance(URI.create("/comments"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {CommentAuthorMismatchException.class})
+    public ProblemDetail handleCommentAuthorMismatchException(CommentAuthorMismatchException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                "Comment author mismatch: " + e.getCommentId());
+        problemDetail.setTitle("Comment author mismatch");
+        problemDetail.setInstance(URI.create("/comments"));
         return problemDetail;
     }
 
