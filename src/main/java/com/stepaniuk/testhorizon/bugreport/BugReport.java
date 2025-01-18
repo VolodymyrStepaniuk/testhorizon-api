@@ -28,8 +28,8 @@ import java.util.Objects;
 public class BugReport {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bug_reports_id_seq")
-    @SequenceGenerator(name = "bug_reports_id_seq", sequenceName = "bug_reports_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bug_reports_id_gen")
+    @SequenceGenerator(name = "bug_reports_id_gen", sequenceName = "bug_reports_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

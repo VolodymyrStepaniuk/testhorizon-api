@@ -27,8 +27,8 @@ import java.util.Objects;
 public class TestCase {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "test_cases_id_seq")
-    @SequenceGenerator(name = "test_cases_id_seq", sequenceName = "test_cases_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "test_cases_id_gen")
+    @SequenceGenerator(name = "test_cases_id_gen", sequenceName = "test_cases_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
