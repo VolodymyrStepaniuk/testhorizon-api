@@ -7,6 +7,7 @@ import com.stepaniuk.testhorizon.payload.comment.exception.CommentAuthorMismatch
 import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
@@ -202,6 +203,15 @@ public class GeneralControllerExceptionHandler {
                 "Comment author mismatch: " + e.getCommentId());
         problemDetail.setTitle("Comment author mismatch");
         problemDetail.setInstance(URI.create("/comments"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {UserCannotChangeOwnRatingException.class})
+    public ProblemDetail handleUserCannotChangeOwnRatingException(UserCannotChangeOwnRatingException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                "User cannot change own rating: " + e.getUserId());
+        problemDetail.setTitle("User cannot change own rating");
+        problemDetail.setInstance(URI.create("/ratings"));
         return problemDetail;
     }
 

@@ -448,6 +448,7 @@ class TestCaseControllerTest {
                 "firstName",
                 "lastName",
                 "email",
+                0,
                 "password",
                 true,
                 true,

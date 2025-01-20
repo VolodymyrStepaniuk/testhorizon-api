@@ -168,7 +168,7 @@ class UserServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", "Password+123",
+        var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true, null,
                 Set.of(), timeOfCreation, timeOfModification);
 
@@ -190,6 +190,7 @@ class UserServiceTest {
         assertEquals(userToFind.getId(), userResponse.getId());
         assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
+        assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
@@ -202,7 +203,7 @@ class UserServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", "Password+123",
+        var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true, null,
                 Set.of(), timeOfCreation, timeOfModification);
 
@@ -223,6 +224,41 @@ class UserServiceTest {
         assertEquals(userToFind.getId(), userResponse.getId());
         assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
+        assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
+        assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
+        assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
+        assertTrue(userResponse.hasLinks());
+    }
+
+    @Test
+    void shouldReturnPagedModelWhenGettingTopUsersByRating(){
+        // given
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+
+        var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+                true, true, true, true, null,
+                Set.of(), timeOfCreation, timeOfModification);
+
+        var pageable = PageRequest.of(0, 2);
+
+        when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
+                new PageImpl<>(List.of(userToFind), pageable, 1));
+        // when
+        var userResponses = userService.getTopUsersByRating(pageable);
+        var userResponse = userResponses.getContent().iterator().next();
+
+        //then
+        assertNotNull(userResponses);
+        assertNotNull(userResponses.getMetadata());
+        assertEquals(1, userResponses.getMetadata().getTotalElements());
+        assertEquals(1, userResponses.getContent().size());
+
+        assertEquals(userToFind.getId(), userResponse.getId());
+        assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
+        assertEquals(userToFind.getLastName(), userResponse.getLastName());
+        assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
@@ -233,7 +269,7 @@ class UserServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        return new User(null, "John", "Doe", "johndoe@gmail.com", "Password+123",
+        return new User(null, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true, null,
                 Set.of(), timeOfCreation, timeOfModification);
     }

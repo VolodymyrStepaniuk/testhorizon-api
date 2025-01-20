@@ -39,6 +39,9 @@ public class User implements UserDetails {
     @Column(name = "email", nullable = false)
     private String email;
 
+    @Column(name = "total_rating", nullable = false)
+    private Integer totalRating;
+
     @Column(name = "password", nullable = false)
     private String password;
 
@@ -125,7 +128,8 @@ public class User implements UserDetails {
                 "firstName = " + firstName + ", " +
                 "lastName = " + lastName + ", " +
                 "email = " + email + ", " +
+                "totalRating = " + totalRating + ", " +
                 "createdAt = " + createdAt + ", " +
-                "lastModifiedAt = " + updatedAt + ")";
+                "updatedAt = " + updatedAt + ")";
     }
 }

@@ -29,7 +29,7 @@ class UserRepositoryTest {
     void shouldSaveUser() {
         Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
         // given
-        User userToSave = new User(null, "John", "Doe", "johndoe@gmail.com", "Password+123",
+        User userToSave = new User(null, "John", "Doe", "johndoe@gmail.com", 100,"Password+123",
                 true, true, true, true, null,
                 Set.of(authority), null, null);
 
@@ -54,7 +54,7 @@ class UserRepositoryTest {
     void shouldThrowExceptionWhenSavingUserWithoutEmail() {
         Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
         // given
-        User userToSave = new User(null, "John", "Doe", null, null,
+        User userToSave = new User(null, "John", "Doe", null, 10,null,
                 true, true, true, true, null,
                 Set.of(authority), null, null);
 
@@ -74,6 +74,7 @@ class UserRepositoryTest {
         assertEquals(1L, user.getId());
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
+        assertEquals(121, user.getTotalRating());
         assertEquals("random.email@example.com", user.getEmail());
         assertTrue(user.isEnabled());
         assertTrue(user.isAccountNonExpired());
@@ -95,6 +96,7 @@ class UserRepositoryTest {
         assertEquals(1L, user.getId());
         assertEquals("John", user.getFirstName());
         assertEquals("Doe", user.getLastName());
+        assertEquals(121, user.getTotalRating());
         assertEquals("random.email@example.com", user.getEmail());
         assertTrue(user.isEnabled());
         assertTrue(user.isAccountNonExpired());

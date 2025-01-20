@@ -57,7 +57,7 @@ class AuthenticationControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new UserResponse(1L, userCreateRequest.getEmail(), userCreateRequest.getFirstName(), userCreateRequest.getLastName(),
-                timeOfCreation, timeOfModification);
+                100, timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/users/1", "self"));
         response.add(Link.of("http://localhost/users/1", "update"));
@@ -74,6 +74,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.email", is(response.getEmail())))
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
+                .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))

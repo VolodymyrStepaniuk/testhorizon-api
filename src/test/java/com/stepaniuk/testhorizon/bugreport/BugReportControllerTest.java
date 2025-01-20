@@ -556,6 +556,7 @@ class BugReportControllerTest {
                 "firstName",
                 "lastName",
                 "email",
+                0,
                 "password",
                 true,
                 true,

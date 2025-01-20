@@ -52,4 +52,9 @@ public class UserController {
             throws NoSuchUserByIdException {
         return ResponseEntity.ok(userService.getUserById(user.getId()));
     }
+
+    @GetMapping("/top")
+    public ResponseEntity<PagedModel<UserResponse>> getTopUsersByRating(Pageable pageable) {
+        return ResponseEntity.ok(userService.getTopUsersByRating(pageable));
+    }
 }
