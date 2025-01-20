@@ -85,6 +85,7 @@ class AuthenticationServiceTest {
         assertEquals(request.getEmail(), response.getEmail());
         assertEquals(request.getFirstName(), response.getFirstName());
         assertEquals(request.getLastName(), response.getLastName());
+        assertEquals(0, response.getTotalRating());
 
         verify(userRepository, times(1)).save(any());
     }

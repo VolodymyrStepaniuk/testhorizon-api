@@ -4,6 +4,7 @@ import com.stepaniuk.testhorizon.validation.shared.Email;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.user.FirstName;
 import com.stepaniuk.testhorizon.validation.user.LastName;
+import com.stepaniuk.testhorizon.validation.user.Rating;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.hateoas.RepresentationModel;
@@ -29,6 +30,9 @@ public class UserResponse extends RepresentationModel<UserResponse> {
     @LastName
     @NotNull
     private final String lastName;
+    @Rating
+    @NotNull
+    private final Integer totalRating;
     @NotNull
     private final Instant createdAt;
     @NotNull

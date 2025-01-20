@@ -25,7 +25,7 @@ class UserMapperTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        User userToMap = new User(null, "John", "Doe", "johndoe@gmail.com", "Password+123",
+        User userToMap = new User(null, "John", "Doe", "johndoe@gmail.com", 19,"Password+123",
                 true, true, true, true, null,
                 Set.of(), timeOfCreation, timeOfModification);
         // when
@@ -35,6 +35,7 @@ class UserMapperTest {
         assertNotNull(userResponse);
         assertNull(userResponse.getId());
         assertEquals(userToMap.getEmail(), userResponse.getEmail());
+        assertEquals(userToMap.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToMap.getFirstName(), userResponse.getFirstName());
         assertEquals(userToMap.getLastName(), userResponse.getLastName());
         assertEquals(userToMap.getCreatedAt(), userResponse.getCreatedAt());

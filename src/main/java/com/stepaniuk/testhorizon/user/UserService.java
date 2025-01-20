@@ -3,7 +3,8 @@ package com.stepaniuk.testhorizon.user;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapper;
-import com.stepaniuk.testhorizon.user.exceptions.*;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,9 +49,9 @@ public class UserService {
         var users = userRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-            users.map(
-                userMapper::toResponse
-            ), URI.create("/users")
+                users.map(
+                        userMapper::toResponse
+                ), URI.create("/users")
         );
     }
 
@@ -73,10 +74,25 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
-    public void deleteUserById(Long id){
+    public void deleteUserById(Long id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
         userRepository.delete(user);
+    }
+
+    public PagedModel<UserResponse> getTopUsersByRating(Pageable pageable) {
+        Specification<User> specification = (root, query, criteriaBuilder) -> {
+
+            query.orderBy(criteriaBuilder.desc(root.get("totalRating")));
+            return criteriaBuilder.conjunction();
+        };
+
+        var users = userRepository.findAll(specification, pageable);
+
+        return pageMapper.toResponse(
+                users.map(userMapper::toResponse),
+                URI.create("/users")
+        );
     }
 }

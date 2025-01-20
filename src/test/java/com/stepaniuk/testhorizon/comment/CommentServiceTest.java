@@ -284,6 +284,6 @@ class CommentServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        return new UserResponse(1L, "email@gmail.com", "Doe", "Doe", timeOfCreation, timeOfModification);
+        return new UserResponse(1L, "email@gmail.com", "Doe", "Doe", 129, timeOfCreation, timeOfModification);
     }
 }

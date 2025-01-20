@@ -34,7 +34,7 @@ class EmailCodeRepositoryTest {
     void shouldSaveEmailCode() {
         // given
         User userForCode = new User(
-                null, "first", "last", "email@gmail.com", "Password+123",
+                null, "first", "last", "email@gmail.com", 100, "Password+123",
                 true, true, true, true, null,
                 Set.of(), null, null
         );
@@ -59,7 +59,7 @@ class EmailCodeRepositoryTest {
     void shouldThrowExceptionWhenSavingEmailCodeWithNullCode() {
         // given
         User userForCode = new User(
-                null, "first", "last", "email@gmail.com", "Password+123",
+                null, "first", "last", "email@gmail.com", 100, "Password+123",
                 true, true, true, true, null,
                 Set.of(), null, null
         );
