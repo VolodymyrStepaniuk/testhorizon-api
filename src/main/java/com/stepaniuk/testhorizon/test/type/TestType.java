@@ -17,8 +17,8 @@ import java.util.Objects;
 @Table(name = "test_types")
 public class TestType {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "test_types_id_seq")
-    @SequenceGenerator(name = "test_types_id_seq", sequenceName = "test_types_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "test_types_id_gen")
+    @SequenceGenerator(name = "test_types_id_gen", sequenceName = "test_types_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
