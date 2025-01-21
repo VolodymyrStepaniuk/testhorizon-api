@@ -20,8 +20,8 @@ import java.util.Objects;
 public class EmailCode {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email_codes_id_seq")
-    @SequenceGenerator(name = "email_codes_id_seq", sequenceName = "email_codes_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email_codes_id_gen")
+    @SequenceGenerator(name = "email_codes_id_gen", sequenceName = "email_codes_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
