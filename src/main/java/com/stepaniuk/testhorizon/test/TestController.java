@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/tests", produces = "application/json")
@@ -26,7 +28,7 @@ public class TestController {
 
     @PostMapping
     public ResponseEntity<TestResponse> createTest(@Valid @RequestBody TestCreateRequest testCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(testService.createTest(testCreateRequest, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(testService.createTest(testCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -36,12 +38,12 @@ public class TestController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<TestResponse> updateTest(@PathVariable Long id, @Valid @RequestBody TestUpdateRequest testUpdateRequest) {
-        return ResponseEntity.ok(testService.updateTest(id, testUpdateRequest));
+        return ResponseEntity.ok(testService.updateTest(id, testUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTestById(@PathVariable Long id) {
-        testService.deleteTestById(id);
+        testService.deleteTestById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 

@@ -26,11 +26,11 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.hamcrest.Matchers.is;
 
 @ControllerLevelUnitTest(controllers = AuthenticationController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -51,7 +51,7 @@ class AuthenticationControllerTest {
     @Test
     void shouldReturnUserResponseWhenRegister() throws Exception {
         // given
-        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123","John", "Doe", AuthorityName.TESTER);
+        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
 
         var timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -63,12 +63,12 @@ class AuthenticationControllerTest {
         response.add(Link.of("http://localhost/users/1", "update"));
         response.add(Link.of("http://localhost/users/1", "delete"));
 
-        when(authenticationService.register(userCreateRequest)).thenReturn(response);
+        when(authenticationService.register(eq(userCreateRequest), any())).thenReturn(response);
 
         mockMvc.perform(post("/auth/register")
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(userCreateRequest))
-        )
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$.email", is(response.getEmail())))
@@ -87,12 +87,12 @@ class AuthenticationControllerTest {
         // given
         var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
 
-        when(authenticationService.register(userCreateRequest)).thenThrow(new UserAlreadyExistsException(userCreateRequest.getEmail()));
+        when(authenticationService.register(eq(userCreateRequest), any())).thenThrow(new UserAlreadyExistsException(userCreateRequest.getEmail()));
 
         mockMvc.perform(post("/auth/register")
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(userCreateRequest))
-        )
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status", is(409)))
                 .andExpect(jsonPath("$.title", is("User already exists")))
@@ -106,7 +106,7 @@ class AuthenticationControllerTest {
         // given
         var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
 
-        when(authenticationService.register(userCreateRequest)).thenThrow(new NoSuchAuthorityException(userCreateRequest.getAuthorityName()));
+        when(authenticationService.register(eq(userCreateRequest), any())).thenThrow(new NoSuchAuthorityException(userCreateRequest.getAuthorityName()));
 
         mockMvc.perform(post("/auth/register")
                         .contentType("application/json")
@@ -129,7 +129,7 @@ class AuthenticationControllerTest {
                 .refreshToken("refresh_token")
                 .build();
 
-        when(authenticationService.authenticate(loginRequest)).thenReturn(authenticationResponse);
+        when(authenticationService.authenticate(eq(loginRequest), any())).thenReturn(authenticationResponse);
 
         mockMvc.perform(post("/auth/login")
                         .contentType("application/json")
@@ -145,7 +145,7 @@ class AuthenticationControllerTest {
         // given
         var loginRequest = new LoginRequest("mail@gmail.com", "Qwerty@123");
 
-        when(authenticationService.authenticate(loginRequest)).thenThrow(new NoSuchUserByEmailException(loginRequest.getEmail()));
+        when(authenticationService.authenticate(eq(loginRequest), any())).thenThrow(new NoSuchUserByEmailException(loginRequest.getEmail()));
 
         mockMvc.perform(post("/auth/login")
                         .contentType("application/json")
@@ -163,7 +163,7 @@ class AuthenticationControllerTest {
         // given
         var loginRequest = new LoginRequest("mail@gmail.com", "Qwerty@123");
 
-        when(authenticationService.authenticate(loginRequest)).thenThrow(new UserNotVerifiedException(loginRequest.getEmail()));
+        when(authenticationService.authenticate(eq(loginRequest), any())).thenThrow(new UserNotVerifiedException(loginRequest.getEmail()));
 
         mockMvc.perform(post("/auth/login")
                         .contentType("application/json")
@@ -181,7 +181,7 @@ class AuthenticationControllerTest {
         // given
         var verificationRequest = new VerificationRequest("mail@gmail.com", "123456");
 
-        doNothing().when(authenticationService).verifyUser(verificationRequest);
+        doNothing().when(authenticationService).verifyUser(eq(verificationRequest), any());
 
 
         mockMvc.perform(post("/auth/verify")
@@ -197,7 +197,7 @@ class AuthenticationControllerTest {
         var verificationRequest = new VerificationRequest("mail@gmail.com", "123456");
         doThrow(new NoSuchUserByEmailException(verificationRequest.getEmail()))
                 .when(authenticationService)
-                .verifyUser(verificationRequest);
+                .verifyUser(eq(verificationRequest), any());
 
         mockMvc.perform(post("/auth/verify")
                         .contentType("application/json")
@@ -217,7 +217,7 @@ class AuthenticationControllerTest {
 
         doThrow(new UserAlreadyVerifiedException(verificationRequest.getEmail()))
                 .when(authenticationService)
-                .verifyUser(verificationRequest);
+                .verifyUser(eq(verificationRequest), any());
 
         mockMvc.perform(post("/auth/verify")
                         .contentType("application/json")
@@ -237,7 +237,7 @@ class AuthenticationControllerTest {
 
         doThrow(new VerificationCodeExpiredException(verificationRequest.getVerificationCode()))
                 .when(authenticationService)
-                .verifyUser(verificationRequest);
+                .verifyUser(eq(verificationRequest), any());
 
         mockMvc.perform(post("/auth/verify")
                         .contentType("application/json")
@@ -257,7 +257,7 @@ class AuthenticationControllerTest {
 
         doThrow(new InvalidVerificationCodeException(verificationRequest.getEmail()))
                 .when(authenticationService)
-                .verifyUser(verificationRequest);
+                .verifyUser(eq(verificationRequest), any());
 
         mockMvc.perform(post("/auth/verify")
                         .contentType("application/json")
@@ -355,7 +355,7 @@ class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Invalid token")))
-                .andExpect(jsonPath("$.detail", is("Invalid token: "+ refreshToken)))
+                .andExpect(jsonPath("$.detail", is("Invalid token: " + refreshToken)))
                 .andExpect(jsonPath("$.instance", is("/auth/refresh")));
     }
 }

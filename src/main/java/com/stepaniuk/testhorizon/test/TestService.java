@@ -1,5 +1,8 @@
 package com.stepaniuk.testhorizon.test;
 
+import com.stepaniuk.testhorizon.event.test.TestCreatedEvent;
+import com.stepaniuk.testhorizon.event.test.TestDeletedEvent;
+import com.stepaniuk.testhorizon.event.test.TestUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.test.TestCreateRequest;
 import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
@@ -17,6 +20,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +31,9 @@ public class TestService {
     private final TestTypeRepository testTypeRepository;
     private final TestMapper testMapper;
     private final PageMapper pageMapper;
+    private final TestProducer testProducer;
 
-    public TestResponse createTest(TestCreateRequest testCreateRequest, Long authorId){
+    public TestResponse createTest(TestCreateRequest testCreateRequest, Long authorId, String correlationId) {
         Test test = new Test();
 
         test.setProjectId(testCreateRequest.getProjectId());
@@ -45,56 +51,86 @@ public class TestService {
 
         var savedTest = testRepository.save(test);
 
+        testProducer.send(
+                new TestCreatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedTest.getId(), savedTest.getProjectId(), savedTest.getAuthorId()
+                )
+        );
+
         return testMapper.toResponse(savedTest);
     }
 
-    public TestResponse getTestById(Long id){
+    public TestResponse getTestById(Long id) {
         var test = testRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestByIdException(id));
 
         return testMapper.toResponse(test);
     }
 
-    public void deleteTestById(Long id){
+    public void deleteTestById(Long id, String correlationId) {
         var test = testRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestByIdException(id));
 
         testRepository.delete(test);
+
+        testProducer.send(
+                new TestDeletedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        id
+                )
+        );
     }
 
-    public TestResponse updateTest(Long id, TestUpdateRequest testUpdateRequest){
+    public TestResponse updateTest(Long id, TestUpdateRequest testUpdateRequest, String correlationId) {
 
         var test = testRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestByIdException(id));
 
-        if (testUpdateRequest.getTestCaseId() != null){
+        var testData = new TestUpdatedEvent.Data();
+
+        if (testUpdateRequest.getTestCaseId() != null) {
             test.setTestCaseId(testUpdateRequest.getTestCaseId());
+            testData.setTestCaseId(testUpdateRequest.getTestCaseId());
         }
 
-        if (testUpdateRequest.getTitle() != null){
+        if (testUpdateRequest.getTitle() != null) {
             test.setTitle(testUpdateRequest.getTitle());
+            testData.setTitle(testUpdateRequest.getTitle());
         }
 
-        if (testUpdateRequest.getDescription() != null){
+        if (testUpdateRequest.getDescription() != null) {
             test.setDescription(testUpdateRequest.getDescription());
+            testData.setDescription(testUpdateRequest.getDescription());
         }
 
-        if (testUpdateRequest.getInstructions() != null){
+        if (testUpdateRequest.getInstructions() != null) {
             test.setInstructions(testUpdateRequest.getInstructions());
+            testData.setInstructions(testUpdateRequest.getInstructions());
         }
 
-        if (testUpdateRequest.getGithubUrl() != null){
+        if (testUpdateRequest.getGithubUrl() != null) {
             test.setGithubUrl(testUpdateRequest.getGithubUrl());
+            testData.setGithubUrl(testUpdateRequest.getGithubUrl());
         }
 
-        if (testUpdateRequest.getType() != null){
+        if (testUpdateRequest.getType() != null) {
             test.setType(
                     testTypeRepository.findByName(testUpdateRequest.getType())
                             .orElseThrow(() -> new NoSuchTestTypeByNameException(testUpdateRequest.getType()))
             );
+
+            testData.setType(testUpdateRequest.getType());
         }
 
         var savedTest = testRepository.save(test);
+
+        testProducer.send(
+                new TestUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedTest.getId(), testData
+                )
+        );
 
         return testMapper.toResponse(savedTest);
     }
@@ -103,7 +139,7 @@ public class TestService {
                                                 @Nullable Long projectId,
                                                 @Nullable Long authorId,
                                                 @Nullable Long testCaseId,
-                                                @Nullable TestTypeName typeName){
+                                                @Nullable TestTypeName typeName) {
 
         Specification<Test> specification = Specification.where(null);
 
@@ -125,7 +161,7 @@ public class TestService {
             );
         }
 
-        if(typeName != null){
+        if (typeName != null) {
             TestType type = testTypeRepository.findByName(typeName)
                     .orElseThrow(() -> new NoSuchTestTypeByNameException(typeName));
 

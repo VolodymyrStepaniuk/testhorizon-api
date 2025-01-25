@@ -17,6 +17,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/bug-reports", produces = "application/json")
@@ -27,7 +29,7 @@ public class BugReportController {
 
     @PostMapping
     public ResponseEntity<BugReportResponse> createBugReport(@Valid @RequestBody BugReportCreateRequest bugReportCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(bugReportService.createBugReport(bugReportCreateRequest, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(bugReportService.createBugReport(bugReportCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -37,12 +39,12 @@ public class BugReportController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<BugReportResponse> updateBugReport(@PathVariable Long id, @Valid @RequestBody BugReportUpdateRequest bugReportUpdateRequest) {
-        return ResponseEntity.ok(bugReportService.updateBugReport(id, bugReportUpdateRequest));
+        return ResponseEntity.ok(bugReportService.updateBugReport(id, bugReportUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBugReportById(@PathVariable Long id) {
-        bugReportService.deleteBugReportById(id);
+        bugReportService.deleteBugReportById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 

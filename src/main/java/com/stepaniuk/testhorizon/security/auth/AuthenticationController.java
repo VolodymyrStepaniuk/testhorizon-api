@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/auth", produces = "application/json")
@@ -21,17 +23,17 @@ public class AuthenticationController {
 
     @PostMapping(path = "/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserCreateRequest userCreateRequest) {
-        return ResponseEntity.ok(authenticationService.register(userCreateRequest));
+        return ResponseEntity.ok(authenticationService.register(userCreateRequest, UUID.randomUUID().toString()));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody LoginRequest loginRequest) {
-        return ResponseEntity.ok(authenticationService.authenticate(loginRequest));
+        return ResponseEntity.ok(authenticationService.authenticate(loginRequest, UUID.randomUUID().toString()));
     }
 
     @PostMapping("/verify")
     public ResponseEntity<Void> verifyUser(@Valid @RequestBody VerificationRequest verificationRequest) {
-        authenticationService.verifyUser(verificationRequest);
+        authenticationService.verifyUser(verificationRequest, UUID.randomUUID().toString());
         return ResponseEntity.ok().build();
     }
 

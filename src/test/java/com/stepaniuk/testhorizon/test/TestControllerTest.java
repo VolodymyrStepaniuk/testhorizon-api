@@ -73,7 +73,7 @@ class TestControllerTest {
 
         TestResponse testResponse = createTestResponse();
 
-        when(testService.createTest(testCreateRequest, userId)).thenReturn(testResponse);
+        when(testService.createTest(eq(testCreateRequest), eq(userId), any())).thenReturn(testResponse);
 
         mockMvc.perform(post("/tests")
                         .contentType("application/json")
@@ -114,7 +114,7 @@ class TestControllerTest {
                 TestTypeName.ACCEPTANCE
         );
 
-        when(testService.createTest(testCreateRequest, userId)).thenThrow(new NoSuchTestTypeByNameException(testCreateRequest.getType()));
+        when(testService.createTest(eq(testCreateRequest), eq(userId), any())).thenThrow(new NoSuchTestTypeByNameException(testCreateRequest.getType()));
 
         // then
         mockMvc.perform(post("/tests")
@@ -190,7 +190,7 @@ class TestControllerTest {
 
         var testResponse = createTestResponse();
 
-        when(testService.updateTest(testId, testUpdateRequest)).thenReturn(testResponse);
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenReturn(testResponse);
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -229,7 +229,7 @@ class TestControllerTest {
                 TestTypeName.ACCEPTANCE
         );
 
-        when(testService.updateTest(testId, testUpdateRequest)).thenThrow(new NoSuchTestByIdException(testId));
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenThrow(new NoSuchTestByIdException(testId));
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -257,7 +257,7 @@ class TestControllerTest {
                 TestTypeName.ACCEPTANCE
         );
 
-        when(testService.updateTest(testId, testUpdateRequest)).thenThrow(new NoSuchTestTypeByNameException(testUpdateRequest.getType()));
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenThrow(new NoSuchTestTypeByNameException(testUpdateRequest.getType()));
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -290,7 +290,7 @@ class TestControllerTest {
 
         doThrow(new NoSuchTestByIdException(testId))
                 .when(testService)
-                .deleteTestById(testId);
+                .deleteTestById(eq(testId), any());
 
 
         // then

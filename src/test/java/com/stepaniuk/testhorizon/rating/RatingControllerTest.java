@@ -29,6 +29,8 @@ import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -66,7 +68,7 @@ class RatingControllerTest {
         var ratingResponse = createRatingResponse();
 
         // when
-        when(ratingService.changeRating(ratingUpdateRequest, userId)).thenReturn(ratingResponse);
+        when(ratingService.changeRating(eq(ratingUpdateRequest), eq(userId), any())).thenReturn(ratingResponse);
 
         // then
         mockMvc.perform(post("/ratings")
@@ -92,7 +94,7 @@ class RatingControllerTest {
         RatingUpdateRequest ratingUpdateRequest = new RatingUpdateRequest(1L, 5, "comment");
 
         // when
-        when(ratingService.changeRating(ratingUpdateRequest, userId)).thenThrow(new NoSuchUserByIdException(1L));
+        when(ratingService.changeRating(eq(ratingUpdateRequest), eq(userId), any())).thenThrow(new NoSuchUserByIdException(1L));
 
         // then
         mockMvc.perform(post("/ratings")
@@ -116,7 +118,7 @@ class RatingControllerTest {
         RatingUpdateRequest ratingUpdateRequest = new RatingUpdateRequest(userId, 5, "comment");
 
         // when
-        when(ratingService.changeRating(ratingUpdateRequest, userId)).thenThrow(new UserCannotChangeOwnRatingException(userId));
+        when(ratingService.changeRating(eq(ratingUpdateRequest), eq(userId), any())).thenThrow(new UserCannotChangeOwnRatingException(userId));
 
         // then
         mockMvc.perform(post("/ratings")

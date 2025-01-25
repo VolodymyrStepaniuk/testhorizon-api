@@ -1,5 +1,7 @@
 package com.stepaniuk.testhorizon.user;
 
+import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
+import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapper;
@@ -13,7 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
+    private final UserProducer userProducer;
     private final PasswordEncoder passwordEncoder;
 
     public UserResponse getUserById(Long id) {
@@ -55,30 +60,52 @@ public class UserService {
         );
     }
 
-    public UserResponse updateUser(Long id, UserUpdateRequest userRequest) {
+    public UserResponse updateUser(Long id, UserUpdateRequest userRequest, String correlationId) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
-        if (userRequest.getFirstName() != null)
+        var userData = new UserUpdatedEvent.Data();
+
+        if (userRequest.getFirstName() != null){
             user.setFirstName(userRequest.getFirstName());
+            userData.setFirstName(userRequest.getFirstName());
+        }
 
-        if (userRequest.getLastName() != null)
+        if (userRequest.getLastName() != null) {
             user.setLastName(userRequest.getLastName());
-
-        if (userRequest.getEmail() != null)
+            userData.setLastName(userRequest.getLastName());
+        }
+        if (userRequest.getEmail() != null) {
             user.setEmail(userRequest.getEmail());
-
+            userData.setEmail(userRequest.getEmail());
+        }
         if (userRequest.getPassword() != null)
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
 
-        return userMapper.toResponse(userRepository.save(user));
+        var savedUser = userRepository.save(user);
+
+        userProducer.send(
+                 new UserUpdatedEvent(
+                         Instant.now(), UUID.randomUUID().toString(), correlationId,
+                         savedUser.getId(), userData
+                 )
+        );
+
+        return userMapper.toResponse(savedUser);
     }
 
-    public void deleteUserById(Long id) {
+    public void deleteUserById(Long id, String correlationId) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
         userRepository.delete(user);
+
+        userProducer.send(
+                new UserDeletedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        id
+                )
+        );
     }
 
     public PagedModel<UserResponse> getTopUsersByRating(Pageable pageable) {

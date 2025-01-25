@@ -74,7 +74,7 @@ class TestCaseControllerTest {
         TestCaseResponse response = createResponse();
 
         // when
-        when(testCaseService.createTestCase(request, userId)).thenReturn(response);
+        when(testCaseService.createTestCase(eq(request), eq(userId), any())).thenReturn(response);
 
         // then
         mockMvc.perform(post("/test-cases")
@@ -118,7 +118,7 @@ class TestCaseControllerTest {
         );
 
         // when
-        when(testCaseService.createTestCase(request, userId)).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
+        when(testCaseService.createTestCase(eq(request), eq(userId), any())).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
 
         // then
         mockMvc.perform(post("/test-cases")
@@ -189,7 +189,7 @@ class TestCaseControllerTest {
 
         TestCaseResponse response = createResponse();
 
-        when(testCaseService.updateTestCase(testCaseId, request)).thenReturn(response);
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenReturn(response);
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -225,7 +225,7 @@ class TestCaseControllerTest {
                 TestCasePriorityName.LOW
         );
 
-        when(testCaseService.updateTestCase(testCaseId, request)).thenThrow(new NoSuchTestCaseByIdException(testCaseId));
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenThrow(new NoSuchTestCaseByIdException(testCaseId));
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -251,7 +251,7 @@ class TestCaseControllerTest {
                 TestCasePriorityName.LOW
         );
 
-        when(testCaseService.updateTestCase(testCaseId, request)).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -282,7 +282,7 @@ class TestCaseControllerTest {
         // when
         doThrow(new NoSuchTestCaseByIdException(testCaseId))
                 .when(testCaseService)
-                .deleteTestCaseById(testCaseId);
+                .deleteTestCaseById(eq(testCaseId), any());
 
         // then
         mockMvc.perform(delete("/test-cases/" + testCaseId)

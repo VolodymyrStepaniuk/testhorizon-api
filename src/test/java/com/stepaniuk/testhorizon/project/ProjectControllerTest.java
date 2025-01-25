@@ -67,7 +67,7 @@ class ProjectControllerTest {
         ProjectResponse projectResponse = createProjectResponse();
 
         // when
-        when(projectService.createProject(projectCreateRequest, userId)).thenReturn(projectResponse);
+        when(projectService.createProject(eq(projectCreateRequest), eq(userId), any())).thenReturn(projectResponse);
 
         // then
         mockMvc.perform(post("/projects")
@@ -101,7 +101,7 @@ class ProjectControllerTest {
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description", "instructions",
                 "https://github.com", List.of("https://image.com"));
 
-        when(projectService.createProject(projectCreateRequest, userId)).thenThrow(
+        when(projectService.createProject(eq(projectCreateRequest), eq(userId), any())).thenThrow(
                 new NoSuchProjectStatusByNameException(ProjectStatusName.ACTIVE)
         );
 
@@ -176,7 +176,7 @@ class ProjectControllerTest {
         ProjectResponse projectResponse = createProjectResponse();
 
         // when
-        when(projectService.updateProject(projectId, projectUpdateRequest)).thenReturn(projectResponse);
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenReturn(projectResponse);
 
         // then
         mockMvc.perform(patch("/projects/" + projectId)
@@ -206,7 +206,7 @@ class ProjectControllerTest {
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("new title", null,
                 null, null, null);
 
-        when(projectService.updateProject(projectId, projectUpdateRequest)).thenThrow(
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenThrow(
                 new NoSuchProjectByIdException(projectId)
         );
 
@@ -229,7 +229,7 @@ class ProjectControllerTest {
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest(null, null,
                 ProjectStatusName.ACTIVE, null, List.of());
 
-        when(projectService.updateProject(projectId, projectUpdateRequest)).thenThrow(
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenThrow(
                 new NoSuchProjectStatusByNameException(projectUpdateRequest.getStatus())
         );
 
@@ -263,7 +263,7 @@ class ProjectControllerTest {
 
         doThrow(new NoSuchProjectByIdException(projectId)).
                 when(projectService).
-                deleteProjectById(projectId);
+                deleteProjectById(eq(projectId), any());
 
         // when
         mockMvc.perform(delete("/projects/" + projectId)

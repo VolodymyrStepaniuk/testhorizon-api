@@ -1,6 +1,9 @@
 package com.stepaniuk.testhorizon.comment;
 
 import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
+import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
+import com.stepaniuk.testhorizon.event.comment.CommentUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
@@ -19,6 +22,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +33,10 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final PageMapper pageMapper;
     private final UserService userService;
+    private final CommentProducer commentProducer;
 
 
-    public CommentResponse createComment(CommentCreateRequest commentCreateRequest, Long authorId) {
+    public CommentResponse createComment(CommentCreateRequest commentCreateRequest, Long authorId, String correlationId) {
         Comment comment = new Comment();
 
         comment.setAuthorId(authorId);
@@ -40,11 +46,18 @@ public class CommentService {
 
         var savedComment = commentRepository.save(comment);
 
+        commentProducer.send(
+                new CommentCreatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedComment.getId(), savedComment.getAuthorId(), savedComment.getEntityType(), savedComment.getEntityId()
+                )
+        );
+
         return commentMapper.toResponse(savedComment, getAuthorInfo(authorId));
     }
 
 
-    public CommentResponse updateComment(Long commentId, Long userId, CommentUpdateRequest commentUpdateRequest) {
+    public CommentResponse updateComment(Long commentId, Long userId, CommentUpdateRequest commentUpdateRequest, String correlationId) {
         var comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NoSuchCommentByIdException(commentId));
 
@@ -52,18 +65,34 @@ public class CommentService {
             throw new CommentAuthorMismatchException(commentId, userId);
         }
 
-        comment.setContent(commentUpdateRequest.getContent());
+        if (commentUpdateRequest.getContent() != null) {
+            comment.setContent(commentUpdateRequest.getContent());
+        }
 
         var updatedComment = commentRepository.save(comment);
+
+        commentProducer.send(
+                new CommentUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        updatedComment.getId(), updatedComment.getContent()
+                )
+        );
 
         return commentMapper.toResponse(updatedComment, getAuthorInfo(userId));
     }
 
-    public void deleteCommentById(Long id) {
+    public void deleteCommentById(Long id, String correlationId) {
         var comment = commentRepository.findById(id)
                 .orElseThrow(() -> new NoSuchCommentByIdException(id));
 
         commentRepository.delete(comment);
+
+        commentProducer.send(
+                new CommentDeletedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        id
+                )
+        );
     }
 
     private UserInfo getAuthorInfo(Long authorId) {
