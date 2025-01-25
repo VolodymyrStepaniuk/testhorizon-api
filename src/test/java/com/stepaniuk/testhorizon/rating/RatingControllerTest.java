@@ -237,7 +237,6 @@ class RatingControllerTest {
                 true,
                 true,
                 true,
-                null,
                 Set.of(),
                 Instant.now(),
                 Instant.now()

@@ -20,7 +20,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -50,9 +49,6 @@ class UserServiceTest {
 
     @MockitoBean
     private AuthorityRepository authorityRepository;
-
-    @MockitoBean
-    private PasswordEncoder passwordEncoder;
 
     @Test
     void shouldReturnUserResponseWhenGetByExistingId() {
@@ -118,7 +114,7 @@ class UserServiceTest {
     void shouldUpdateAndReturnUserResponseWhenChangingFirstName() {
         // given
         User userToUpdate = getNewUserWithAllFields();
-        var userUpdateRequest = new UserUpdateRequest(null, null, "Jane", null);
+        var userUpdateRequest = new UserUpdateRequest(null, "Jane", null );
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
         when(userRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -154,7 +150,7 @@ class UserServiceTest {
     @Test
     void shouldThrowNoSuchUserByIdExceptionWhenChangingFirstNameOfNonExistingUser() {
         // given
-        var userUpdateRequest = new UserUpdateRequest(null, null, "Jane", null);
+        var userUpdateRequest = new UserUpdateRequest(null, null, "Jane");
         var correlationId = UUID.randomUUID().toString();
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
@@ -204,7 +200,7 @@ class UserServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -239,7 +235,7 @@ class UserServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -273,7 +269,7 @@ class UserServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -311,7 +307,7 @@ class UserServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         return new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
     }
 }

@@ -562,7 +562,6 @@ class BugReportControllerTest {
                 true,
                 true,
                 true,
-                null,
                 Set.of(),
                 Instant.now(),
                 Instant.now()

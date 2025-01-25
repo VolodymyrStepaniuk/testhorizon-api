@@ -57,9 +57,6 @@ public class User implements UserDetails {
     @Column(name = "is_credentials_non_expired", nullable = false)
     private boolean isCredentialsNonExpired;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private EmailCode emailCode;
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "users_has_authorities",
             joinColumns = @JoinColumn(name = "user_id"),

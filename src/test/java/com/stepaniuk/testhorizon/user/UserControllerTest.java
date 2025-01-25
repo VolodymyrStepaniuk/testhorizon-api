@@ -147,7 +147,7 @@ class UserControllerTest {
     void shouldReturnUserResponseWhenUpdatingUser() throws Exception {
         // given
         var userId = 1L;
-        var userRequest = new UserUpdateRequest("newFirstName", null, null, null);
+        var userRequest = new UserUpdateRequest("newFirstName", null, null);
         var response = createUserResponse();
 
         // when
@@ -176,7 +176,7 @@ class UserControllerTest {
     void shouldReturnErrorResponseWhenUpdatingUser() throws Exception {
         // given
         var userId = 1L;
-        var userRequest = new UserUpdateRequest("newFirstName", null, null, null);
+        var userRequest = new UserUpdateRequest("newFirstName", null, null);
 
         // when
         when(userService.updateUser(eq(userId), eq(userRequest), any())).thenThrow(new NoSuchUserByIdException(userId));
@@ -382,7 +382,6 @@ class UserControllerTest {
                 true,
                 true,
                 true,
-                null,
                 Set.of(),
                 Instant.now(),
                 Instant.now()
