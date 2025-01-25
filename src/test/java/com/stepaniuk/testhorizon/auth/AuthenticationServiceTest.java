@@ -1,5 +1,9 @@
 package com.stepaniuk.testhorizon.auth;
 
+import com.stepaniuk.testhorizon.event.auth.AuthEvent;
+import com.stepaniuk.testhorizon.event.auth.UserAuthenticatedEvent;
+import com.stepaniuk.testhorizon.event.auth.UserRegisteredEvent;
+import com.stepaniuk.testhorizon.event.auth.UserVerifiedEvent;
 import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
 import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
 import com.stepaniuk.testhorizon.payload.auth.VerificationRequest;
@@ -7,6 +11,7 @@ import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.EmailService;
 import com.stepaniuk.testhorizon.security.JwtTokenService;
+import com.stepaniuk.testhorizon.security.auth.AuthProducer;
 import com.stepaniuk.testhorizon.security.auth.AuthenticationService;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
@@ -22,9 +27,13 @@ import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeEx
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
 import com.stepaniuk.testhorizon.user.exceptions.*;
 import jakarta.mail.MessagingException;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
-import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,8 +43,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -45,6 +57,9 @@ class AuthenticationServiceTest {
 
     @Autowired
     private AuthenticationService authenticationService;
+
+    @MockitoBean
+    private AuthProducer authProducer;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -75,10 +90,18 @@ class AuthenticationServiceTest {
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(authorityRepository.findByName(request.getAuthorityName())).thenReturn(Optional.of(authority));
-        when(userRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(userRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
+
+        final var receivedEventWrapper = new UserRegisteredEvent[1];
+        when(
+                authProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (UserRegisteredEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        UserResponse response = authenticationService.register(request);
+        UserResponse response = authenticationService.register(request, UUID.randomUUID().toString());
 
         // then
         assertNotNull(response);
@@ -87,27 +110,33 @@ class AuthenticationServiceTest {
         assertEquals(request.getLastName(), response.getLastName());
         assertEquals(0, response.getTotalRating());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(response.getEmail(), receivedEvent.getEmail());
+
         verify(userRepository, times(1)).save(any());
     }
 
     @Test
     void shouldThrowUserAlreadyExistsExceptionWhenRegisterUser() {
+        var correlationId = UUID.randomUUID().toString();
         UserCreateRequest request = new UserCreateRequest("existing.email@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
 
-        assertThrows(UserAlreadyExistsException.class, () -> authenticationService.register(request));
+        assertThrows(UserAlreadyExistsException.class, () -> authenticationService.register(request, correlationId));
     }
 
     // Test case for missing authority
     @Test
     void shouldThrowNoSuchAuthorityExceptionWhenRegisterUser() {
+        var correlationId = UUID.randomUUID().toString();
         UserCreateRequest request = new UserCreateRequest("existing.email@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
 
         when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
         when(authorityRepository.findByName(request.getAuthorityName())).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchAuthorityException.class, () -> authenticationService.register(request));
+        assertThrows(NoSuchAuthorityException.class, () -> authenticationService.register(request, correlationId));
     }
 
     @Test
@@ -121,26 +150,40 @@ class AuthenticationServiceTest {
         when(jwtTokenService.generateAccessToken(user)).thenReturn("access-token");
         when(jwtTokenService.generateRefreshToken(user)).thenReturn("refresh-token");
 
-        AuthenticationResponse response = authenticationService.authenticate(request);
+        final var receivedEventWrapper = new UserAuthenticatedEvent[1];
+        when(
+                authProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (UserAuthenticatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
+        AuthenticationResponse response = authenticationService.authenticate(request, UUID.randomUUID().toString());
 
         assertNotNull(response);
         assertEquals("access-token", response.getAccessToken());
         assertEquals("refresh-token", response.getRefreshToken());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(user.getEmail(), receivedEvent.getEmail());
 
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
     @Test
     void shouldThrowNoSuchUserByEmailExceptionWhenUserLogin() {
+        var correlationId = UUID.randomUUID().toString();
         LoginRequest request = new LoginRequest("nonexistent.email@gmail.com", "password");
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.authenticate(request));
+        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.authenticate(request, correlationId));
     }
 
     @Test
     void shouldThrowUserNotVerifiedExceptionWhenUserNotVerified() {
+        var correlationId = UUID.randomUUID().toString();
         LoginRequest request = new LoginRequest("existing.email@gmail.com", "password");
         User user = new User();
         user.setEmail(request.getEmail());
@@ -148,7 +191,7 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
 
-        assertThrows(UserNotVerifiedException.class, () -> authenticationService.authenticate(request));
+        assertThrows(UserNotVerifiedException.class, () -> authenticationService.authenticate(request, correlationId));
     }
 
     @Test
@@ -195,25 +238,40 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
 
-        authenticationService.verifyUser(request);
+        final var receivedEventWrapper = new UserVerifiedEvent[1];
+        when(
+                authProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (UserVerifiedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
+        authenticationService.verifyUser(request, UUID.randomUUID().toString());
 
         assertTrue(user.isEnabled());
         assertNull(user.getEmailCode());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(user.getEmail(), receivedEvent.getEmail());
+
         verify(emailCodeRepository, times(1)).deleteByCode(emailCode.getCode());
         verify(userRepository, times(1)).save(user);
     }
 
     @Test
     void shouldThrowNoSuchUserByEmailExceptionWhenVerifyUser() {
+        var correlationId = UUID.randomUUID().toString();
         VerificationRequest request = new VerificationRequest("nonexistent.email@gmail.com", "123456");
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.verifyUser(request));
+        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.verifyUser(request, correlationId));
     }
 
     @Test
     void shouldThrowVerificationCodeExpiredExceptionWhenCodeIsExpired() {
+        var correlationId = UUID.randomUUID().toString();
         VerificationRequest request = new VerificationRequest("existing.email@gmail.com", "123456");
         User user = new User();
         user.setEmail(request.getEmail());
@@ -226,11 +284,12 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
 
-        assertThrows(VerificationCodeExpiredException.class, () -> authenticationService.verifyUser(request));
+        assertThrows(VerificationCodeExpiredException.class, () -> authenticationService.verifyUser(request, correlationId));
     }
 
     @Test
     void shouldThrowInvalidVerificationCodeExceptionWhenCodeIsInvalid() {
+        var correlationId = UUID.randomUUID().toString();
         VerificationRequest request = new VerificationRequest("existing.email@gmail.com", "wrong-code");
         User user = new User();
         user.setEmail(request.getEmail());
@@ -243,7 +302,7 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
 
-        assertThrows(InvalidVerificationCodeException.class, () -> authenticationService.verifyUser(request));
+        assertThrows(InvalidVerificationCodeException.class, () -> authenticationService.verifyUser(request, correlationId));
     }
 
     @Test
@@ -287,5 +346,18 @@ class AuthenticationServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         assertThrows(UserAlreadyVerifiedException.class, () -> authenticationService.resendVerificationCode(email));
+    }
+
+    private Answer1<User, User> getFakeSave(long id) {
+        return user -> {
+            user.setId(id);
+            return user;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, AuthEvent>>, AuthEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("auth", event),
+                        new RecordMetadata(new TopicPartition("auth", 0), 0L, 0, 0L, 0, 0)));
     }
 }

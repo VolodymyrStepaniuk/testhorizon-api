@@ -15,6 +15,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/comments", produces = "application/json")
@@ -25,17 +27,17 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(@Valid @RequestBody CommentCreateRequest commentCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(commentService.createComment(commentCreateRequest, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(commentService.createComment(commentCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest,@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(commentService.updateComment(id, user.getId(), commentUpdateRequest));
+        return ResponseEntity.ok(commentService.updateComment(id, user.getId(), commentUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCommentById(@PathVariable Long id) {
-        commentService.deleteCommentById(id);
+        commentService.deleteCommentById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 

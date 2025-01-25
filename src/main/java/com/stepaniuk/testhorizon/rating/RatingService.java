@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.rating;
 
+import com.stepaniuk.testhorizon.event.rating.RatingUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.rating.RatingResponse;
 import com.stepaniuk.testhorizon.payload.rating.RatingUpdateRequest;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -15,6 +16,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +27,9 @@ public class RatingService {
     private final UserRepository userRepository;
     private final RatingMapper ratingMapper;
     private final PageMapper pageMapper;
+    private final RatingProducer ratingProducer;
 
-    public RatingResponse changeRating(RatingUpdateRequest request, Long ratedByUserId) {
+    public RatingResponse changeRating(RatingUpdateRequest request, Long ratedByUserId, String correlationId) {
 
         Long userId = request.getUserId();
 
@@ -45,6 +49,13 @@ public class RatingService {
 
         user.setTotalRating(user.getTotalRating() + rating.getRatingPoints());
         userRepository.save(user);
+
+        ratingProducer.send(
+                new RatingUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedRating.getUserId(), savedRating.getRatedByUserId(), savedRating.getRatingPoints()
+                )
+        );
 
         return ratingMapper.toResponse(savedRating);
     }

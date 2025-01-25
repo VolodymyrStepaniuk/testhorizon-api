@@ -1,5 +1,8 @@
 package com.stepaniuk.testhorizon.project;
 
+import com.stepaniuk.testhorizon.event.project.ProjectCreatedEvent;
+import com.stepaniuk.testhorizon.event.project.ProjectDeletedEvent;
+import com.stepaniuk.testhorizon.event.project.ProjectUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
@@ -17,6 +20,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +31,9 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final PageMapper pageMapper;
     private final ProjectStatusRepository projectStatusRepository;
+    private final ProjectProducer projectProducer;
 
-    public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest, Long ownerId){
+    public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest, Long ownerId, String correlationId){
         Project project = new Project();
 
         project.setOwnerId(ownerId);
@@ -43,6 +49,13 @@ public class ProjectService {
 
         var savedProject = projectRepository.save(project);
 
+        projectProducer.send(
+                new ProjectCreatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedProject.getId(), savedProject.getOwnerId()
+                )
+        );
+
         return projectMapper.toResponse(savedProject);
     }
 
@@ -52,36 +65,63 @@ public class ProjectService {
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
     }
 
-    public void deleteProjectById(Long id){
+    public void deleteProjectById(Long id, String correlationId){
         var project = projectRepository.findById(id)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
 
         projectRepository.delete(project);
+
+        projectProducer.send(
+                new ProjectDeletedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        id
+                )
+        );
     }
 
-    public ProjectResponse updateProject(Long id, ProjectUpdateRequest projectUpdateRequest){
+    public ProjectResponse updateProject(Long id, ProjectUpdateRequest projectUpdateRequest, String correlationId){
         var project = projectRepository.findById(id)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
 
-        if(projectUpdateRequest.getTitle() != null)
+        var projectData = new ProjectUpdatedEvent.Data();
+
+        if(projectUpdateRequest.getTitle() != null) {
             project.setTitle(projectUpdateRequest.getTitle());
+            projectData.setTitle(projectUpdateRequest.getTitle());
+        }
 
-        if(projectUpdateRequest.getDescription() != null)
+        if(projectUpdateRequest.getDescription() != null) {
             project.setDescription(projectUpdateRequest.getDescription());
+            projectData.setDescription(projectUpdateRequest.getDescription());
+        }
 
-        if(projectUpdateRequest.getInstructions() != null)
+        if(projectUpdateRequest.getInstructions() != null) {
             project.setInstructions(projectUpdateRequest.getInstructions());
+            projectData.setInstructions(projectUpdateRequest.getInstructions());
+        }
 
-        if(projectUpdateRequest.getImageUrls() != null)
+        if(projectUpdateRequest.getImageUrls() != null) {
             project.setImageUrls(projectUpdateRequest.getImageUrls());
+            projectData.setImageUrls(projectUpdateRequest.getImageUrls());
+        }
 
-        if(projectUpdateRequest.getStatus() != null)
+        if(projectUpdateRequest.getStatus() != null) {
             project.setStatus(
                     projectStatusRepository.findByName(projectUpdateRequest.getStatus())
                             .orElseThrow(() -> new NoSuchProjectStatusByNameException(projectUpdateRequest.getStatus()))
             );
 
+            projectData.setStatus(projectUpdateRequest.getStatus());
+        }
+
         var updatedProject = projectRepository.save(project);
+
+        projectProducer.send(
+                new ProjectUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        updatedProject.getId(), projectData
+                )
+        );
 
         return projectMapper.toResponse(updatedProject);
     }

@@ -13,6 +13,22 @@ spring:
         show_sql: true
         check_nullability: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: testhorizon
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   # JWT secret key
   security:
     jwt:
@@ -36,4 +52,4 @@ spring:
     import: "optional:file:.env[.properties]"
 
 server:
-  port: 8080
+  port: 3010

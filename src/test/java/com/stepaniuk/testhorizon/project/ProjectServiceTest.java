@@ -1,5 +1,9 @@
 package com.stepaniuk.testhorizon.project;
 
+import com.stepaniuk.testhorizon.event.project.ProjectCreatedEvent;
+import com.stepaniuk.testhorizon.event.project.ProjectDeletedEvent;
+import com.stepaniuk.testhorizon.event.project.ProjectEvent;
+import com.stepaniuk.testhorizon.event.project.ProjectUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
@@ -9,13 +13,18 @@ import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -23,8 +32,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -34,6 +46,9 @@ class ProjectServiceTest {
 
     @Autowired
     private ProjectService projectService;
+
+    @MockitoBean
+    private ProjectProducer projectProducer;
 
     @MockitoBean
     private ProjectRepository projectRepository;
@@ -48,11 +63,18 @@ class ProjectServiceTest {
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description",
                 "instructions", "githubUrl", List.of("imageUrl1", "imageUrl2"));
 
-        when(projectRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(projectRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(projectStatusRepository.findByName(ProjectStatusName.ACTIVE)).thenReturn(Optional.of(new ProjectStatus(1L, ProjectStatusName.ACTIVE)));
+        final var receivedEventWrapper = new ProjectCreatedEvent[1];
+        when(
+                projectProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (ProjectCreatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        var projectResponse = projectService.createProject(projectCreateRequest, 1L);
+        var projectResponse = projectService.createProject(projectCreateRequest, 1L, UUID.randomUUID().toString());
 
         // then
         assertNotNull(projectResponse);
@@ -65,19 +87,25 @@ class ProjectServiceTest {
         assertEquals(ProjectStatusName.ACTIVE, projectResponse.getStatus());
         assertTrue(projectResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(1L, receivedEvent.getProjectId());
+        assertEquals(projectResponse.getOwnerId(), receivedEvent.getOwnerId());
+
         verify(projectRepository, times(1)).save(any());
     }
 
     @Test
     void shouldThrowNoSuchProjectStatusByNameExceptionWhenCreatingProject(){
         // given
+        var correlationId = UUID.randomUUID().toString();
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description",
                 "instructions", "githubUrl", List.of("imageUrl1", "imageUrl2"));
 
         when(projectStatusRepository.findByName(ProjectStatusName.ACTIVE)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.createProject(projectCreateRequest, 1L));
+        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.createProject(projectCreateRequest, 1L, correlationId));
     }
 
     @Test
@@ -122,9 +150,16 @@ class ProjectServiceTest {
 
         when(projectRepository.findById(1L)).thenReturn(java.util.Optional.of(projectToUpdate));
         when(projectRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        var receivedEventWrapper = new ProjectUpdatedEvent[1];
+        when(
+                projectProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (ProjectUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        var updatedProjectResponse = projectService.updateProject(1L, projectUpdateRequest);
+        var updatedProjectResponse = projectService.updateProject(1L, projectUpdateRequest, UUID.randomUUID().toString());
 
         // then
         assertNotNull(updatedProjectResponse);
@@ -140,23 +175,31 @@ class ProjectServiceTest {
         assertEquals(projectToUpdate.getUpdatedAt(), updatedProjectResponse.getUpdatedAt());
         assertTrue(updatedProjectResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(updatedProjectResponse.getId(), receivedEvent.getProjectId());
+        assertEquals(updatedProjectResponse.getTitle(), receivedEvent.getData().getTitle());
+        assertNull(receivedEvent.getData().getDescription());
+
         verify(projectRepository, times(1)).save(any());
     }
 
     @Test
     void shouldThrowNoSuchProjectByIdExceptionWhenUpdatingProject(){
         // given
+        var correlationId = UUID.randomUUID().toString();
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
 
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectByIdException.class, () -> projectService.updateProject(10L, projectUpdateRequest));
+        assertThrows(NoSuchProjectByIdException.class, () -> projectService.updateProject(10L, projectUpdateRequest, correlationId));
     }
 
     @Test
     void shouldThrowNoSuchProjectStatusByNameExceptionWhenUpdatingProject(){
         // given
+        var correlationId = UUID.randomUUID().toString();
         Project projectToUpdate = getNewProjectWithAllFields();
         var projectUpdateRequest = new ProjectUpdateRequest(null, null, ProjectStatusName.INACTIVE, null, List.of());
 
@@ -164,7 +207,7 @@ class ProjectServiceTest {
         when(projectStatusRepository.findByName(ProjectStatusName.INACTIVE)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.updateProject(1L, projectUpdateRequest));
+        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.updateProject(1L, projectUpdateRequest, correlationId));
     }
 
     @Test
@@ -173,10 +216,20 @@ class ProjectServiceTest {
         Project projectToDelete = getNewProjectWithAllFields();
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToDelete));
+        final var receivedEventWrapper = new ProjectDeletedEvent[1];
+        when(
+                projectProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (ProjectDeletedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        projectService.deleteProjectById(1L);
+        projectService.deleteProjectById(1L, UUID.randomUUID().toString());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(projectToDelete.getId(), receivedEvent.getProjectId());
         // then
         verify(projectRepository, times(1)).delete(projectToDelete);
     }
@@ -184,10 +237,11 @@ class ProjectServiceTest {
     @Test
     void shouldThrowNoSuchProjectByIdExceptionWhenDeletingProject(){
         // given
+        var correlationId = UUID.randomUUID().toString();
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectByIdException.class, () -> projectService.deleteProjectById(10L));
+        assertThrows(NoSuchProjectByIdException.class, () -> projectService.deleteProjectById(10L, correlationId));
     }
 
     @Test
@@ -356,6 +410,19 @@ class ProjectServiceTest {
 
         // when && then
         assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.getAllProjects(pageable, null, null, statusName));
+    }
+
+    private Answer1<Project, Project> getFakeSave(long id) {
+        return project -> {
+            project.setId(id);
+            return project;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, ProjectEvent>>, ProjectEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("projects", event),
+                        new RecordMetadata(new TopicPartition("projects", 0), 0L, 0, 0L, 0, 0)));
     }
 
     private Project getNewProjectWithAllFields() {

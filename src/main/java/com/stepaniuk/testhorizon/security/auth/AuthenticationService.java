@@ -1,5 +1,8 @@
 package com.stepaniuk.testhorizon.security.auth;
 
+import com.stepaniuk.testhorizon.event.auth.UserAuthenticatedEvent;
+import com.stepaniuk.testhorizon.event.auth.UserRegisteredEvent;
+import com.stepaniuk.testhorizon.event.auth.UserVerifiedEvent;
 import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
 import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
 import com.stepaniuk.testhorizon.payload.auth.VerificationRequest;
@@ -29,6 +32,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -42,8 +46,9 @@ public class AuthenticationService {
     private final JwtTokenService jwtTokenService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuthProducer authProducer;
 
-    public UserResponse register(UserCreateRequest request) {
+    public UserResponse register(UserCreateRequest request, String correlationId) {
         String email = request.getEmail();
 
         if (userRepository.existsByEmail(email)) {
@@ -79,12 +84,19 @@ public class AuthenticationService {
 
         newUser = userRepository.save(newUser);
 
+        authProducer.send(
+                new UserRegisteredEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        newUser.getEmail()
+                )
+        );
+
         sendVerificationEmail(email, emailCode.getCode());
 
         return userMapper.toResponse(newUser);
     }
 
-    public AuthenticationResponse authenticate(LoginRequest request) {
+    public AuthenticationResponse authenticate(LoginRequest request, String correlationId) {
         String email = request.getEmail();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
@@ -99,6 +111,13 @@ public class AuthenticationService {
                 )
         );
 
+        authProducer.send(
+                new UserAuthenticatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        user.getEmail()
+                )
+        );
+
         return AuthenticationResponse.builder()
                 .accessToken(jwtTokenService.generateAccessToken(user))
                 .refreshToken(jwtTokenService.generateRefreshToken(user))
@@ -110,7 +129,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public void verifyUser(VerificationRequest request) {
+    public void verifyUser(VerificationRequest request, String correlationId) {
         String email = request.getEmail();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
@@ -130,6 +149,13 @@ public class AuthenticationService {
             user.setEmailCode(null);
             emailCodeRepository.deleteByCode(emailCode.getCode());
             userRepository.save(user);
+
+            authProducer.send(
+                    new UserVerifiedEvent(
+                            Instant.now(), UUID.randomUUID().toString(), correlationId,
+                            user.getEmail()
+                    )
+            );
         } else {
             throw new InvalidVerificationCodeException(email);
         }

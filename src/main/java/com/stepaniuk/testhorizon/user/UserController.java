@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,12 +33,12 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest userRequest) {
-        return ResponseEntity.ok(userService.updateUser(id, userRequest));
+        return ResponseEntity.ok(userService.updateUser(id, userRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUserById(id);
+        userService.deleteUserById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 

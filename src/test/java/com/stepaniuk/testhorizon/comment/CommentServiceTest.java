@@ -1,6 +1,10 @@
 package com.stepaniuk.testhorizon.comment;
 
 import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
+import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
+import com.stepaniuk.testhorizon.event.comment.CommentEvent;
+import com.stepaniuk.testhorizon.event.comment.CommentUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
@@ -10,20 +14,28 @@ import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.UserService;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -33,6 +45,9 @@ class CommentServiceTest {
 
     @Autowired
     private CommentService commentService;
+
+    @MockitoBean
+    private CommentProducer commentProducer;
 
     @MockitoBean
     private CommentRepository commentRepository;
@@ -48,10 +63,17 @@ class CommentServiceTest {
         UserResponse user = getNewUserResponseWithAllFields();
 
         when(userService.getUserById(authorId)).thenReturn(user);
-        when(commentRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(commentRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
+        final var receivedEventWrapper = new CommentCreatedEvent[1];
+        when(
+                commentProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (CommentCreatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        CommentResponse commentResponse = commentService.createComment(commentCreateRequest, authorId);
+        CommentResponse commentResponse = commentService.createComment(commentCreateRequest, authorId, UUID.randomUUID().toString());
 
         // then
         assertNotNull(commentResponse);
@@ -60,6 +82,12 @@ class CommentServiceTest {
         assertEquals(commentResponse.getContent(), commentCreateRequest.getContent());
         assertNotNull(commentResponse.getAuthor());
         assertTrue(commentResponse.hasLinks());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(commentResponse.getId(), receivedEvent.getCommentId());
+        assertEquals(commentResponse.getEntityType(), receivedEvent.getEntityType());
+        assertEquals(commentResponse.getEntityId(), receivedEvent.getEntityId());
 
         verify(commentRepository, times(1)).save(any());
     }
@@ -78,7 +106,15 @@ class CommentServiceTest {
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
         when(commentRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
-        CommentResponse commentResponse = commentService.updateComment(commentId, userId, commentUpdateRequest);
+        final var receivedEventWrapper = new CommentUpdatedEvent[1];
+        when(
+                commentProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (CommentUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
+        CommentResponse commentResponse = commentService.updateComment(commentId, userId, commentUpdateRequest, UUID.randomUUID().toString());
 
         // then
         assertNotNull(commentResponse);
@@ -92,12 +128,18 @@ class CommentServiceTest {
         assertEquals(comment.getUpdatedAt(), commentResponse.getUpdatedAt());
         assertTrue(commentResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(commentResponse.getId(), receivedEvent.getCommentId());
+        assertEquals(commentResponse.getContent(), receivedEvent.getContent());
+
         verify(commentRepository, times(1)).findById(commentId);
     }
 
     @Test
     void shouldThrowNoSuchCommentByIdExceptionWhenUpdatingNonExistingComment() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
         Long userId = 1L;
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
@@ -106,12 +148,13 @@ class CommentServiceTest {
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.empty());
 
         // then
-        assertThrows(NoSuchCommentByIdException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest));
+        assertThrows(NoSuchCommentByIdException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId));
     }
 
     @Test
     void shouldThrowCommentAuthorMismatchExceptionWhenUpdatingCommentWithDifferentAuthor() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
         Long userId = 2L;
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
@@ -121,7 +164,7 @@ class CommentServiceTest {
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
 
         // then
-        assertThrows(CommentAuthorMismatchException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest));
+        assertThrows(CommentAuthorMismatchException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId));
     }
 
     @Test
@@ -132,9 +175,20 @@ class CommentServiceTest {
 
         // when
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
+        final var receivedEventWrapper = new CommentDeletedEvent[1];
+        when(
+                commentProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (CommentDeletedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        commentService.deleteCommentById(commentId);
+        commentService.deleteCommentById(commentId, UUID.randomUUID().toString());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(comment.getId(), receivedEvent.getCommentId());
 
         // then
         verify(commentRepository, times(1)).delete(comment);
@@ -143,13 +197,14 @@ class CommentServiceTest {
     @Test
     void shouldThrowNoSuchCommentByIdExceptionWhenDeletingNonExistingComment() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
 
         // when
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.empty());
 
         // then
-        assertThrows(NoSuchCommentByIdException.class, () -> commentService.deleteCommentById(commentId));
+        assertThrows(NoSuchCommentByIdException.class, () -> commentService.deleteCommentById(commentId, correlationId));
     }
 
     @Test
@@ -219,7 +274,7 @@ class CommentServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelOfCommentResponseWhenGettingCommentsByEntity(){
+    void shouldReturnPagedModelOfCommentResponseWhenGettingCommentsByEntity() {
         // given
         var commentToFind = getNewCommentWithAllFields(1L);
         var user = getNewUserResponseWithAllFields();
@@ -254,7 +309,7 @@ class CommentServiceTest {
     }
 
     @Test
-    void shouldReturnEmptyPagedModelOfCommentResponseWhenGettingCommentsByEntity(){
+    void shouldReturnEmptyPagedModelOfCommentResponseWhenGettingCommentsByEntity() {
         // given
         Long entityId = 1L;
         CommentEntityType entityType = CommentEntityType.TEST;
@@ -273,6 +328,19 @@ class CommentServiceTest {
         assertEquals(0, comments.getContent().size());
     }
 
+    private Answer1<Comment, Comment> getFakeSave(long id) {
+        return comment -> {
+            comment.setId(id);
+            return comment;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, CommentEvent>>, CommentEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("comments", event),
+                        new RecordMetadata(new TopicPartition("comments", 0), 0L, 0, 0L, 0, 0)));
+    }
+
     private Comment getNewCommentWithAllFields(Long id) {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -280,7 +348,7 @@ class CommentServiceTest {
         return new Comment(id, 1L, CommentEntityType.TEST, 1L, "Comment content", timeOfCreation, timeOfModification);
     }
 
-    private static UserResponse getNewUserResponseWithAllFields(){
+    private static UserResponse getNewUserResponseWithAllFields() {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 

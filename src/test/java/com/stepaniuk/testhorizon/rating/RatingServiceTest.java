@@ -1,5 +1,7 @@
 package com.stepaniuk.testhorizon.rating;
 
+import com.stepaniuk.testhorizon.event.rating.RatingEvent;
+import com.stepaniuk.testhorizon.event.rating.RatingUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.rating.RatingResponse;
 import com.stepaniuk.testhorizon.payload.rating.RatingUpdateRequest;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -8,12 +10,16 @@ import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
-import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -22,11 +28,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.AdditionalAnswers.answer;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ServiceLevelUnitTest
@@ -37,16 +44,19 @@ class RatingServiceTest {
     private RatingService ratingService;
 
     @MockitoBean
+    private RatingProducer ratingProducer;
+
+    @MockitoBean
     private RatingRepository ratingRepository;
 
     @MockitoBean
     private UserRepository userRepository;
 
     @Test
-    void shouldReturnRatingResponseWhenChangingRating(){
+    void shouldReturnRatingResponseWhenChangingRating() {
         // given
         Long ratedByUserId = 1L;
-        RatingUpdateRequest request = new RatingUpdateRequest(2L,5,"comment");
+        RatingUpdateRequest request = new RatingUpdateRequest(2L, 5, "comment");
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
@@ -55,10 +65,17 @@ class RatingServiceTest {
                 Set.of(), timeOfCreation, timeOfModification);
 
         // when
-        when(ratingRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(ratingRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(userRepository.findById(2L)).thenReturn(Optional.of(newUser));
+        final var receivedEventWrapper = new RatingUpdatedEvent[1];
+        when(
+                ratingProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (RatingUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
-        RatingResponse ratingResponse = ratingService.changeRating(request, ratedByUserId);
+        RatingResponse ratingResponse = ratingService.changeRating(request, ratedByUserId, UUID.randomUUID().toString());
 
         // then
         assertNotNull(ratingResponse);
@@ -67,33 +84,41 @@ class RatingServiceTest {
         assertEquals(request.getComment(), ratingResponse.getComment());
         assertEquals(ratedByUserId, ratingResponse.getRatedByUserId());
         assertTrue(ratingResponse.hasLinks());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(ratingResponse.getUserId(), receivedEvent.getUserId());
+        assertEquals(ratingResponse.getRatedByUserId(), receivedEvent.getRatedByUserId());
+        assertEquals(ratingResponse.getRatingPoints(), receivedEvent.getRatingPoints());
     }
 
     @Test
-    void shouldThrowNoSuchUserByIdExceptionWhenChangingRating(){
+    void shouldThrowNoSuchUserByIdExceptionWhenChangingRating() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Long ratedByUserId = 1L;
-        RatingUpdateRequest request = new RatingUpdateRequest(2L,5,"comment");
+        RatingUpdateRequest request = new RatingUpdateRequest(2L, 5, "comment");
 
         // when
         when(userRepository.findById(2L)).thenReturn(Optional.empty());
 
         // then
-        assertThrows(NoSuchUserByIdException.class, () -> ratingService.changeRating(request, ratedByUserId));
+        assertThrows(NoSuchUserByIdException.class, () -> ratingService.changeRating(request, ratedByUserId, correlationId));
     }
 
     @Test
-    void shouldThrowUserCannotChangeOwnRatingExceptionWhenChangingRating(){
+    void shouldThrowUserCannotChangeOwnRatingExceptionWhenChangingRating() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Long ratedByUserId = 1L;
-        RatingUpdateRequest request = new RatingUpdateRequest(1L,5,"comment");
+        RatingUpdateRequest request = new RatingUpdateRequest(1L, 5, "comment");
 
         // then
-        assertThrows(UserCannotChangeOwnRatingException.class, () -> ratingService.changeRating(request, ratedByUserId));
+        assertThrows(UserCannotChangeOwnRatingException.class, () -> ratingService.changeRating(request, ratedByUserId, correlationId));
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllRatings(){
+    void shouldReturnPagedModelWhenGettingAllRatings() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Long userId = 1L;
@@ -127,7 +152,7 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingRatingByUserId(){
+    void shouldReturnPagedModelWhenGettingRatingByUserId() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Long userId = 1L;
@@ -159,7 +184,7 @@ class RatingServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingRatingByRatedByUserId(){
+    void shouldReturnPagedModelWhenGettingRatingByRatedByUserId() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Long userId = 1L;
@@ -188,5 +213,18 @@ class RatingServiceTest {
         assertEquals(ratingToFind.getComment(), ratingResponse.getComment());
         assertEquals(ratingToFind.getCreatedAt(), ratingResponse.getCreatedAt());
         assertTrue(ratingResponse.hasLinks());
+    }
+
+    private Answer1<Rating, Rating> getFakeSave(long id) {
+        return rating -> {
+            rating.setId(id);
+            return rating;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, RatingEvent>>, RatingEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("ratings", event),
+                        new RecordMetadata(new TopicPartition("ratings", 0), 0L, 0, 0L, 0, 0)));
     }
 }

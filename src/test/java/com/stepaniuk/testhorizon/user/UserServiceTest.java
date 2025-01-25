@@ -1,17 +1,25 @@
 package com.stepaniuk.testhorizon.user;
 
+import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
+import com.stepaniuk.testhorizon.event.user.UserEvent;
+import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,11 +29,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.Mockito.*;
 
 @ServiceLevelUnitTest
@@ -33,6 +41,9 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
     @Autowired
     private UserService userService;
+
+    @MockitoBean
+    private UserProducer userProducer;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -74,7 +85,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldReturnUserResponseWhenGetByExistingEmail(){
+    void shouldReturnUserResponseWhenGetByExistingEmail() {
         // given
         User userToFind = getNewUserWithAllFields();
 
@@ -111,9 +122,15 @@ class UserServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
         when(userRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        final var receivedEventWrapper = new UserUpdatedEvent[1];
+        when(userProducer.send(
+                assertArg(
+                        event -> receivedEventWrapper[0] = (UserUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult())
+        );
 
         // when
-        var userResponse = userService.updateUser(1L, userUpdateRequest);
+        var userResponse = userService.updateUser(1L, userUpdateRequest, UUID.randomUUID().toString());
 
         // then
         assertNotNull(userResponse);
@@ -125,6 +142,12 @@ class UserServiceTest {
         assertEquals(userToUpdate.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(userResponse.getId(), receivedEvent.getUserId());
+        assertEquals(userResponse.getFirstName(), receivedEvent.getData().getFirstName());
+        assertNull(receivedEvent.getData().getLastName());
+
         verify(userRepository, times(1)).save(any());
     }
 
@@ -132,11 +155,12 @@ class UserServiceTest {
     void shouldThrowNoSuchUserByIdExceptionWhenChangingFirstNameOfNonExistingUser() {
         // given
         var userUpdateRequest = new UserUpdateRequest(null, null, "Jane", null);
+        var correlationId = UUID.randomUUID().toString();
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByIdException.class, () -> userService.updateUser(1L, userUpdateRequest));
+        assertThrows(NoSuchUserByIdException.class, () -> userService.updateUser(1L, userUpdateRequest, correlationId));
     }
 
     @Test
@@ -144,10 +168,20 @@ class UserServiceTest {
         // given
         User userToDelete = getNewUserWithAllFields();
 
+        final var receivedEventWrapper = new UserDeletedEvent[1];
+        when(userProducer.send(
+                assertArg(event -> receivedEventWrapper[0] = (UserDeletedEvent) event))).thenAnswer(
+                answer(getFakeSendResult())
+        );
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToDelete));
 
         // when
-        userService.deleteUserById(1L);
+        userService.deleteUserById(1L, UUID.randomUUID().toString());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(userToDelete.getId(), receivedEvent.getUserId());
 
         // then
         verify(userRepository, times(1)).delete(userToDelete);
@@ -156,10 +190,11 @@ class UserServiceTest {
     @Test
     void shouldThrowNoSuchUserByIdExceptionWhenDeletingNonExistingUser() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByIdException.class, () -> userService.deleteUserById(1L));
+        assertThrows(NoSuchUserByIdException.class, () -> userService.deleteUserById(1L, correlationId));
     }
 
     @Test
@@ -232,7 +267,7 @@ class UserServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingTopUsersByRating(){
+    void shouldReturnPagedModelWhenGettingTopUsersByRating() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -265,11 +300,17 @@ class UserServiceTest {
         assertTrue(userResponse.hasLinks());
     }
 
-    private static User getNewUserWithAllFields(){
+    private Answer1<CompletableFuture<SendResult<String, UserEvent>>, UserEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("users", event),
+                        new RecordMetadata(new TopicPartition("users", 0), 0L, 0, 0L, 0, 0)));
+    }
+
+    private static User getNewUserWithAllFields() {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        return new User(null, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+        return new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true, null,
                 Set.of(), timeOfCreation, timeOfModification);
     }

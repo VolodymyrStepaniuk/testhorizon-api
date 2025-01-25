@@ -9,6 +9,9 @@ import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityRepository;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusRepository;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportCreatedEvent;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportDeletedEvent;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
@@ -21,6 +24,8 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +36,9 @@ public class BugReportService {
     private final PageMapper pageMapper;
     private final BugReportStatusRepository bugReportStatusRepository;
     private final BugReportSeverityRepository bugReportSeverityRepository;
+    private final BugReportProducer bugReportProducer;
 
-    public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId){
+    public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId, String correlationId) {
         BugReport bugReport = new BugReport();
 
         bugReport.setProjectId(bugReportCreateRequest.getProjectId());
@@ -55,54 +61,92 @@ public class BugReportService {
 
         var savedBugReport = bugReportRepository.save(bugReport);
 
+        bugReportProducer.send(
+                new BugReportCreatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedBugReport.getId(), savedBugReport.getProjectId(), savedBugReport.getReporterId()
+                )
+        );
+
         return bugReportMapper.toResponse(savedBugReport);
     }
 
-    public BugReportResponse getBugReportById(Long id){
+    public BugReportResponse getBugReportById(Long id) {
         return bugReportRepository.findById(id)
                 .map(bugReportMapper::toResponse)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
     }
 
-    public void deleteBugReportById(Long id){
+    public void deleteBugReportById(Long id, String correlationId) {
         var bugReport = bugReportRepository.findById(id)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
 
         bugReportRepository.delete(bugReport);
+
+        bugReportProducer.send(
+                new BugReportDeletedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        id
+                )
+        );
     }
 
-    public BugReportResponse updateBugReport(Long bugReportId, BugReportUpdateRequest bugReportUpdateRequest){
+    public BugReportResponse updateBugReport(Long bugReportId, BugReportUpdateRequest bugReportUpdateRequest, String correlationId) {
         var bugReport = bugReportRepository.findById(bugReportId)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(bugReportId));
 
-        if (bugReportUpdateRequest.getTitle() != null && !bugReportUpdateRequest.getTitle().isEmpty())
+        var bugReportData = new BugReportUpdatedEvent.Data();
+
+        if (bugReportUpdateRequest.getTitle() != null && !bugReportUpdateRequest.getTitle().isEmpty()) {
             bugReport.setTitle(bugReportUpdateRequest.getTitle());
+            bugReportData.setTitle(bugReportUpdateRequest.getTitle());
+        }
 
-        if (bugReportUpdateRequest.getDescription() != null && !bugReportUpdateRequest.getDescription().isEmpty())
+        if (bugReportUpdateRequest.getDescription() != null && !bugReportUpdateRequest.getDescription().isEmpty()) {
             bugReport.setDescription(bugReportUpdateRequest.getDescription());
+            bugReportData.setDescription(bugReportUpdateRequest.getDescription());
+        }
 
-        if (bugReportUpdateRequest.getEnvironment() != null && !bugReportUpdateRequest.getEnvironment().isEmpty())
+        if (bugReportUpdateRequest.getEnvironment() != null && !bugReportUpdateRequest.getEnvironment().isEmpty()) {
             bugReport.setEnvironment(bugReportUpdateRequest.getEnvironment());
-
-        if (bugReportUpdateRequest.getImageUrls() != null && !bugReportUpdateRequest.getImageUrls().isEmpty())
+            bugReportData.setEnvironment(bugReportUpdateRequest.getEnvironment());
+        }
+        if (bugReportUpdateRequest.getImageUrls() != null && !bugReportUpdateRequest.getImageUrls().isEmpty()) {
             bugReport.setImageUrls(bugReportUpdateRequest.getImageUrls());
+            bugReportData.setImageUrls(bugReportUpdateRequest.getImageUrls());
+        }
 
-        if (bugReportUpdateRequest.getVideoUrls() != null && !bugReportUpdateRequest.getVideoUrls().isEmpty())
+        if (bugReportUpdateRequest.getVideoUrls() != null && !bugReportUpdateRequest.getVideoUrls().isEmpty()) {
             bugReport.setVideoUrls(bugReportUpdateRequest.getVideoUrls());
+            bugReportData.setVideoUrls(bugReportUpdateRequest.getVideoUrls());
+        }
 
-        if (bugReportUpdateRequest.getSeverity() != null)
+        if (bugReportUpdateRequest.getSeverity() != null) {
             bugReport.setSeverity(
                     bugReportSeverityRepository.findByName(bugReportUpdateRequest.getSeverity())
                             .orElseThrow(() -> new NoSuchBugReportSeverityByNameException(bugReportUpdateRequest.getSeverity()))
             );
 
-        if (bugReportUpdateRequest.getStatus() != null)
+            bugReportData.setSeverity(bugReportUpdateRequest.getSeverity());
+        }
+
+        if (bugReportUpdateRequest.getStatus() != null) {
             bugReport.setStatus(
                     bugReportStatusRepository.findByName(bugReportUpdateRequest.getStatus())
                             .orElseThrow(() -> new NoSuchBugReportStatusByNameException(bugReportUpdateRequest.getStatus()))
             );
 
+            bugReportData.setStatus(bugReportUpdateRequest.getStatus());
+        }
+
         var updatedBugReport = bugReportRepository.save(bugReport);
+
+        bugReportProducer.send(
+                new BugReportUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        updatedBugReport.getId(), bugReportData
+                )
+        );
 
         return bugReportMapper.toResponse(updatedBugReport);
     }
@@ -112,7 +156,7 @@ public class BugReportService {
                                                           @Nullable String title,
                                                           @Nullable Long reporterId,
                                                           @Nullable BugReportSeverityName severityName,
-                                                          @Nullable BugReportStatusName statusName){
+                                                          @Nullable BugReportStatusName statusName) {
 
         Specification<BugReport> specification = Specification.where(null);
 
@@ -155,9 +199,9 @@ public class BugReportService {
         var bugReports = bugReportRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-            bugReports.map(
-                bugReportMapper::toResponse
-            ), URI.create("/bug-reports")
+                bugReports.map(
+                        bugReportMapper::toResponse
+                ), URI.create("/bug-reports")
         );
     }
 }

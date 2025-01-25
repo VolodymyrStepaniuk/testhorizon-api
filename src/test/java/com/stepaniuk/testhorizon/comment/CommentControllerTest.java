@@ -68,7 +68,7 @@ class CommentControllerTest {
         CommentResponse commentResponse = createCommentResponse(1L);
 
         // when
-        when(commentService.createComment(commentCreateRequest, userId)).thenReturn(commentResponse);
+        when(commentService.createComment(eq(commentCreateRequest), eq(userId), any())).thenReturn(commentResponse);
 
         // then
         mockMvc.perform(post("/comments")
@@ -83,9 +83,9 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.author.lastName", is(commentResponse.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(commentResponse.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(commentResponse.getUpdatedAt())))
-                .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/"+commentResponse.getId())))
-                .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/"+commentResponse.getId())))
-                .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/"+commentResponse.getId())));
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/" + commentResponse.getId())))
+                .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/" + commentResponse.getId())))
+                .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/" + commentResponse.getId())));
 
         SecurityContextHolder.clearContext();
     }
@@ -103,10 +103,10 @@ class CommentControllerTest {
         CommentResponse commentResponse = createCommentResponse(commentId);
 
         // when
-        when(commentService.updateComment(commentId, userId, commentUpdateRequest)).thenReturn(commentResponse);
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenReturn(commentResponse);
 
         // then
-        mockMvc.perform(patch("/comments/"+commentId)
+        mockMvc.perform(patch("/comments/" + commentId)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(commentUpdateRequest)))
                 .andExpect(status().isOk())
@@ -118,9 +118,9 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.author.lastName", is(commentResponse.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(commentResponse.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(commentResponse.getUpdatedAt())))
-                .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/"+commentResponse.getId())))
-                .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/"+commentResponse.getId())))
-                .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/"+commentResponse.getId())));
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/" + commentResponse.getId())))
+                .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/" + commentResponse.getId())))
+                .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/" + commentResponse.getId())));
 
         SecurityContextHolder.clearContext();
     }
@@ -136,7 +136,7 @@ class CommentControllerTest {
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
         // when
-        when(commentService.updateComment(commentId, userId, commentUpdateRequest)).thenThrow(new NoSuchCommentByIdException(commentId));
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenThrow(new NoSuchCommentByIdException(commentId));
 
         // then
         mockMvc.perform(patch("/comments/" + commentId)
@@ -163,7 +163,7 @@ class CommentControllerTest {
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
         // when
-        when(commentService.updateComment(commentId, userId, commentUpdateRequest)).thenThrow(new CommentAuthorMismatchException(commentId, userId));
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenThrow(new CommentAuthorMismatchException(commentId, userId));
 
         // then
         mockMvc.perform(patch("/comments/" + commentId)
@@ -198,7 +198,7 @@ class CommentControllerTest {
 
         doThrow(new NoSuchCommentByIdException(commentId))
                 .when(commentService)
-                .deleteCommentById(commentId);
+                .deleteCommentById(eq(commentId), any());
 
         mockMvc.perform(delete("/comments/" + commentId)
                         .contentType("application/json")
@@ -211,7 +211,7 @@ class CommentControllerTest {
     }
 
     @Test
-    void shouldReturnPageOfCommentResponsesWhenGettingAllComments() throws Exception{
+    void shouldReturnPageOfCommentResponsesWhenGettingAllComments() throws Exception {
         // given
         Long commentId = 1L;
         var response = createCommentResponse(commentId);
@@ -238,13 +238,13 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.comments[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/"+response.getId())));
+                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/" + response.getId())));
     }
 
     @Test
-    void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsWhenAuthorIdNotNull() throws Exception{
+    void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsWhenAuthorIdNotNull() throws Exception {
         // given
         Long commentId = 1L;
         Long authorId = 1L;
@@ -273,13 +273,13 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.comments[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/"+response.getId())));
+                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/" + response.getId())));
     }
 
     @Test
-    void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsByEntity() throws Exception{
+    void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsByEntity() throws Exception {
         // given
         Long commentId = 1L;
         Long entityId = 1L;
@@ -310,13 +310,13 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.comments[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/"+response.getId())))
-                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/"+response.getId())));
+                .andExpect(jsonPath("$._embedded.comments[0]._links.self.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.update.href", is("http://localhost/comments/" + response.getId())))
+                .andExpect(jsonPath("$._embedded.comments[0]._links.delete.href", is("http://localhost/comments/" + response.getId())));
     }
 
     @Test
-    void shouldReturnEmptyPageWhenGettingAllCommentsByEntity() throws Exception{
+    void shouldReturnEmptyPageWhenGettingAllCommentsByEntity() throws Exception {
         // given
         Long entityId = 1L;
         CommentEntityType entityType = CommentEntityType.TEST;

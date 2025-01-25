@@ -9,16 +9,25 @@ import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityRepository;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusRepository;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportCreatedEvent;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportDeletedEvent;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportEvent;
+import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -26,8 +35,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +49,9 @@ class BugReportServiceTest {
 
     @Autowired
     private BugReportService bugReportService;
+
+    @MockitoBean
+    private BugReportProducer bugReportProducer;
 
     @MockitoBean
     private BugReportRepository bugReportRepository;
@@ -56,12 +71,20 @@ class BugReportServiceTest {
                 List.of("https://video.com"), bugReportSeverity.getName()
         );
 
-        when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(bugReportRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.of(new BugReportStatus(1L, BugReportStatusName.OPENED)));
         when(bugReportSeverityRepository.findByName(bugReportSeverity.getName())).thenReturn(Optional.of(bugReportSeverity));
 
+        final var receivedEventWrapper = new BugReportCreatedEvent[1];
+        when(
+                bugReportProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (BugReportCreatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
         // when
-        var bugReportResponse = bugReportService.createBugReport(bugReportCreateRequest, 1L);
+        var bugReportResponse = bugReportService.createBugReport(bugReportCreateRequest, 1L, UUID.randomUUID().toString());
 
         // then
         assertNotNull(bugReportResponse);
@@ -76,12 +99,19 @@ class BugReportServiceTest {
         assertEquals(BugReportStatusName.OPENED, bugReportResponse.getStatus());
         assertTrue(bugReportResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(1L, receivedEvent.getBugReportId());
+        assertEquals(bugReportResponse.getProjectId(), receivedEvent.getProjectId());
+        assertEquals(bugReportResponse.getReporterId(), receivedEvent.getReporterId());
+
         verify(bugReportRepository, times(1)).save(any());
     }
 
     @Test
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
                 List.of("https://video.com"), BugReportSeverityName.HIGH
@@ -90,12 +120,13 @@ class BugReportServiceTest {
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.createBugReport(bugReportCreateRequest, 1L));
+        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.createBugReport(bugReportCreateRequest, 1L, correlationId));
     }
 
     @Test
     void shouldThrowNoSuchBugReportStatusByNameExceptionWhenCreatingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
                 List.of("https://video.com"), BugReportSeverityName.HIGH
@@ -105,7 +136,7 @@ class BugReportServiceTest {
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.createBugReport(bugReportCreateRequest, 1L));
+        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.createBugReport(bugReportCreateRequest, 1L, correlationId));
     }
 
     @Test
@@ -153,8 +184,16 @@ class BugReportServiceTest {
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
+        final var receivedEventWrapper = new BugReportUpdatedEvent[1];
+        when(
+                bugReportProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (BugReportUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
         // when
-        var bugReportResponse = bugReportService.updateBugReport(1L, bugReportUpdateRequest);
+        var bugReportResponse = bugReportService.updateBugReport(1L, bugReportUpdateRequest, UUID.randomUUID().toString());
 
         // then
         assertNotNull(bugReportResponse);
@@ -172,23 +211,31 @@ class BugReportServiceTest {
         assertEquals(bugReport.getUpdatedAt(), bugReportResponse.getUpdatedAt());
         assertTrue(bugReportResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(bugReportResponse.getId(), receivedEvent.getBugReportId());
+        assertEquals(bugReportResponse.getTitle(), receivedEvent.getData().getTitle());
+        assertNull(receivedEvent.getData().getDescription());
+
         verify(bugReportRepository, times(1)).save(any());
     }
 
     @Test
     void shouldThrowNoSuchBugReportByIdExceptionWhenUpdatingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest));
+        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
     }
 
     @Test
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenUpdatingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, BugReportSeverityName.HIGH, null);
 
@@ -196,12 +243,13 @@ class BugReportServiceTest {
         when(bugReportSeverityRepository.findByName(bugReportUpdateRequest.getSeverity())).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest));
+        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
     }
 
     @Test
     void shouldThrowNoSuchBugReportStatusByNameExceptionWhenUpdatingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, null, BugReportStatusName.OPENED);
 
@@ -209,7 +257,7 @@ class BugReportServiceTest {
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest));
+        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
     }
 
     @Test
@@ -218,9 +266,20 @@ class BugReportServiceTest {
         BugReport bugReport = getNewBugReportWithAllFields();
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
+        final var receivedEventWrapper = new BugReportDeletedEvent[1];
+        when(
+                bugReportProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (BugReportDeletedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        bugReportService.deleteBugReportById(1L);
+        bugReportService.deleteBugReportById(1L, UUID.randomUUID().toString());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(bugReport.getId(), receivedEvent.getBugReportId());
 
         // then
         verify(bugReportRepository, times(1)).delete(bugReport);
@@ -229,10 +288,12 @@ class BugReportServiceTest {
     @Test
     void shouldThrowNoSuchBugReportByIdExceptionWhenDeletingBugReport() {
         // given
+        var correlationId = UUID.randomUUID().toString();
+
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.deleteBugReportById(1L));
+        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.deleteBugReportById(1L, correlationId));
     }
 
     @Test
@@ -451,6 +512,19 @@ class BugReportServiceTest {
         assertEquals(bugReportToFind.getCreatedAt(), bugReportResponse.getCreatedAt());
         assertEquals(bugReportToFind.getUpdatedAt(), bugReportResponse.getUpdatedAt());
         assertTrue(bugReportResponse.hasLinks());
+    }
+
+    private Answer1<BugReport, BugReport> getFakeSave(long id) {
+        return bugReport -> {
+            bugReport.setId(id);
+            return bugReport;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, BugReportEvent>>, BugReportEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("bug-reports", event),
+                        new RecordMetadata(new TopicPartition("bug-reports", 0), 0L, 0, 0L, 0, 0)));
     }
 
     private BugReport getNewBugReportWithAllFields() {

@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/test-cases", produces = "application/json")
@@ -26,7 +28,7 @@ public class TestCaseController {
 
     @PostMapping
     public ResponseEntity<TestCaseResponse> createTestCase(@Valid @RequestBody TestCaseCreateRequest testCaseCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(testCaseService.createTestCase(testCaseCreateRequest, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(testCaseService.createTestCase(testCaseCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -36,12 +38,12 @@ public class TestCaseController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<TestCaseResponse> updateTestCase(@PathVariable Long id, @Valid @RequestBody TestCaseUpdateRequest testCaseUpdateRequest) {
-        return ResponseEntity.ok(testCaseService.updateTestCase(id, testCaseUpdateRequest));
+        return ResponseEntity.ok(testCaseService.updateTestCase(id, testCaseUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTestCaseById(@PathVariable Long id) {
-        testCaseService.deleteTestCaseById(id);
+        testCaseService.deleteTestCaseById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 
@@ -49,7 +51,7 @@ public class TestCaseController {
     public ResponseEntity<PagedModel<TestCaseResponse>> getAllTestCases(Pageable pageable,
                                                                         @Nullable @RequestParam(required = false) Long projectId,
                                                                         @Nullable @RequestParam(required = false) Long authorId,
-                                                                        @Nullable @RequestParam(required = false)TestCasePriorityName priority) {
+                                                                        @Nullable @RequestParam(required = false) TestCasePriorityName priority) {
 
         return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, projectId, authorId, priority));
     }

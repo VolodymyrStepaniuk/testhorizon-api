@@ -70,7 +70,7 @@ class BugReportControllerTest {
         var response = getResponse();
 
         // when
-        when(bugReportService.createBugReport(bugReportCreateRequest, reporterId)).thenReturn(response);
+        when(bugReportService.createBugReport(eq(bugReportCreateRequest), eq(reporterId), any())).thenReturn(response);
 
         // then
         mockMvc.perform(post("/bug-reports")
@@ -107,7 +107,7 @@ class BugReportControllerTest {
                 "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
 
         // when
-        when(bugReportService.createBugReport(bugReportCreateRequest, reporterId))
+        when(bugReportService.createBugReport(eq(bugReportCreateRequest), eq(reporterId), any()))
                 .thenThrow(new NoSuchBugReportSeverityByNameException(bugReportCreateRequest.getSeverity()));
 
         // then
@@ -135,7 +135,7 @@ class BugReportControllerTest {
                 "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
 
         // when
-        when(bugReportService.createBugReport(bugReportCreateRequest, reporterId))
+        when(bugReportService.createBugReport(eq(bugReportCreateRequest), eq(reporterId), any()))
                 .thenThrow(new NoSuchBugReportStatusByNameException(BugReportStatusName.OPENED));
 
         // then
@@ -207,7 +207,7 @@ class BugReportControllerTest {
         var bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null,
                 null, null, null, null);
 
-        when(bugReportService.updateBugReport(bugReportId, bugReportUpdateRequest)).thenReturn(bugReportResponse);
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any())).thenReturn(bugReportResponse);
 
         // then
         mockMvc.perform(patch("/bug-reports/" + bugReportId).contentType("application/json")
@@ -238,7 +238,7 @@ class BugReportControllerTest {
                 null, null, null);
 
         // when
-        when(bugReportService.updateBugReport(bugReportId, bugReportUpdateRequest))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
                 .thenThrow(new NoSuchBugReportByIdException(bugReportId));
 
         // then
@@ -259,7 +259,7 @@ class BugReportControllerTest {
                 null, BugReportSeverityName.LOW, null);
 
         // when
-        when(bugReportService.updateBugReport(bugReportId, bugReportUpdateRequest))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
                 .thenThrow(new NoSuchBugReportSeverityByNameException(bugReportUpdateRequest.getSeverity()));
 
         // then
@@ -280,7 +280,7 @@ class BugReportControllerTest {
                 null, null, BugReportStatusName.CLOSED);
 
         // when
-        when(bugReportService.updateBugReport(bugReportId, bugReportUpdateRequest))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
                 .thenThrow(new NoSuchBugReportStatusByNameException(bugReportUpdateRequest.getStatus()));
 
         // then
@@ -310,7 +310,7 @@ class BugReportControllerTest {
 
         doThrow(new NoSuchBugReportByIdException(bugReportId))
                 .when(bugReportService)
-                .deleteBugReportById(bugReportId);
+                .deleteBugReportById(eq(bugReportId), any());
 
         // then
         mockMvc.perform(delete("/bug-reports/" + bugReportId)

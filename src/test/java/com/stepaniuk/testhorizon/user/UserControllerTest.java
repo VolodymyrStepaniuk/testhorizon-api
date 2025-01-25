@@ -99,7 +99,7 @@ class UserControllerTest {
     }
 
     @Test
-    void shouldReturnUserResponseWhenGetUserByEmail() throws Exception{
+    void shouldReturnUserResponseWhenGetUserByEmail() throws Exception {
         // given
         var email = "email@mail.com";
         var response = createUserResponse();
@@ -151,7 +151,7 @@ class UserControllerTest {
         var response = createUserResponse();
 
         // when
-        when(userService.updateUser(userId, userRequest)).thenReturn(response);
+        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenReturn(response);
 
         // then
         mockMvc.perform(patch("/users/" + userId)
@@ -179,7 +179,7 @@ class UserControllerTest {
         var userRequest = new UserUpdateRequest("newFirstName", null, null, null);
 
         // when
-        when(userService.updateUser(userId, userRequest)).thenThrow(new NoSuchUserByIdException(userId));
+        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenThrow(new NoSuchUserByIdException(userId));
 
         // then
         mockMvc.perform(patch("/users/" + userId)
@@ -212,7 +212,7 @@ class UserControllerTest {
         // when
         doThrow(new NoSuchUserByIdException(userId))
                 .when(userService)
-                .deleteUserById(userId);
+                .deleteUserById(eq(userId), any());
 
         // then
         mockMvc.perform(delete("/users/" + userId)

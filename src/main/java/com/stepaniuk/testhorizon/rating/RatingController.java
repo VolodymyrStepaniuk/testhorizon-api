@@ -14,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/ratings", produces = "application/json")
@@ -24,7 +26,7 @@ public class RatingController {
 
     @PostMapping
     public ResponseEntity<RatingResponse> changeRating(@Valid @RequestBody RatingUpdateRequest request, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(ratingService.changeRating(request, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(ratingService.changeRating(request, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping

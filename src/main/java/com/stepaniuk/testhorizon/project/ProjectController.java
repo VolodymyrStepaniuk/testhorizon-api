@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/projects", produces = "application/json")
@@ -26,7 +28,7 @@ public class ProjectController {
 
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectCreateRequest projectCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(projectService.createProject(projectCreateRequest, user.getId()), HttpStatus.CREATED);
+        return new ResponseEntity<>(projectService.createProject(projectCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
@@ -36,12 +38,12 @@ public class ProjectController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectUpdateRequest projectUpdateRequest) {
-        return ResponseEntity.ok(projectService.updateProject(id, projectUpdateRequest));
+        return ResponseEntity.ok(projectService.updateProject(id, projectUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProjectById(@PathVariable Long id) {
-        projectService.deleteProjectById(id);
+        projectService.deleteProjectById(id, UUID.randomUUID().toString());
         return ResponseEntity.noContent().build();
     }
 

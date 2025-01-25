@@ -1,5 +1,9 @@
 package com.stepaniuk.testhorizon.test;
 
+import com.stepaniuk.testhorizon.event.test.TestCreatedEvent;
+import com.stepaniuk.testhorizon.event.test.TestDeletedEvent;
+import com.stepaniuk.testhorizon.event.test.TestEvent;
+import com.stepaniuk.testhorizon.event.test.TestUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.test.TestCreateRequest;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
@@ -9,12 +13,17 @@ import com.stepaniuk.testhorizon.test.type.TestType;
 import com.stepaniuk.testhorizon.test.type.TestTypeName;
 import com.stepaniuk.testhorizon.test.type.TestTypeRepository;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.mockito.AdditionalAnswers;
+import org.mockito.stubbing.Answer1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -22,8 +31,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.AdditionalAnswers.answer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -33,6 +45,9 @@ class TestServiceTest {
 
     @Autowired
     private TestService testService;
+
+    @MockitoBean
+    private TestProducer testProducer;
 
     @MockitoBean
     private TestRepository testRepository;
@@ -47,10 +62,17 @@ class TestServiceTest {
         var testType = new TestType(1L, TestTypeName.UNIT);
 
         when(testTypeRepository.findByName(TestTypeName.UNIT)).thenReturn(Optional.of(testType));
-        when(testRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(testRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
+        final var receivedEventWrapper = new TestCreatedEvent[1];
+        when(
+                testProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (TestCreatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        var testResponse = testService.createTest(testCreateRequest, 1L);
+        var testResponse = testService.createTest(testCreateRequest, 1L, UUID.randomUUID().toString());
 
         // then
         assertNotNull(testResponse);
@@ -64,18 +86,25 @@ class TestServiceTest {
         assertEquals(testCreateRequest.getType(), testResponse.getType());
         assertTrue(testResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(1L, receivedEvent.getTestId());
+        assertEquals(testResponse.getProjectId(), receivedEvent.getProjectId());
+        assertEquals(testResponse.getAuthorId(), receivedEvent.getAuthorId());
+
         verify(testRepository, times(1)).save(any());
     }
 
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestTypeByNameExceptionWhenCreatingTestWithNonExistingType() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         var testCreateRequest = new TestCreateRequest(1L, 1L, "title", "description", "instructions", "githubUrl", TestTypeName.INTEGRATION);
 
         when(testTypeRepository.findByName(TestTypeName.INTEGRATION)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.createTest(testCreateRequest, 1L));
+        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.createTest(testCreateRequest, 1L, correlationId));
     }
 
     @org.junit.jupiter.api.Test
@@ -120,9 +149,16 @@ class TestServiceTest {
 
         when(testRepository.findById(1L)).thenReturn(Optional.of(testToUpdate));
         when(testRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        final var receivedEventWrapper = new TestUpdatedEvent[1];
+        when(
+                testProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (TestUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         // when
-        var testResponse = testService.updateTest(1L, testUpdateRequest);
+        var testResponse = testService.updateTest(1L, testUpdateRequest, UUID.randomUUID().toString());
 
         // then
         assertNotNull(testResponse);
@@ -138,23 +174,31 @@ class TestServiceTest {
         assertEquals(testToUpdate.getUpdatedAt(), testResponse.getUpdatedAt());
         assertTrue(testResponse.hasLinks());
 
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(testResponse.getId(), receivedEvent.getTestId());
+        assertEquals(testResponse.getTitle(), receivedEvent.getData().getTitle());
+        assertNull(receivedEvent.getData().getType());
+
         verify(testRepository, times(1)).save(any());
     }
 
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestByIdExceptionWhenChangingTitleOfNonExistingTest() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         var testUpdateRequest = new TestUpdateRequest(null, "newTitle", null, null, null, null);
 
         when(testRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestByIdException.class, () -> testService.updateTest(1L, testUpdateRequest));
+        assertThrows(NoSuchTestByIdException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId));
     }
 
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestTypeByNameExceptionWhenChangingTypeWithNonExistingType() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         Test testToUpdate = getNewTestWithAllFields();
         var testUpdateRequest = new TestUpdateRequest(null, null, null, null, null, TestTypeName.INTEGRATION);
 
@@ -162,18 +206,30 @@ class TestServiceTest {
         when(testTypeRepository.findByName(TestTypeName.INTEGRATION)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.updateTest(1L, testUpdateRequest));
+        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId));
     }
 
     @org.junit.jupiter.api.Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingTest() {
         // given
         Test testToDelete = getNewTestWithAllFields();
+        final var receivedEventWrapper = new TestDeletedEvent[1];
+
+        when(
+                testProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (TestDeletedEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
 
         when(testRepository.findById(1L)).thenReturn(Optional.of(testToDelete));
 
         // when
-        testService.deleteTestById(1L);
+        testService.deleteTestById(1L, UUID.randomUUID().toString());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(testToDelete.getId(), receivedEvent.getTestId());
 
         // then
         verify(testRepository, times(1)).delete(testToDelete);
@@ -182,10 +238,11 @@ class TestServiceTest {
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestByIdExceptionWhenDeletingNonExistingTest() {
         // given
+        var correlationId = UUID.randomUUID().toString();
         when(testRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestByIdException.class, () -> testService.deleteTestById(1L));
+        assertThrows(NoSuchTestByIdException.class, () -> testService.deleteTestById(1L, correlationId));
     }
 
     @org.junit.jupiter.api.Test
@@ -389,6 +446,19 @@ class TestServiceTest {
 
         // when && then
         assertThrows(NoSuchTestTypeByNameException.class, () -> testService.getAllTests(pageable, null, null, null, typeName));
+    }
+
+    private Answer1<Test, Test> getFakeSave(long id) {
+        return test -> {
+            test.setId(id);
+            return test;
+        };
+    }
+
+    private Answer1<CompletableFuture<SendResult<String, TestEvent>>, TestEvent> getFakeSendResult() {
+        return event -> CompletableFuture.completedFuture(
+                new SendResult<>(new ProducerRecord<>("tests", event),
+                        new RecordMetadata(new TopicPartition("tests", 0), 0L, 0, 0L, 0, 0)));
     }
 
     private Test getNewTestWithAllFields() {
