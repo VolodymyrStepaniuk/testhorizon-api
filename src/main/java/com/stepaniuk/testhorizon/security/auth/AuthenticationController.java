@@ -1,8 +1,6 @@
 package com.stepaniuk.testhorizon.security.auth;
 
-import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
-import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
-import com.stepaniuk.testhorizon.payload.auth.VerificationRequest;
+import com.stepaniuk.testhorizon.payload.auth.*;
 import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import jakarta.validation.Valid;
@@ -48,5 +46,17 @@ public class AuthenticationController {
         AuthenticationResponse response = authenticationService.refreshToken(refreshToken);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/send-reset-password")
+    public ResponseEntity<Void> sendPasswordReset(@RequestBody PasswordResetRequest request) {
+        authenticationService.sendPasswordReset(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestParam String token, @RequestBody PasswordResetConfirmRequest request) {
+        authenticationService.resetPassword(token, request, UUID.randomUUID().toString());
+        return ResponseEntity.ok().build();
     }
 }

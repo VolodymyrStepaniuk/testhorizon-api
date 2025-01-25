@@ -26,7 +26,7 @@ class UserMapperTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         User userToMap = new User(null, "John", "Doe", "johndoe@gmail.com", 19,"Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
         // when
         UserResponse userResponse = userMapper.toResponse(userToMap);

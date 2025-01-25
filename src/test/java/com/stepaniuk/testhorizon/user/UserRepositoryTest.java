@@ -30,7 +30,7 @@ class UserRepositoryTest {
         Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
         // given
         User userToSave = new User(null, "John", "Doe", "johndoe@gmail.com", 100,"Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(authority), null, null);
 
         // when
@@ -55,7 +55,7 @@ class UserRepositoryTest {
         Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
         // given
         User userToSave = new User(null, "John", "Doe", null, 10,null,
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(authority), null, null);
 
         // when && then

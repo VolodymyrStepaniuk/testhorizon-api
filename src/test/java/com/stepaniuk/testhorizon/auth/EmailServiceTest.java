@@ -26,7 +26,7 @@ class EmailServiceTest {
     }
 
     @Test
-    void testSendVerificationEmail() throws MessagingException {
+    void testSendEmail() throws MessagingException {
         // Arrange
         String to = "test@example.com";
         String subject = "Verification Email";
@@ -36,7 +36,7 @@ class EmailServiceTest {
         when(emailSender.createMimeMessage()).thenReturn(mimeMessage);
 
         // Act
-        emailService.sendVerificationEmail(to, subject, text);
+        emailService.sendEmail(to, subject, text);
 
         // Assert
         verify(emailSender, times(1)).createMimeMessage();

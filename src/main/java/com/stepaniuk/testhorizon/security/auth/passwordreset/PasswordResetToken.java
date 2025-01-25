@@ -1,8 +1,11 @@
-package com.stepaniuk.testhorizon.user.email;
+package com.stepaniuk.testhorizon.security.auth.passwordreset;
 
 import com.stepaniuk.testhorizon.user.User;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -16,28 +19,27 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "email_codes")
-public class EmailCode {
-
+@Table(name = "password_reset_tokens")
+public class PasswordResetToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "email_codes_id_gen")
-    @SequenceGenerator(name = "email_codes_id_gen", sequenceName = "email_codes_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "password_reset_tokens_id_gen")
+    @SequenceGenerator(name = "password_reset_tokens_id_gen", sequenceName = "password_reset_tokens_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "code", nullable = false)
-    private String code;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @CreatedDate
-    private Instant createdAt;
-
-    @Column(name = "expires_at", nullable = false)
-    private Instant expiresAt;
+    @Column(name = "token", nullable = false)
+    private String token;
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
+
+    @Column(name = "expires_at", nullable = false)
+    private Instant expiresAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
+    private Instant createdAt;
 
     @Override
     public final boolean equals(Object o) {
@@ -46,8 +48,8 @@ public class EmailCode {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        EmailCode emailCode = (EmailCode) o;
-        return getId() != null && Objects.equals(getId(), emailCode.getId());
+        PasswordResetToken that = (PasswordResetToken) o;
+        return getId() != null && Objects.equals(getId(), that.getId());
     }
 
     @Override
@@ -58,8 +60,8 @@ public class EmailCode {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" +
-                "code = " + code + ", " +
-                "createdAt = " + createdAt + ", " +
-                "expiresAt = " + expiresAt + ")";
+                "token = " + token + ", " +
+                "expiresAt = " + expiresAt + ", " +
+                "createdAt = " + createdAt + ")";
     }
 }

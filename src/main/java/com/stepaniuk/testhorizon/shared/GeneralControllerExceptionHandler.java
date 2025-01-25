@@ -8,6 +8,8 @@ import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdExce
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
@@ -212,6 +214,24 @@ public class GeneralControllerExceptionHandler {
                 "User cannot change own rating: " + e.getUserId());
         problemDetail.setTitle("User cannot change own rating");
         problemDetail.setInstance(URI.create("/ratings"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchPasswordResetTokenException.class})
+    public ProblemDetail handleNoSuchPasswordResetTokenException(NoSuchPasswordResetTokenException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No password reset token with token: " + e.getToken());
+        problemDetail.setTitle("No such password reset token");
+        problemDetail.setInstance(URI.create("/auth/reset-password"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {PasswordResetTokenExpiredException.class})
+    public ProblemDetail handlePasswordResetTokenExpiredException(PasswordResetTokenExpiredException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Password reset token expired: " + e.getToken());
+        problemDetail.setTitle("Password reset token expired");
+        problemDetail.setInstance(URI.create("/auth/reset-password"));
         return problemDetail;
     }
 

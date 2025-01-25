@@ -35,7 +35,7 @@ class EmailCodeRepositoryTest {
         // given
         User userForCode = new User(
                 null, "first", "last", "email@gmail.com", 100, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), null, null
         );
 
@@ -60,7 +60,7 @@ class EmailCodeRepositoryTest {
         // given
         User userForCode = new User(
                 null, "first", "last", "email@gmail.com", 100, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), null, null
         );
 
@@ -83,6 +83,17 @@ class EmailCodeRepositoryTest {
         assertEquals(1L, emailCode.getUser().getId());
     }
 
+    @Test
+    void shouldReturnEmailCodeWhenFindByCode(){
+        EmailCode emailCode = emailCodeRepository.findByCode("123456").orElseThrow();
+
+        assertNotNull(emailCode);
+        assertEquals(1L, emailCode.getId());
+        assertEquals("123456", emailCode.getCode());
+        assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), emailCode.getCreatedAt());
+        assertEquals(Instant.parse("2025-11-25T17:28:19.266615Z"), emailCode.getExpiresAt());
+        assertEquals(1L, emailCode.getUser().getId());
+    }
 
     @Test
     void shouldUpdateEmailCodeWhenChangingCode() {
@@ -105,16 +116,11 @@ class EmailCodeRepositoryTest {
 
     @Test
     void shouldDeleteEmailCodeWhenDeletingByExistingEmailCode() {
-
-        User user = userRepository.findById(1L).orElseThrow();
-
         // given
         EmailCode emailCode = emailCodeRepository.findById(1L).orElseThrow();
 
         // when
-        user.setEmailCode(null);
         emailCodeRepository.delete(emailCode);
-        userRepository.save(user);
 
         // then
         assertFalse(emailCodeRepository.existsById(1L));
@@ -122,24 +128,8 @@ class EmailCodeRepositoryTest {
 
     @Test
     void shouldDeleteEmailCodeWhenDeletingByExistingEmailCodeId(){
-        User user = userRepository.findById(1L).orElseThrow();
-        user.setEmailCode(null);
-
         // when
         emailCodeRepository.deleteById(1L);
-        userRepository.save(user);
-
-        // then
-        assertFalse(emailCodeRepository.existsById(1L));
-    }
-
-    @Test
-    void shouldDeleteEmailCodeWhenDeletingByCode(){
-        User user = userRepository.findById(1L).orElseThrow();
-        user.setEmailCode(null);
-        // when
-        emailCodeRepository.deleteByCode("123456");
-        userRepository.save(user);
 
         // then
         assertFalse(emailCodeRepository.existsById(1L));

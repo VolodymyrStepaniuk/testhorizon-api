@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.hateoas.PagedModel;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -27,7 +26,6 @@ public class UserService {
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final UserProducer userProducer;
-    private final PasswordEncoder passwordEncoder;
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
@@ -79,8 +77,6 @@ public class UserService {
             user.setEmail(userRequest.getEmail());
             userData.setEmail(userRequest.getEmail());
         }
-        if (userRequest.getPassword() != null)
-            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
 
         var savedUser = userRepository.save(user);
 

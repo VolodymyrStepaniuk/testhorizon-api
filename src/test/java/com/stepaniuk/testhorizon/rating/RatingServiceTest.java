@@ -61,7 +61,7 @@ class RatingServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         User newUser = new User(null, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
-                true, true, true, true, null,
+                true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
 
         // when
