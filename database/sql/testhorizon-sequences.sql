@@ -96,6 +96,20 @@ CREATE SEQUENCE IF NOT EXISTS test_types_id_seq
 ALTER SEQUENCE test_types_id_seq
     OWNER TO postgres_container;
 
+-- SEQUENCE: password_reset_tokens_id_seq
+
+DROP SEQUENCE IF EXISTS password_reset_tokens_id_seq;
+
+CREATE SEQUENCE IF NOT EXISTS password_reset_tokens_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+ALTER SEQUENCE password_reset_tokens_id_seq
+    OWNER TO postgres_container;
+
 -- SEQUENCE: ratings_id_seq
 
 DROP SEQUENCE IF EXISTS ratings_id_seq;

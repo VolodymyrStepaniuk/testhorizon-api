@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS authorities
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT authorities_name_CHECK
+        CONSTRAINT authorities_name_check
             CHECK ((name)::TEXT = ANY
                    ((ARRAY ['DEVELOPER'::CHARACTER VARYING, 'TESTER'::CHARACTER VARYING, 'ADMIN'::CHARACTER VARYING])::TEXT[]))
 );
@@ -342,4 +342,26 @@ ALTER SEQUENCE ratings_id_seq
     OWNED BY ratings.id;
 
 ALTER TABLE ratings
+    OWNER TO postgres_container;
+
+-- Table: password_reset_tokens
+
+DROP TABLE IF EXISTS password_reset_tokens;
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens
+(
+    id         BIGINT                      NOT NULL
+        PRIMARY KEY,
+    created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    expires_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    token      VARCHAR(255)                NOT NULL,
+    user_id    BIGINT
+        CONSTRAINT fkk3ndxg5xp6v7wd4gjyusp15gq
+            REFERENCES users
+);
+
+ALTER SEQUENCE password_reset_tokens_id_seq
+    OWNED BY password_reset_tokens.id;
+
+ALTER TABLE password_reset_tokens
     OWNER TO postgres_container;
