@@ -30,7 +30,7 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/**", "/docs/**", "/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/bug-reports","/tests","/test-cases").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
                         .requestMatchers(HttpMethod.PATCH,"/bug-reports/**","/tests/**","/test-cases/**").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
                         .requestMatchers(HttpMethod.POST,"/projects").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
