@@ -53,3 +53,35 @@ spring:
 
 server:
   port: 3010
+
+springdoc:
+  api-docs:
+    path: /docs/api-docs
+    enabled: true
+  swagger-ui:
+    path: /docs/swagger
+    enabled: true
+
+# Actuator
+info:
+  app:
+    name: Test Horizon
+    description: Test Horizon is a platform for beginners in testing who want to get their first experience!
+    version: 1.0.0
+    contact:
+      name: Test Horizon
+      email: ${INFO_EMAIL}
+      url: https://testhorizon.com
+
+management:
+  info:
+    env:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always

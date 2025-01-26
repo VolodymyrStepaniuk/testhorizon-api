@@ -36,6 +36,11 @@ dependencies {
 	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
 
+	//documentation
+	// https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
+
+
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
@@ -54,6 +59,7 @@ dependencies {
 	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testImplementation 'org.testcontainers:junit-jupiter'
 	testImplementation 'org.testcontainers:postgresql'
+	// https://mvnrepository.com/artifact/org.testcontainers/kafka
 	testImplementation 'org.testcontainers:kafka'
 	testImplementation 'org.awaitility:awaitility:4.2.0'
 }
