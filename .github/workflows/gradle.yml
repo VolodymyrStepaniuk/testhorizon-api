@@ -23,7 +23,10 @@ jobs:
           distribution: 'adopt'
 
       - name: Set Environment Variables
-        run: echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+        run: echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> $GITHUB_ENV
+
+      - name: Clear Gradle Cache
+        run: ./gradlew --stop && ./gradlew clean
 
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2
