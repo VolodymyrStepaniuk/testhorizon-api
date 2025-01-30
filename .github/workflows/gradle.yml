@@ -22,6 +22,9 @@ jobs:
           java-version: 17
           distribution: 'adopt'
 
+      - name: Set Environment Variables
+        run: echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> $GITHUB_ENV
+
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2
         with:
