@@ -1,11 +1,11 @@
 package com.stepaniuk.testhorizon.testspecific.jwt;
 
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.TestingAuthenticationProvider;
 
-@Configuration
+@TestConfiguration
 public class TestAppConfiguration {
 
     @Bean
