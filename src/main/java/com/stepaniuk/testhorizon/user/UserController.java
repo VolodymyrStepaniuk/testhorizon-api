@@ -2,13 +2,13 @@ package com.stepaniuk.testhorizon.user;
 
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,16 +42,29 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping
-    public ResponseEntity<PagedModel<UserResponse>> getAllUsers(Pageable pageable,
-                                                                @Nullable @RequestParam(required = false) List<Long> ids) {
-        return ResponseEntity.ok(userService.getAllUsers(pageable, ids));
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(AuthInfo authInfo)
+            throws NoSuchUserByIdException {
+        return ResponseEntity.ok(userService.getUserById(authInfo.getUserId()));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal User user)
-            throws NoSuchUserByIdException {
-        return ResponseEntity.ok(userService.getUserById(user.getId()));
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponse> updateMe(@RequestBody UserUpdateRequest userRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.updateUser(authInfo.getUserId(), userRequest, UUID.randomUUID().toString()));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(AuthInfo authInfo) {
+        userService.deleteUserById(authInfo.getUserId(), UUID.randomUUID().toString());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<PagedModel<UserResponse>> getAllUsers(Pageable pageable,
+                                                                @Nullable @RequestParam(required = false) List<Long> ids,
+                                                                @Nullable @RequestParam(required = false) String email,
+                                                                @Nullable @RequestParam(required = false) String fullName) {
+        return ResponseEntity.ok(userService.getAllUsers(pageable, ids, email, fullName));
     }
 
     @GetMapping("/top")

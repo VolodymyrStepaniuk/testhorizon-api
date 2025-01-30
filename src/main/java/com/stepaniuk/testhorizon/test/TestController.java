@@ -3,8 +3,8 @@ package com.stepaniuk.testhorizon.test;
 import com.stepaniuk.testhorizon.payload.test.TestCreateRequest;
 import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.test.type.TestTypeName;
-import com.stepaniuk.testhorizon.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +12,6 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +26,8 @@ public class TestController {
     private final TestService testService;
 
     @PostMapping
-    public ResponseEntity<TestResponse> createTest(@Valid @RequestBody TestCreateRequest testCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(testService.createTest(testCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
+    public ResponseEntity<TestResponse> createTest(@Valid @RequestBody TestCreateRequest testCreateRequest, AuthInfo authInfo) {
+        return new ResponseEntity<>(testService.createTest(testCreateRequest, authInfo.getUserId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")

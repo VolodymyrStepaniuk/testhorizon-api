@@ -1,7 +1,10 @@
 package com.stepaniuk.testhorizon.testspecific;
 
+import com.stepaniuk.testhorizon.security.JwtProvider;
+import com.stepaniuk.testhorizon.security.config.SecurityConfiguration;
 import com.stepaniuk.testhorizon.shared.GeneralControllerExceptionHandler;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.testspecific.jwt.TestAppConfiguration;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -19,9 +22,11 @@ import java.lang.annotation.*;
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(properties = "spring.mvc.problem-details.enabled=true")
-@Import({GeneralControllerExceptionHandler.class, PageMapperImpl.class})
+@Import({GeneralControllerExceptionHandler.class, JwtProvider.class, SecurityConfiguration.class,
+        TestAppConfiguration.class, PageMapperImpl.class})
 @ImportAutoConfiguration
 public @interface ControllerLevelUnitTest {
 
-  @AliasFor(attribute = "controllers", annotation = WebMvcTest.class) Class<?>[] controllers() default {};
+    @AliasFor(attribute = "controllers", annotation = WebMvcTest.class) Class<?>[] controllers() default {};
+
 }

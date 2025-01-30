@@ -10,15 +10,13 @@ import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,7 +25,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -55,11 +52,10 @@ class ProjectControllerTest {
     private PageMapper pageMapper;
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnProjectResponseWhenCreatingProject() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description", "instructions",
                 "https://github.com", List.of("https://image.com"));
@@ -92,11 +88,10 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenCreatingProject() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description", "instructions",
                 "https://github.com", List.of("https://image.com"));
@@ -120,6 +115,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnProjectResponseWhenGettingById() throws Exception {
         // given
         Long projectId = 1L;
@@ -148,6 +144,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenGettingById() throws Exception {
         // given
         Long projectId = 1L;
@@ -166,6 +163,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnProjectResponseWhenUpdatingProject() throws Exception {
         // given
         Long projectId = 1L;
@@ -199,6 +197,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchProjectByIdExceptionWhenUpdatingProject() throws Exception {
         // given
         Long projectId = 1L;
@@ -222,6 +221,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchProjectStatusByNameExceptionWhenUpdatingProject() throws Exception {
         // given
         Long projectId = 1L;
@@ -245,6 +245,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnNoContentWhenDeletingProject() throws Exception {
         // given
         long projectId = 1L;
@@ -257,6 +258,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchProjectByIdExceptionWhenDeletingProject() throws Exception {
         // given
         Long projectId = 1L;
@@ -277,6 +279,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfProjectResponsesWhenGettingAllProjects() throws Exception {
         // given
         var response = createProjectResponse();
@@ -312,6 +315,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfProjectResponsesWhenGettingAllProjectsByOwnerId() throws Exception {
         // given
         var response = createProjectResponse();
@@ -348,6 +352,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfProjectResponsesWhenGettingAllProjectsByTitle() throws Exception {
         // given
         var response = createProjectResponse();
@@ -384,6 +389,7 @@ class ProjectControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfProjectResponsesWhenGettingAllProjectsByStatus() throws Exception {
         // given
         var response = createProjectResponse();
@@ -417,32 +423,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._embedded.projects[0]._links.self.href", is("http://localhost/projects/1")))
                 .andExpect(jsonPath("$._embedded.projects[0]._links.update.href", is("http://localhost/projects/1")))
                 .andExpect(jsonPath("$._embedded.projects[0]._links.delete.href", is("http://localhost/projects/1")));
-    }
-
-    private void mockSecurityContext(Long userId) {
-        User mockUser = new User(
-                userId,
-                "firstName",
-                "lastName",
-                "email",
-                0,
-                "password",
-                true,
-                true,
-                true,
-                true,
-                Set.of(),
-                Instant.now(),
-                Instant.now()
-        );
-
-        // Мокання SecurityContext для передачі користувача
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     private ProjectResponse createProjectResponse() {

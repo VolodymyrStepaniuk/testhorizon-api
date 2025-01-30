@@ -11,15 +11,13 @@ import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,7 +26,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -57,11 +54,10 @@ class CommentControllerTest {
     private PageMapper pageMapper;
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnCommentResponseWhenCreatingComment() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         CommentCreateRequest commentCreateRequest = new CommentCreateRequest(CommentEntityType.TEST, 1L, "Comment content");
 
@@ -91,12 +87,11 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnCommentResponseWhenUpdatingComment() throws Exception {
         // given
         Long userId = 1L;
         Long commentId = 1L;
-
-        mockSecurityContext(userId);
 
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
@@ -126,12 +121,11 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchCommentByIdExceptionWhenUpdatingComment() throws Exception {
         // given
         Long userId = 1L;
         Long commentId = 1L;
-
-        mockSecurityContext(userId);
 
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
@@ -153,12 +147,11 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseCommentAuthorMismatchExceptionWhenUpdatingComment() throws Exception {
         // given
         Long userId = 1L;
         Long commentId = 1L;
-
-        mockSecurityContext(userId);
 
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
@@ -180,6 +173,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnNoContentWhenDeletingComment() throws Exception {
         // given
         long commentId = 1L;
@@ -192,6 +186,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenDeletingComment() throws Exception {
         // given
         long commentId = 1L;
@@ -211,6 +206,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfCommentResponsesWhenGettingAllComments() throws Exception {
         // given
         Long commentId = 1L;
@@ -244,6 +240,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsWhenAuthorIdNotNull() throws Exception {
         // given
         Long commentId = 1L;
@@ -279,6 +276,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfCommentResponsesWhenGettingAllCommentsByEntity() throws Exception {
         // given
         Long commentId = 1L;
@@ -316,6 +314,7 @@ class CommentControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnEmptyPageWhenGettingAllCommentsByEntity() throws Exception {
         // given
         Long entityId = 1L;
@@ -338,32 +337,6 @@ class CommentControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.totalElements", is(0)));
-    }
-
-    private void mockSecurityContext(Long userId) {
-        User mockUser = new User(
-                userId,
-                "firstName",
-                "lastName",
-                "email",
-                0,
-                "password",
-                true,
-                true,
-                true,
-                true,
-                Set.of(),
-                Instant.now(),
-                Instant.now()
-        );
-
-        // Мокання SecurityContext для передачі користувача
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     private CommentResponse createCommentResponse(Long id) {

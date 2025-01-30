@@ -12,15 +12,13 @@ import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -29,7 +27,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -58,11 +55,10 @@ class BugReportControllerTest {
 
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugResponseWhenCreatingBugReport() throws Exception {
         // given
         Long reporterId = 1L;
-
-        mockSecurityContext(reporterId);
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
                 "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
@@ -97,11 +93,10 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReportWithNonExistingSeverity() throws Exception {
         // given
         Long reporterId = 1L;
-
-        mockSecurityContext(reporterId);
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
                 "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
@@ -125,11 +120,10 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldThrowNoSuchBugReportStatusByNameExceptionWhenCreatingBugReportWithNonExistingStatus() throws Exception {
         // given
         Long reporterId = 1L;
-
-        mockSecurityContext(reporterId);
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
                 "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
@@ -153,6 +147,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugResponseWhenGettingById() throws Exception {
         Long bugReportId = 1L;
         // given
@@ -182,6 +177,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldThrowNoSuchBugReportByIdExceptionWhenGettingNonExistingBugReport() throws Exception {
         Long bugReportId = 1L;
         // when
@@ -198,6 +194,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugReportResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
@@ -231,6 +228,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugNoSuchBugReportByIdExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
@@ -252,6 +250,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugNoSuchBugReportSeverityByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
@@ -273,6 +272,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugNoSuchBugReportStatusByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
@@ -294,6 +294,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnNoContentWhenDeletingBugReport() throws Exception {
         long bugReportId = 1L;
         // when && then
@@ -304,6 +305,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnBugNoSuchBugReportByIdExceptionResponseWhenDeletingBugReport() throws Exception {
         // when
         Long bugReportId = 1L;
@@ -324,6 +326,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReports() throws Exception {
         // given
         var response = getResponse();
@@ -361,6 +364,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReportsWhenProjectIdIsNotNull() throws Exception {
         // given
         var response = getResponse();
@@ -399,6 +403,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReportsWhenTitleIsNotNull() throws Exception {
         // given
         var response = getResponse();
@@ -437,6 +442,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReportsWhenReporterIdIsNotNull() throws Exception {
         // given
         var response = getResponse();
@@ -475,6 +481,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReportsWhenSeverityNameIsNotNull() throws Exception {
         // given
         var response = getResponse();
@@ -513,6 +520,7 @@ class BugReportControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfBugReportResponsesWhenGettingAllBugReportsWhenStatusIsNotNull() throws Exception {
         // given
         var response = getResponse();
@@ -548,32 +556,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0]._links.self.href", is("http://localhost/bug-reports/1")))
                 .andExpect(jsonPath("$._embedded.bugReports[0]._links.update.href", is("http://localhost/bug-reports/1")))
                 .andExpect(jsonPath("$._embedded.bugReports[0]._links.delete.href", is("http://localhost/bug-reports/1")));
-    }
-
-    private void mockSecurityContext(Long userId) {
-        User mockUser = new User(
-                userId,
-                "firstName",
-                "lastName",
-                "email",
-                0,
-                "password",
-                true,
-                true,
-                true,
-                true,
-                Set.of(),
-                Instant.now(),
-                Instant.now()
-        );
-
-        // Мокання SecurityContext для передачі користувача
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     private BugReportResponse getResponse() {

@@ -7,7 +7,7 @@ import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingExce
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +15,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,13 +22,11 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,15 +48,15 @@ class RatingControllerTest {
 
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @Autowired
     private PageMapper pageMapper;
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnRatingResponseWhenCreatingRating() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         RatingUpdateRequest ratingUpdateRequest = new RatingUpdateRequest(1L, 5, "comment");
 
@@ -85,11 +80,10 @@ class RatingControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenCreatingRating() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         RatingUpdateRequest ratingUpdateRequest = new RatingUpdateRequest(1L, 5, "comment");
 
@@ -108,12 +102,10 @@ class RatingControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenCreatingRatingForOwnUser() throws Exception {
         // given
-        Long authUserId = 1L;
         Long userId = 1L;
-
-        mockSecurityContext(authUserId);
 
         RatingUpdateRequest ratingUpdateRequest = new RatingUpdateRequest(userId, 5, "comment");
 
@@ -132,6 +124,7 @@ class RatingControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfRatingResponsesWhenGettingAllRatings() throws Exception {
         // given
         var response = createRatingResponse();
@@ -162,6 +155,7 @@ class RatingControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfRatingResponsesWhenGettingRatingByUserId() throws Exception{
         // given
         Long userId = 1L;
@@ -194,6 +188,7 @@ class RatingControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfRatingResponsesWhenGettingRatingByRatedByUserId() throws Exception{
         // given
         Long ratedByUserId = 1L;
@@ -223,32 +218,6 @@ class RatingControllerTest {
                 .andExpect(jsonPath("$._embedded.ratings[0].comment", is(response.getComment())))
                 .andExpect(jsonPath("$._embedded.ratings[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.ratings[0]._links.self.href", is("http://localhost/ratings/1")));
-    }
-
-    private void mockSecurityContext(Long userId) {
-        User mockUser = new User(
-                userId,
-                "firstName",
-                "lastName",
-                "email",
-                0,
-                "password",
-                true,
-                true,
-                true,
-                true,
-                Set.of(),
-                Instant.now(),
-                Instant.now()
-        );
-
-        // Мокання SecurityContext для передачі користувача
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     private RatingResponse createRatingResponse(){

@@ -42,6 +42,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -323,10 +324,12 @@ class AuthenticationServiceTest {
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(emailCodeRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+        when(emailCodeRepository.findAllByUserId(user.getId())).thenReturn(List.of(new EmailCode(), new EmailCode()));
 
         authenticationService.resendVerificationCode(email);
 
         verify(emailService, times(1)).sendEmail(eq(email), anyString(), anyString());
+        verify(emailCodeRepository, times(1)).deleteAll(any());
         verify(emailCodeRepository, times(1)).save(argThat(savedEmailCode ->
                 savedEmailCode.getUser().equals(user) &&
                         savedEmailCode.getExpiresAt().isAfter(Instant.now())
