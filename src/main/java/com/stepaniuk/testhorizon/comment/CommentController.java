@@ -4,14 +4,13 @@ import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,13 +25,13 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(@Valid @RequestBody CommentCreateRequest commentCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(commentService.createComment(commentCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
+    public ResponseEntity<CommentResponse> createComment(@Valid @RequestBody CommentCreateRequest commentCreateRequest, AuthInfo authInfo) {
+        return new ResponseEntity<>(commentService.createComment(commentCreateRequest, authInfo.getUserId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest,@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(commentService.updateComment(id, user.getId(), commentUpdateRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(commentService.updateComment(id, authInfo.getUserId(), commentUpdateRequest, UUID.randomUUID().toString()));
     }
 
     @DeleteMapping("/{id}")

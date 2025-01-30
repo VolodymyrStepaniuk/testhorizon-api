@@ -10,15 +10,13 @@ import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,7 +25,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -55,11 +52,10 @@ class TestCaseControllerTest {
     private PageMapper pageMapper;
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnTestCaseWhenCreatingTestCase() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         TestCaseCreateRequest request = new TestCaseCreateRequest(
                 1L,
@@ -101,11 +97,10 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenCreatingTestCase() throws Exception {
         // given
         Long userId = 1L;
-
-        mockSecurityContext(userId);
 
         TestCaseCreateRequest request = new TestCaseCreateRequest(
                 1L,
@@ -135,6 +130,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnTestCaseResponseWhenGettingById() throws Exception {
         Long testCaseId = 1L;
 
@@ -161,6 +157,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenGettingById() throws Exception {
         Long testCaseId = 1L;
 
@@ -175,6 +172,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnTestCaseResponseWhenUpdatingTestCase() throws Exception {
         Long testCaseId = 1L;
 
@@ -213,6 +211,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchTestCaseByIdExceptionWhenUpdatingTestCase() throws Exception {
         Long testCaseId = 1L;
 
@@ -239,6 +238,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseNoSuchTestCasePriorityByNameExceptionWhenUpdatingTestCase() throws Exception {
         Long testCaseId = 1L;
 
@@ -265,6 +265,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnNoContentWhenDeletingTestCase() throws Exception {
         long testCaseId = 1L;
 
@@ -276,6 +277,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnErrorResponseWhenDeletingTestCase() throws Exception {
         Long testCaseId = 1L;
 
@@ -296,6 +298,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCases() throws Exception {
         // given
         var response = createResponse();
@@ -332,6 +335,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenProjectIdNotNull() throws Exception {
         // given
         var response = createResponse();
@@ -369,6 +373,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenAuthorIdNotNull() throws Exception {
         // given
         var response = createResponse();
@@ -406,6 +411,7 @@ class TestCaseControllerTest {
     }
 
     @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenPriorityNotNull() throws Exception {
         // given
         var response = createResponse();
@@ -440,32 +446,6 @@ class TestCaseControllerTest {
                 .andExpect(jsonPath("$._embedded.testCases[0]._links.self.href", is("http://localhost/test-cases/1")))
                 .andExpect(jsonPath("$._embedded.testCases[0]._links.update.href", is("http://localhost/test-cases/1")))
                 .andExpect(jsonPath("$._embedded.testCases[0]._links.delete.href", is("http://localhost/test-cases/1")));
-    }
-
-    private void mockSecurityContext(Long userId) {
-        User mockUser = new User(
-                userId,
-                "firstName",
-                "lastName",
-                "email",
-                0,
-                "password",
-                true,
-                true,
-                true,
-                true,
-                Set.of(),
-                Instant.now(),
-                Instant.now()
-        );
-
-        // Мокання SecurityContext для передачі користувача
-        SecurityContext securityContext = mock(SecurityContext.class);
-        Authentication authentication = mock(Authentication.class);
-
-        when(authentication.getPrincipal()).thenReturn(mockUser);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        SecurityContextHolder.setContext(securityContext);
     }
 
     private TestCaseResponse createResponse() {

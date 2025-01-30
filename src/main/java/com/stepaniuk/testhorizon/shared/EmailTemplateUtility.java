@@ -9,9 +9,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class EmailTemplateService {
+public abstract class EmailTemplateUtility {
 
-    private EmailTemplateService() {
+    private EmailTemplateUtility() {
+        throw new IllegalStateException("Utility class");
     }
 
     public static String loadEmailTemplate(String templateName, Map<String, String> params) {

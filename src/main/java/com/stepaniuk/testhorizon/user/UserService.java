@@ -5,6 +5,7 @@ import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmailCodeRepository emailCodeRepository;
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final UserProducer userProducer;
@@ -40,13 +42,29 @@ public class UserService {
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
     }
 
-    public PagedModel<UserResponse> getAllUsers(Pageable pageable, List<Long> userIds) {
+    public PagedModel<UserResponse> getAllUsers(Pageable pageable, List<Long> userIds, String email, String fullName) {
         Specification<User> specification = Specification.where(null);
 
         if (userIds != null && !userIds.isEmpty()) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
                     .in(root.get("id")).value(userIds)
             );
+        }
+
+        if (email != null) {
+            specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
+                    .equal(root.get("email"), email)
+            );
+        }
+
+        if (fullName != null) {
+            specification = specification.and((root, query, criteriaBuilder) -> {
+                String fullNamePattern = "%" + fullName + "%";
+                return criteriaBuilder.like(
+                        criteriaBuilder.concat(criteriaBuilder.concat(root.get("firstName"), " "), root.get("lastName")),
+                        fullNamePattern
+                );
+            });
         }
 
         var users = userRepository.findAll(specification, pageable);
@@ -93,6 +111,11 @@ public class UserService {
     public void deleteUserById(Long id, String correlationId) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
+
+        var emailCodes = emailCodeRepository.findAllByUserId(id);
+
+        if(!emailCodes.isEmpty())
+            emailCodeRepository.deleteAll(emailCodes);
 
         userRepository.delete(user);
 

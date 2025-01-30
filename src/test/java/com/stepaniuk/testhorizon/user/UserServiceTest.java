@@ -7,6 +7,7 @@ import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
+import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -49,6 +50,9 @@ class UserServiceTest {
 
     @MockitoBean
     private AuthorityRepository authorityRepository;
+
+    @MockitoBean
+    private EmailCodeRepository emailCodeRepository;
 
     @Test
     void shouldReturnUserResponseWhenGetByExistingId() {
@@ -209,7 +213,7 @@ class UserServiceTest {
         when(userRepository.findAll(specification, pageable)).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, null);
+        var userResponses = userService.getAllUsers(pageable, null, null, null);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -243,7 +247,77 @@ class UserServiceTest {
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, List.of(1L));
+        var userResponses = userService.getAllUsers(pageable, List.of(1L), null, null);
+        var userResponse = userResponses.getContent().iterator().next();
+
+        //then
+        assertNotNull(userResponses);
+        assertNotNull(userResponses.getMetadata());
+        assertEquals(1, userResponses.getMetadata().getTotalElements());
+        assertEquals(1, userResponses.getContent().size());
+
+        assertEquals(userToFind.getId(), userResponse.getId());
+        assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
+        assertEquals(userToFind.getLastName(), userResponse.getLastName());
+        assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
+        assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
+        assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
+        assertTrue(userResponse.hasLinks());
+    }
+
+    @Test
+    void shouldReturnPagedModelWhenGettingAllUsersAndEmailNotNull() {
+        // given
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+
+        var email = "email@mail.com";
+        var userToFind = new User(1L, "John", "Doe", email, 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, timeOfModification);
+
+        var pageable = PageRequest.of(0, 2);
+
+        when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
+                new PageImpl<>(List.of(userToFind), pageable, 1));
+        // when
+        var userResponses = userService.getAllUsers(pageable, null, email, null);
+        var userResponse = userResponses.getContent().iterator().next();
+
+        //then
+        assertNotNull(userResponses);
+        assertNotNull(userResponses.getMetadata());
+        assertEquals(1, userResponses.getMetadata().getTotalElements());
+        assertEquals(1, userResponses.getContent().size());
+
+        assertEquals(userToFind.getId(), userResponse.getId());
+        assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
+        assertEquals(userToFind.getLastName(), userResponse.getLastName());
+        assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
+        assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
+        assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
+        assertTrue(userResponse.hasLinks());
+    }
+
+    @Test
+    void shouldReturnPagedModelWhenGettingAllUsersAndFullNameNotNull() {
+        // given
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+
+        var fullName = "John Doe";
+        var userToFind = new User(1L, "John", "Doe", "", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, timeOfModification);
+
+        var pageable = PageRequest.of(0, 2);
+
+        when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
+                new PageImpl<>(List.of(userToFind), pageable, 1));
+        // when
+        var userResponses = userService.getAllUsers(pageable, null, null, fullName);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then

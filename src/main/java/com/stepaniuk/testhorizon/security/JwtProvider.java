@@ -59,9 +59,11 @@ public class JwtProvider {
             TokenType tokenType
     ){
         extraClaims.put("type", tokenType.name());
+        extraClaims.put("authorities", userDetails.getAuthorities());
 
         return Jwts
                 .builder()
+                .setHeaderParam("typ", "JWT")
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))

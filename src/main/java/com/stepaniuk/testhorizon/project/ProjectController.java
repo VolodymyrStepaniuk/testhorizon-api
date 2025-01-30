@@ -4,7 +4,7 @@ import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
-import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +12,6 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +26,8 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @PostMapping
-    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectCreateRequest projectCreateRequest, @AuthenticationPrincipal User user) {
-        return new ResponseEntity<>(projectService.createProject(projectCreateRequest, user.getId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
+    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectCreateRequest projectCreateRequest, AuthInfo authInfo) {
+        return new ResponseEntity<>(projectService.createProject(projectCreateRequest, authInfo.getUserId(), UUID.randomUUID().toString()), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")

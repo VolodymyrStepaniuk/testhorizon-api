@@ -33,7 +33,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static com.stepaniuk.testhorizon.shared.EmailTemplateService.loadEmailTemplate;
+import static com.stepaniuk.testhorizon.shared.EmailTemplateUtility.loadEmailTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -170,6 +170,12 @@ public class AuthenticationService {
             throw new UserAlreadyVerifiedException(email);
         }
 
+        var emailCodes = emailCodeRepository.findAllByUserId(user.getId());
+
+        if (!emailCodes.isEmpty()) {
+            emailCodeRepository.deleteAll(emailCodes);
+        }
+
         EmailCode emailCode = new EmailCode();
         emailCode.setCode(generateVerificationCode());
         emailCode.setExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
@@ -195,7 +201,6 @@ public class AuthenticationService {
 
         passwordResetTokenRepository.save(resetToken);
 
-        // Send email with reset link
         sendPasswordResetEmail(email, token);
     }
 
