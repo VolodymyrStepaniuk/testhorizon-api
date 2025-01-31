@@ -11,7 +11,9 @@ import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameExce
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -147,7 +149,7 @@ class ProjectServiceTest {
         // given
         Project projectToUpdate = getNewProjectWithAllFields();
         var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
-
+        var authInfo = new AuthInfo(1L, List.of());
         when(projectRepository.findById(1L)).thenReturn(java.util.Optional.of(projectToUpdate));
         when(projectRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
         var receivedEventWrapper = new ProjectUpdatedEvent[1];
@@ -159,7 +161,7 @@ class ProjectServiceTest {
         );
 
         // when
-        var updatedProjectResponse = projectService.updateProject(1L, projectUpdateRequest, UUID.randomUUID().toString());
+        var updatedProjectResponse = projectService.updateProject(1L, projectUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(updatedProjectResponse);
@@ -187,18 +189,20 @@ class ProjectServiceTest {
     @Test
     void shouldThrowNoSuchProjectByIdExceptionWhenUpdatingProject(){
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
 
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectByIdException.class, () -> projectService.updateProject(10L, projectUpdateRequest, correlationId));
+        assertThrows(NoSuchProjectByIdException.class, () -> projectService.updateProject(10L, projectUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldThrowNoSuchProjectStatusByNameExceptionWhenUpdatingProject(){
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Project projectToUpdate = getNewProjectWithAllFields();
         var projectUpdateRequest = new ProjectUpdateRequest(null, null, ProjectStatusName.INACTIVE, null, List.of());
@@ -207,14 +211,28 @@ class ProjectServiceTest {
         when(projectStatusRepository.findByName(ProjectStatusName.INACTIVE)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.updateProject(1L, projectUpdateRequest, correlationId));
+        assertThrows(NoSuchProjectStatusByNameException.class, () -> projectService.updateProject(1L, projectUpdateRequest, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessDeniedExceptionWhenUpdatingProject(){
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        Project projectToUpdate = getNewProjectWithAllFields();
+        var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToUpdate));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> projectService.updateProject(1L, projectUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingProject(){
         // given
         Project projectToDelete = getNewProjectWithAllFields();
-
+        var authInfo = new AuthInfo(1L, List.of());
         when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToDelete));
         final var receivedEventWrapper = new ProjectDeletedEvent[1];
         when(
@@ -225,7 +243,7 @@ class ProjectServiceTest {
         );
 
         // when
-        projectService.deleteProjectById(1L, UUID.randomUUID().toString());
+        projectService.deleteProjectById(1L, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -237,11 +255,24 @@ class ProjectServiceTest {
     @Test
     void shouldThrowNoSuchProjectByIdExceptionWhenDeletingProject(){
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchProjectByIdException.class, () -> projectService.deleteProjectById(10L, correlationId));
+        assertThrows(NoSuchProjectByIdException.class, () -> projectService.deleteProjectById(10L, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingProject(){
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        Project projectToDelete = getNewProjectWithAllFields();
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToDelete));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> projectService.deleteProjectById(1L, correlationId, authInfo));
     }
 
     @Test

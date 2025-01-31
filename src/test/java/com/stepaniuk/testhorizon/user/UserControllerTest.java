@@ -5,6 +5,7 @@ import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
@@ -56,7 +57,7 @@ class UserControllerTest {
         var userId = 1L;
         var response = createUserResponse();
 
-        when(userService.getUserById(userId)).thenReturn(response);
+        when(userService.getUserById(eq(userId), any())).thenReturn(response);
 
         // when && then
         // @formatter:off
@@ -82,7 +83,7 @@ class UserControllerTest {
     void shouldReturnErrorResponseWhenGetUserById() throws Exception {
         // given
         Long userId = 1L;
-        when(userService.getUserById(userId)).thenThrow(new NoSuchUserByIdException(1L));
+        when(userService.getUserById(eq(userId), any())).thenThrow(new NoSuchUserByIdException(1L));
 
         // when && then
         // @formatter:off
@@ -105,7 +106,7 @@ class UserControllerTest {
         var response = createUserResponse();
 
         // when
-        when(userService.getUserByEmail(email)).thenReturn(response);
+        when(userService.getUserByEmail(eq(email), any())).thenReturn(response);
 
         // then
         mockMvc.perform(get("/users/email/" + email)
@@ -131,7 +132,7 @@ class UserControllerTest {
         var email = "email@mail.com";
 
         // when
-        when(userService.getUserByEmail(email)).thenThrow(new NoSuchUserByEmailException(email));
+        when(userService.getUserByEmail(eq(email), any())).thenThrow(new NoSuchUserByEmailException(email));
 
         // then
         mockMvc.perform(get("/users/email/" + email)
@@ -153,7 +154,7 @@ class UserControllerTest {
         var response = createUserResponse();
 
         // when
-        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenReturn(response);
+        when(userService.updateUser(eq(userId), eq(userRequest), any(), any())).thenReturn(response);
 
         // then
         mockMvc.perform(patch("/users/" + userId)
@@ -182,7 +183,7 @@ class UserControllerTest {
         var userRequest = new UserUpdateRequest("newFirstName", null, null);
 
         // when
-        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenThrow(new NoSuchUserByIdException(userId));
+        when(userService.updateUser(eq(userId), eq(userRequest), any(), any())).thenThrow(new NoSuchUserByIdException(userId));
 
         // then
         mockMvc.perform(patch("/users/" + userId)
@@ -193,6 +194,28 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such user")))
                 .andExpect(jsonPath("$.detail", is("No user with id " + userId)))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenUpdatingUser() throws Exception {
+        // given
+        var userId = 1L;
+        var userRequest = new UserUpdateRequest("newFirstName", null, null);
+
+        // when
+        when(userService.updateUser(eq(userId), eq(userRequest), any(), any())).thenThrow(new AccessToManageEntityDeniedException("User", "/users"));
+
+        // then
+        mockMvc.perform(patch("/users/" + userId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage User denied")))
                 .andExpect(jsonPath("$.instance", is("/users")));
     }
 
@@ -217,7 +240,7 @@ class UserControllerTest {
         // when
         doThrow(new NoSuchUserByIdException(userId))
                 .when(userService)
-                .deleteUserById(eq(userId), any());
+                .deleteUserById(eq(userId), any(), any());
 
         // then
         mockMvc.perform(delete("/users/" + userId)
@@ -232,13 +255,35 @@ class UserControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenDeletingUser() throws Exception {
+        // given
+        var userId = 1L;
+
+        // when
+        doThrow(new AccessToManageEntityDeniedException("User", "/users"))
+                .when(userService)
+                .deleteUserById(eq(userId), any(), any());
+
+        // then
+        mockMvc.perform(delete("/users/" + userId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage User denied")))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfUserResponsesWhenGettingAllUsers() throws Exception {
         // given
         var response = createUserResponse();
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(userService.getAllUsers(pageable, null, null, null)).thenReturn(pageMapper.toResponse(
+        when(userService.getAllUsers(eq(pageable), eq(null), eq(null), eq(null),  any())).thenReturn(pageMapper.toResponse(
                 new PageImpl<>(List.of(response), pageable, 1),
                 URI.create("/users"))
         );
@@ -272,7 +317,7 @@ class UserControllerTest {
         var userIds = List.of(1L);
 
         // when
-        when(userService.getAllUsers(pageable, userIds, null, null)).thenReturn(pageMapper.toResponse(
+        when(userService.getAllUsers(eq(pageable), eq(userIds), eq(null), eq(null),  any())).thenReturn(pageMapper.toResponse(
                 new PageImpl<>(List.of(response), pageable, 1),
                 URI.create("/users"))
         );
@@ -306,7 +351,7 @@ class UserControllerTest {
         var email = "email@mail.com";
 
         // when
-        when(userService.getAllUsers(pageable, null, email, null)).thenReturn(pageMapper.toResponse(
+        when(userService.getAllUsers(eq(pageable), eq(null), eq(email), eq(null),  any())).thenReturn(pageMapper.toResponse(
                 new PageImpl<>(List.of(response), pageable, 1),
                 URI.create("/users"))
         );
@@ -339,7 +384,7 @@ class UserControllerTest {
         var pageable = PageRequest.of(0, 2);
         var fullName = "first";
         // when
-        when(userService.getAllUsers(pageable, null, null, fullName)).thenReturn(pageMapper.toResponse(
+        when(userService.getAllUsers(eq(pageable), eq(null), eq(null), eq(fullName),  any())).thenReturn(pageMapper.toResponse(
                 new PageImpl<>(List.of(response), pageable, 1),
                 URI.create("/users"))
         );
@@ -371,7 +416,7 @@ class UserControllerTest {
         var userId = 1L;
         var response = createUserResponse();
 
-        when(userService.getUserById(userId)).thenReturn(response);
+        when(userService.getUserById(eq(userId), any())).thenReturn(response);
 
         // when && then
         // @formatter:off
@@ -398,7 +443,7 @@ class UserControllerTest {
         // given
         var userId = 1L;
 
-        when(userService.getUserById(userId)).thenThrow(new NoSuchUserByIdException(userId));
+        when(userService.getUserById(eq(userId), any())).thenThrow(new NoSuchUserByIdException(userId));
 
         // when && then
         // @formatter:off
@@ -422,7 +467,7 @@ class UserControllerTest {
         var response = createUserResponse();
 
         // when
-        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenReturn(response);
+        when(userService.updateUser(eq(userId), eq(userRequest), any(), any())).thenReturn(response);
 
         // then
         mockMvc.perform(patch("/users/me")
@@ -451,7 +496,7 @@ class UserControllerTest {
         var userRequest = new UserUpdateRequest("newFirstName", null, null);
 
         // when
-        when(userService.updateUser(eq(userId), eq(userRequest), any())).thenThrow(new NoSuchUserByIdException(userId));
+        when(userService.updateUser(eq(userId), eq(userRequest), any(), any())).thenThrow(new NoSuchUserByIdException(userId));
 
         // then
         mockMvc.perform(patch("/users/me")
@@ -485,7 +530,7 @@ class UserControllerTest {
         // when
         doThrow(new NoSuchUserByIdException(userId))
                 .when(userService)
-                .deleteUserById(eq(userId), any());
+                .deleteUserById(eq(userId), any(), any());
 
         // then
         mockMvc.perform(delete("/users/me")
@@ -506,7 +551,7 @@ class UserControllerTest {
         var pageable = PageRequest.of(0, 1);
 
         // when
-        when(userService.getTopUsersByRating(pageable)).thenReturn(pageMapper.toResponse(
+        when(userService.getTopUsersByRating(eq(pageable), any())).thenReturn(pageMapper.toResponse(
                 new PageImpl<>(List.of(response), pageable, 1),
                 URI.create("/users"))
         );

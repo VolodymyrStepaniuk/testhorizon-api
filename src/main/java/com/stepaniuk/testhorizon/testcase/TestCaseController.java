@@ -31,18 +31,18 @@ public class TestCaseController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TestCaseResponse> getTestCaseById(@PathVariable Long id) {
+    public ResponseEntity<TestCaseResponse> getTestCaseById(@PathVariable Long id, AuthInfo authInfo) {
         return ResponseEntity.ok(testCaseService.getTestCaseById(id));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<TestCaseResponse> updateTestCase(@PathVariable Long id, @Valid @RequestBody TestCaseUpdateRequest testCaseUpdateRequest) {
-        return ResponseEntity.ok(testCaseService.updateTestCase(id, testCaseUpdateRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<TestCaseResponse> updateTestCase(@PathVariable Long id, @Valid @RequestBody TestCaseUpdateRequest testCaseUpdateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(testCaseService.updateTestCase(id, testCaseUpdateRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestCaseById(@PathVariable Long id) {
-        testCaseService.deleteTestCaseById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteTestCaseById(@PathVariable Long id, AuthInfo authInfo) {
+        testCaseService.deleteTestCaseById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 
@@ -50,7 +50,8 @@ public class TestCaseController {
     public ResponseEntity<PagedModel<TestCaseResponse>> getAllTestCases(Pageable pageable,
                                                                         @Nullable @RequestParam(required = false) Long projectId,
                                                                         @Nullable @RequestParam(required = false) Long authorId,
-                                                                        @Nullable @RequestParam(required = false) TestCasePriorityName priority) {
+                                                                        @Nullable @RequestParam(required = false) TestCasePriorityName priority,
+                                                                        AuthInfo authInfo) {
 
         return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, projectId, authorId, priority));
     }

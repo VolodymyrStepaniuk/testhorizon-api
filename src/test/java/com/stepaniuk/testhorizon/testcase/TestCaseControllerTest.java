@@ -6,6 +6,7 @@ import com.stepaniuk.testhorizon.payload.testcase.TestCaseResponse;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -92,8 +92,6 @@ class TestCaseControllerTest {
                 .andExpect(jsonPath("$._links.update.href", is("http://localhost/test-cases/1")))
                 .andExpect(jsonPath("$._links.delete.href", is("http://localhost/test-cases/1")));
 
-        SecurityContextHolder.clearContext();
-
     }
 
     @Test
@@ -125,8 +123,6 @@ class TestCaseControllerTest {
                 .andExpect(jsonPath("$.title", is("No such test case priority")))
                 .andExpect(jsonPath("$.detail", is("No test case priority with name " + request.getPriority())))
                 .andExpect(jsonPath("$.instance", is("/test-cases")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -187,7 +183,7 @@ class TestCaseControllerTest {
 
         TestCaseResponse response = createResponse();
 
-        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenReturn(response);
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any(), any())).thenReturn(response);
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -224,7 +220,7 @@ class TestCaseControllerTest {
                 TestCasePriorityName.LOW
         );
 
-        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenThrow(new NoSuchTestCaseByIdException(testCaseId));
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any(), any())).thenThrow(new NoSuchTestCaseByIdException(testCaseId));
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -251,7 +247,7 @@ class TestCaseControllerTest {
                 TestCasePriorityName.LOW
         );
 
-        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any())).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any(), any())).thenThrow(new NoSuchTestCasePriorityByNameException(request.getPriority()));
 
         mockMvc.perform(patch("/test-cases/" + testCaseId)
                         .contentType("application/json")
@@ -261,6 +257,33 @@ class TestCaseControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such test case priority")))
                 .andExpect(jsonPath("$.detail", is("No test case priority with name " + request.getPriority())))
+                .andExpect(jsonPath("$.instance", is("/test-cases")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenUpdatingTestCase() throws Exception {
+        Long testCaseId = 1L;
+
+        TestCaseUpdateRequest request = new TestCaseUpdateRequest(
+                "new title",
+                "new description",
+                "new preconditions",
+                "new inputData",
+                List.of("new step1", "new step2"),
+                TestCasePriorityName.LOW
+        );
+
+        when(testCaseService.updateTestCase(eq(testCaseId), eq(request), any(), any())).thenThrow(new AccessToManageEntityDeniedException("TestCase", "/test-cases"));
+
+        mockMvc.perform(patch("/test-cases/" + testCaseId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage TestCase denied")))
                 .andExpect(jsonPath("$.instance", is("/test-cases")));
     }
 
@@ -284,7 +307,7 @@ class TestCaseControllerTest {
         // when
         doThrow(new NoSuchTestCaseByIdException(testCaseId))
                 .when(testCaseService)
-                .deleteTestCaseById(eq(testCaseId), any());
+                .deleteTestCaseById(eq(testCaseId), any(), any());
 
         // then
         mockMvc.perform(delete("/test-cases/" + testCaseId)
@@ -294,6 +317,27 @@ class TestCaseControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such test case")))
                 .andExpect(jsonPath("$.detail", is("No test case with id " + testCaseId)))
+                .andExpect(jsonPath("$.instance", is("/test-cases")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenDeletingTestCase() throws Exception {
+        Long testCaseId = 1L;
+
+        // when
+        doThrow(new AccessToManageEntityDeniedException("TestCase", "/test-cases"))
+                .when(testCaseService)
+                .deleteTestCaseById(eq(testCaseId), any(), any());
+
+        // then
+        mockMvc.perform(delete("/test-cases/" + testCaseId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage TestCase denied")))
                 .andExpect(jsonPath("$.instance", is("/test-cases")));
     }
 

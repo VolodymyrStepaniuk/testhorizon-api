@@ -36,13 +36,13 @@ public class ProjectController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectUpdateRequest projectUpdateRequest) {
-        return ResponseEntity.ok(projectService.updateProject(id, projectUpdateRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectUpdateRequest projectUpdateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(projectService.updateProject(id, projectUpdateRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProjectById(@PathVariable Long id) {
-        projectService.deleteProjectById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteProjectById(@PathVariable Long id, AuthInfo authInfo) {
+        projectService.deleteProjectById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 
@@ -50,7 +50,7 @@ public class ProjectController {
     public ResponseEntity<PagedModel<ProjectResponse>> getAllProjects(Pageable pageable,
                                                                       @Nullable @RequestParam(required = false) Long ownerId,
                                                                       @Nullable @RequestParam(required = false) String title,
-                                                                      @Nullable @RequestParam(required = false) ProjectStatusName status){
+                                                                      @Nullable @RequestParam(required = false) ProjectStatusName status) {
         return ResponseEntity.ok(projectService.getAllProjects(pageable, ownerId, title, status));
     }
 }

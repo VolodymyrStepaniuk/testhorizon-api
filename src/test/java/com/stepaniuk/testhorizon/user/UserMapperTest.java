@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.user;
 
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,8 +30,10 @@ class UserMapperTest {
         User userToMap = new User(null, "John", "Doe", "johndoe@gmail.com", 19,"Password+123",
                 true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
+
+        var authInfo = new AuthInfo(1L, List.of());
         // when
-        UserResponse userResponse = userMapper.toResponse(userToMap);
+        UserResponse userResponse = userMapper.toResponse(userToMap, authInfo);
 
         // then
         assertNotNull(userResponse);
@@ -42,7 +46,5 @@ class UserMapperTest {
         assertEquals(userToMap.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
         assertTrue(userResponse.getLinks().hasLink("self"));
-        assertTrue(userResponse.getLinks().hasLink("update"));
-        assertTrue(userResponse.getLinks().hasLink("delete"));
     }
 }

@@ -6,7 +6,10 @@ import com.stepaniuk.testhorizon.event.testcase.TestCaseEvent;
 import com.stepaniuk.testhorizon.event.testcase.TestCaseUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseCreateRequest;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
+import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriority;
@@ -55,12 +58,16 @@ class TestCaseServiceTest {
     @MockitoBean
     private TestCasePriorityRepository testCasePriorityRepository;
 
+    @MockitoBean
+    private ProjectRepository projectRepository;
+
     @Test
     void shouldReturnTestCaseResponseWhenCreatingTestCase() {
         // given
         var testCaseCreateRequest = new TestCaseCreateRequest(1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"), TestCasePriorityName.LOW);
         var testCasePriority = new TestCasePriority(1L, TestCasePriorityName.LOW);
 
+        when(projectRepository.existsById(1L)).thenReturn(true);
         when(testCasePriorityRepository.findByName(TestCasePriorityName.LOW)).thenReturn(Optional.of(testCasePriority));
         when(testCaseRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         final var receivedEventWrapper = new TestCaseCreatedEvent[1];
@@ -101,6 +108,7 @@ class TestCaseServiceTest {
         var testCaseCreateRequest = new TestCaseCreateRequest(1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"), TestCasePriorityName.HIGH);
         var correlationId = UUID.randomUUID().toString();
 
+        when(projectRepository.existsById(1L)).thenReturn(true);
         when(testCasePriorityRepository.findByName(TestCasePriorityName.HIGH)).thenReturn(Optional.empty());
 
         // when && then
@@ -147,6 +155,7 @@ class TestCaseServiceTest {
         // given
         TestCase testCaseToUpdate = getNewTestCaseWithAllFields();
         var testCaseUpdateRequest = new TestCaseUpdateRequest("newTitle", null, null, null, null, null);
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToUpdate));
         when(testCaseRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -158,7 +167,7 @@ class TestCaseServiceTest {
         );
 
         // when
-        var testCaseResponse = testCaseService.updateTestCase(1L, testCaseUpdateRequest, UUID.randomUUID().toString());
+        var testCaseResponse = testCaseService.updateTestCase(1L, testCaseUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(testCaseResponse);
@@ -187,18 +196,20 @@ class TestCaseServiceTest {
     @Test
     void shouldThrowNoSuchTestCaseByIdExceptionWhenChangingTitleOfNonExistingTestCase() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         var testCaseUpdateRequest = new TestCaseUpdateRequest("newTitle", null, null, null, null, null);
 
         when(testCaseRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestCaseByIdException.class, () -> testCaseService.updateTestCase(1L, testCaseUpdateRequest, correlationId));
+        assertThrows(NoSuchTestCaseByIdException.class, () -> testCaseService.updateTestCase(1L, testCaseUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldThrowNoSuchTestCasePriorityByNameExceptionWhenUpdatingTestCaseWithNonExistingPriority() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         var testCaseToUpdate = getNewTestCaseWithAllFields();
         var testCaseUpdateRequest = new TestCaseUpdateRequest(null, null, null, null, null, TestCasePriorityName.HIGH);
@@ -207,13 +218,28 @@ class TestCaseServiceTest {
         when(testCasePriorityRepository.findByName(TestCasePriorityName.HIGH)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestCasePriorityByNameException.class, () -> testCaseService.updateTestCase(1L, testCaseUpdateRequest, correlationId));
+        assertThrows(NoSuchTestCasePriorityByNameException.class, () -> testCaseService.updateTestCase(1L, testCaseUpdateRequest, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenUpdatingTestCase() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        var testCaseToUpdate = getNewTestCaseWithAllFields();
+        var testCaseUpdateRequest = new TestCaseUpdateRequest("New Title", null, null, null, null, null);
+
+        when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToUpdate));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> testCaseService.updateTestCase(1L, testCaseUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingTestCase() {
         // given
         TestCase testCaseToDelete = getNewTestCaseWithAllFields();
+        var authInfo = new AuthInfo(1L, List.of());
 
         final var receivedEventWrapper = new TestCaseDeletedEvent[1];
         when(
@@ -225,7 +251,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToDelete));
 
         // when
-        testCaseService.deleteTestCaseById(1L, UUID.randomUUID().toString());
+        testCaseService.deleteTestCaseById(1L, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -238,12 +264,26 @@ class TestCaseServiceTest {
     @Test
     void shouldThrowNoSuchTestCaseByIdExceptionWhenDeletingNonExistingTestCase() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
 
         when(testCaseRepository.findById(100L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestCaseByIdException.class, () -> testCaseService.deleteTestCaseById(100L, correlationId));
+        assertThrows(NoSuchTestCaseByIdException.class, () -> testCaseService.deleteTestCaseById(100L, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingTestCase() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        var testCaseToDelete = getNewTestCaseWithAllFields();
+
+        when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToDelete));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> testCaseService.deleteTestCaseById(1L, correlationId, authInfo));
     }
 
     @Test

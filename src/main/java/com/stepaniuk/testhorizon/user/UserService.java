@@ -4,7 +4,10 @@ import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
@@ -19,6 +22,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
+import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -29,20 +35,21 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserProducer userProducer;
 
-    public UserResponse getUserById(Long id) {
+    public UserResponse getUserById(Long id, AuthInfo authInfo) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
-        return userMapper.toResponse(user);
+        return userMapper.toResponse(user, authInfo);
     }
 
-    public UserResponse getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(userMapper::toResponse)
+    public UserResponse getUserByEmail(String email, AuthInfo authInfo) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
+
+        return userMapper.toResponse(user, authInfo);
     }
 
-    public PagedModel<UserResponse> getAllUsers(Pageable pageable, List<Long> userIds, String email, String fullName) {
+    public PagedModel<UserResponse> getAllUsers(Pageable pageable, List<Long> userIds, String email, String fullName, AuthInfo authInfo) {
         Specification<User> specification = Specification.where(null);
 
         if (userIds != null && !userIds.isEmpty()) {
@@ -71,18 +78,23 @@ public class UserService {
 
         return pageMapper.toResponse(
                 users.map(
-                        userMapper::toResponse
+                        user -> userMapper.toResponse(user, authInfo)
                 ), URI.create("/users")
         );
     }
 
-    public UserResponse updateUser(Long id, UserUpdateRequest userRequest, String correlationId) {
+    public UserResponse updateUser(Long id, UserUpdateRequest userRequest, String correlationId, AuthInfo authInfo) {
+
+        if(hasNoAccessToManageUser(id, authInfo)) {
+            throw new AccessToManageEntityDeniedException("User", "/users");
+        }
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
         var userData = new UserUpdatedEvent.Data();
 
-        if (userRequest.getFirstName() != null){
+        if (userRequest.getFirstName() != null) {
             user.setFirstName(userRequest.getFirstName());
             userData.setFirstName(userRequest.getFirstName());
         }
@@ -99,22 +111,27 @@ public class UserService {
         var savedUser = userRepository.save(user);
 
         userProducer.send(
-                 new UserUpdatedEvent(
-                         Instant.now(), UUID.randomUUID().toString(), correlationId,
-                         savedUser.getId(), userData
-                 )
+                new UserUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        savedUser.getId(), userData
+                )
         );
 
-        return userMapper.toResponse(savedUser);
+        return userMapper.toResponse(savedUser, authInfo);
     }
 
-    public void deleteUserById(Long id, String correlationId) {
+    public void deleteUserById(Long id, String correlationId, AuthInfo authInfo) {
+
+        if (hasNoAccessToManageUser(id, authInfo)) {
+            throw new AccessToManageEntityDeniedException("User", "/users");
+        }
+
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
         var emailCodes = emailCodeRepository.findAllByUserId(id);
 
-        if(!emailCodes.isEmpty())
+        if (!emailCodes.isEmpty())
             emailCodeRepository.deleteAll(emailCodes);
 
         userRepository.delete(user);
@@ -127,7 +144,7 @@ public class UserService {
         );
     }
 
-    public PagedModel<UserResponse> getTopUsersByRating(Pageable pageable) {
+    public PagedModel<UserResponse> getTopUsersByRating(Pageable pageable, AuthInfo authInfo) {
         Specification<User> specification = (root, query, criteriaBuilder) -> {
 
             query.orderBy(criteriaBuilder.desc(root.get("totalRating")));
@@ -137,8 +154,14 @@ public class UserService {
         var users = userRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-                users.map(userMapper::toResponse),
+                users.map(
+                        user -> userMapper.toResponse(user, authInfo)
+                ),
                 URI.create("/users")
         );
+    }
+
+    private boolean hasNoAccessToManageUser(Long userId, AuthInfo authInfo) {
+        return !(isOwner(authInfo, userId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()));
     }
 }

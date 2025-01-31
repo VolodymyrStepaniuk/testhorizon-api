@@ -15,7 +15,10 @@ import com.stepaniuk.testhorizon.event.bugreport.BugReportEvent;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
+import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -62,6 +65,9 @@ class BugReportServiceTest {
     @MockitoBean
     private BugReportStatusRepository bugReportStatusRepository;
 
+    @MockitoBean
+    private ProjectRepository projectRepository;
+
     @Test
     void shouldReturnBugReportResponseWhenCreatingBugReport() {
         // given
@@ -71,6 +77,7 @@ class BugReportServiceTest {
                 List.of("https://video.com"), bugReportSeverity.getName()
         );
 
+        when(projectRepository.existsById(any())).thenReturn(true);
         when(bugReportRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.of(new BugReportStatus(1L, BugReportStatusName.OPENED)));
         when(bugReportSeverityRepository.findByName(bugReportSeverity.getName())).thenReturn(Optional.of(bugReportSeverity));
@@ -112,11 +119,13 @@ class BugReportServiceTest {
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReport() {
         // given
         var correlationId = UUID.randomUUID().toString();
+
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", List.of("https://image.com", "https://image2.com"),
                 List.of("https://video.com"), BugReportSeverityName.HIGH
         );
 
+        when(projectRepository.existsById(any())).thenReturn(true);
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.empty());
 
         // when && then
@@ -132,6 +141,7 @@ class BugReportServiceTest {
                 List.of("https://video.com"), BugReportSeverityName.HIGH
         );
 
+        when(projectRepository.existsById(any())).thenReturn(true);
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.of(new BugReportSeverity(1L, BugReportSeverityName.HIGH)));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
 
@@ -180,6 +190,7 @@ class BugReportServiceTest {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -193,7 +204,7 @@ class BugReportServiceTest {
         );
 
         // when
-        var bugReportResponse = bugReportService.updateBugReport(1L, bugReportUpdateRequest, UUID.randomUUID().toString());
+        var bugReportResponse = bugReportService.updateBugReport(1L, bugReportUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(bugReportResponse);
@@ -223,18 +234,20 @@ class BugReportServiceTest {
     @Test
     void shouldThrowNoSuchBugReportByIdExceptionWhenUpdatingBugReport() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
+        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenUpdatingBugReport() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, BugReportSeverityName.HIGH, null);
@@ -243,12 +256,13 @@ class BugReportServiceTest {
         when(bugReportSeverityRepository.findByName(bugReportUpdateRequest.getSeverity())).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
+        assertThrows(NoSuchBugReportSeverityByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldThrowNoSuchBugReportStatusByNameExceptionWhenUpdatingBugReport() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest(null, null, null, null, null, null, BugReportStatusName.OPENED);
@@ -257,12 +271,27 @@ class BugReportServiceTest {
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId));
+        assertThrows(NoSuchBugReportStatusByNameException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenUpdatingBugReport() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        BugReport bugReport = getNewBugReportWithAllFields();
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null, null, null);
+
+        when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> bugReportService.updateBugReport(1L, bugReportUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingBugReport() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         BugReport bugReport = getNewBugReportWithAllFields();
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
@@ -275,7 +304,7 @@ class BugReportServiceTest {
         );
 
         // when
-        bugReportService.deleteBugReportById(1L, UUID.randomUUID().toString());
+        bugReportService.deleteBugReportById(1L, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -288,12 +317,26 @@ class BugReportServiceTest {
     @Test
     void shouldThrowNoSuchBugReportByIdExceptionWhenDeletingBugReport() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
 
         when(bugReportRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.deleteBugReportById(1L, correlationId));
+        assertThrows(NoSuchBugReportByIdException.class, () -> bugReportService.deleteBugReportById(1L, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingBugReport() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        BugReport bugReport = getNewBugReportWithAllFields();
+
+        when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> bugReportService.deleteBugReportById(1L, correlationId, authInfo));
     }
 
     @Test

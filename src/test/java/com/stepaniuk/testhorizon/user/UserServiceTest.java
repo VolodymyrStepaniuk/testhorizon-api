@@ -4,6 +4,8 @@ import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
 import com.stepaniuk.testhorizon.event.user.UserEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
@@ -58,11 +60,12 @@ class UserServiceTest {
     void shouldReturnUserResponseWhenGetByExistingId() {
         // given
         User userToFind = getNewUserWithAllFields();
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToFind));
 
         // when
-        var userResponse = userService.getUserById(1L);
+        var userResponse = userService.getUserById(1L, authInfo);
 
         // then
         assertNotNull(userResponse);
@@ -78,21 +81,23 @@ class UserServiceTest {
     @Test
     void shouldThrowNoSuchUserByIdExceptionWhenGetByNonExistingId() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByIdException.class, () -> userService.getUserById(1L));
+        assertThrows(NoSuchUserByIdException.class, () -> userService.getUserById(1L, authInfo));
     }
 
     @Test
     void shouldReturnUserResponseWhenGetByExistingEmail() {
         // given
         User userToFind = getNewUserWithAllFields();
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(userRepository.findByEmail("johndoe@gmail.com")).thenReturn(Optional.of(userToFind));
 
         // when
-        var userResponse = userService.getUserByEmail("johndoe@gmail.com");
+        var userResponse = userService.getUserByEmail("johndoe@gmail.com", authInfo);
 
         // then
         assertNotNull(userResponse);
@@ -108,10 +113,11 @@ class UserServiceTest {
     @Test
     void shouldThrowNoSuchUserByEmailExceptionWhenGetByNonExistingEmail() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         when(userRepository.findByEmail("johndoe@gmail.com")).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByEmailException.class, () -> userService.getUserByEmail("johndoe@gmail.com"));
+        assertThrows(NoSuchUserByEmailException.class, () -> userService.getUserByEmail("johndoe@gmail.com", authInfo));
     }
 
     @Test
@@ -119,6 +125,7 @@ class UserServiceTest {
         // given
         User userToUpdate = getNewUserWithAllFields();
         var userUpdateRequest = new UserUpdateRequest(null, "Jane", null );
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
         when(userRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -130,7 +137,7 @@ class UserServiceTest {
         );
 
         // when
-        var userResponse = userService.updateUser(1L, userUpdateRequest, UUID.randomUUID().toString());
+        var userResponse = userService.updateUser(1L, userUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(userResponse);
@@ -156,17 +163,33 @@ class UserServiceTest {
         // given
         var userUpdateRequest = new UserUpdateRequest(null, null, "Jane");
         var correlationId = UUID.randomUUID().toString();
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByIdException.class, () -> userService.updateUser(1L, userUpdateRequest, correlationId));
+        assertThrows(NoSuchUserByIdException.class, () -> userService.updateUser(1L, userUpdateRequest, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenChangingFirstNameOfUser() {
+        // given
+        User userToUpdate = getNewUserWithAllFields();
+        var userUpdateRequest = new UserUpdateRequest(null, "Jane", null);
+        var correlationId = UUID.randomUUID().toString();
+        var authInfo = new AuthInfo(2L, List.of());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> userService.updateUser(1L, userUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingUser() {
         // given
         User userToDelete = getNewUserWithAllFields();
+        var authInfo = new AuthInfo(1L, List.of());
 
         final var receivedEventWrapper = new UserDeletedEvent[1];
         when(userProducer.send(
@@ -177,7 +200,7 @@ class UserServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToDelete));
 
         // when
-        userService.deleteUserById(1L, UUID.randomUUID().toString());
+        userService.deleteUserById(1L, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -191,10 +214,23 @@ class UserServiceTest {
     void shouldThrowNoSuchUserByIdExceptionWhenDeletingNonExistingUser() {
         // given
         var correlationId = UUID.randomUUID().toString();
+        var authInfo = new AuthInfo(1L, List.of());
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchUserByIdException.class, () -> userService.deleteUserById(1L, correlationId));
+        assertThrows(NoSuchUserByIdException.class, () -> userService.deleteUserById(1L, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingUser() {
+        // given
+        User userToDelete = getNewUserWithAllFields();
+        var correlationId = UUID.randomUUID().toString();
+        var authInfo = new AuthInfo(2L, List.of());
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userToDelete));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> userService.deleteUserById(1L, correlationId, authInfo));
     }
 
     @Test
@@ -202,6 +238,7 @@ class UserServiceTest {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        var authInfo = new AuthInfo(1L, List.of());
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
@@ -213,7 +250,7 @@ class UserServiceTest {
         when(userRepository.findAll(specification, pageable)).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, null, null, null);
+        var userResponses = userService.getAllUsers(pageable, null, null, null, authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -237,6 +274,7 @@ class UserServiceTest {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        var authInfo = new AuthInfo(1L, List.of());
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
@@ -247,7 +285,7 @@ class UserServiceTest {
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, List.of(1L), null, null);
+        var userResponses = userService.getAllUsers(pageable, List.of(1L), null, null, authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -273,6 +311,7 @@ class UserServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var email = "email@mail.com";
+        var authInfo = new AuthInfo(1L, List.of());
         var userToFind = new User(1L, "John", "Doe", email, 120, "Password+123",
                 true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
@@ -282,7 +321,7 @@ class UserServiceTest {
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, null, email, null);
+        var userResponses = userService.getAllUsers(pageable, null, email, null, authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -306,7 +345,7 @@ class UserServiceTest {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
-
+        var authInfo = new AuthInfo(1L, List.of());
         var fullName = "John Doe";
         var userToFind = new User(1L, "John", "Doe", "", 120, "Password+123",
                 true, true, true, true,
@@ -317,7 +356,7 @@ class UserServiceTest {
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getAllUsers(pageable, null, null, fullName);
+        var userResponses = userService.getAllUsers(pageable, null, null, fullName, authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -341,7 +380,7 @@ class UserServiceTest {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
-
+        var authInfo = new AuthInfo(1L, List.of());
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
@@ -351,7 +390,7 @@ class UserServiceTest {
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getTopUsersByRating(pageable);
+        var userResponses = userService.getTopUsersByRating(pageable,authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then

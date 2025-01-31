@@ -36,13 +36,13 @@ public class TestController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<TestResponse> updateTest(@PathVariable Long id, @Valid @RequestBody TestUpdateRequest testUpdateRequest) {
-        return ResponseEntity.ok(testService.updateTest(id, testUpdateRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<TestResponse> updateTest(@PathVariable Long id, @Valid @RequestBody TestUpdateRequest testUpdateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(testService.updateTest(id, testUpdateRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTestById(@PathVariable Long id) {
-        testService.deleteTestById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteTestById(@PathVariable Long id, AuthInfo authInfo) {
+        testService.deleteTestById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 

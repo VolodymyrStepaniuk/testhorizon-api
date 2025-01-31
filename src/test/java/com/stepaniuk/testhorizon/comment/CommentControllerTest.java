@@ -10,6 +10,7 @@ import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdExce
 import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -82,8 +82,6 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/" + commentResponse.getId())))
                 .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/" + commentResponse.getId())))
                 .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/" + commentResponse.getId())));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -98,7 +96,7 @@ class CommentControllerTest {
         CommentResponse commentResponse = createCommentResponse(commentId);
 
         // when
-        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenReturn(commentResponse);
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any(), any())).thenReturn(commentResponse);
 
         // then
         mockMvc.perform(patch("/comments/" + commentId)
@@ -116,8 +114,6 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/comments/" + commentResponse.getId())))
                 .andExpect(jsonPath("$._links.update.href", is("http://localhost/comments/" + commentResponse.getId())))
                 .andExpect(jsonPath("$._links.delete.href", is("http://localhost/comments/" + commentResponse.getId())));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -130,7 +126,7 @@ class CommentControllerTest {
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
         // when
-        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenThrow(new NoSuchCommentByIdException(commentId));
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any(), any())).thenThrow(new NoSuchCommentByIdException(commentId));
 
         // then
         mockMvc.perform(patch("/comments/" + commentId)
@@ -142,8 +138,6 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.title", is("No such comment")))
                 .andExpect(jsonPath("$.detail", is("No comment with id " + commentId)))
                 .andExpect(jsonPath("$.instance", is("/comments")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -156,7 +150,7 @@ class CommentControllerTest {
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
 
         // when
-        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any())).thenThrow(new CommentAuthorMismatchException(commentId, userId));
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any(), any())).thenThrow(new CommentAuthorMismatchException(commentId, userId));
 
         // then
         mockMvc.perform(patch("/comments/" + commentId)
@@ -168,8 +162,31 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.title", is("Comment author mismatch")))
                 .andExpect(jsonPath("$.detail", is("Comment author mismatch: " + commentId)))
                 .andExpect(jsonPath("$.instance", is("/comments")));
+    }
 
-        SecurityContextHolder.clearContext();
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenUpdatingComment() throws Exception {
+        // given
+        Long userId = 1L;
+        Long commentId = 1L;
+
+        CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
+
+        // when
+        when(commentService.updateComment(eq(commentId), eq(userId), eq(commentUpdateRequest), any(), any())).
+                thenThrow(new AccessToManageEntityDeniedException("Comment", "/comments"));
+
+        // then
+        mockMvc.perform(patch("/comments/" + commentId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(commentUpdateRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Comment denied")))
+                .andExpect(jsonPath("$.instance", is("/comments")));
     }
 
     @Test
@@ -193,7 +210,7 @@ class CommentControllerTest {
 
         doThrow(new NoSuchCommentByIdException(commentId))
                 .when(commentService)
-                .deleteCommentById(eq(commentId), any());
+                .deleteCommentById(eq(commentId), any(), any());
 
         mockMvc.perform(delete("/comments/" + commentId)
                         .contentType("application/json")
@@ -202,6 +219,27 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such comment")))
                 .andExpect(jsonPath("$.detail", is("No comment with id " + commentId)))
+                .andExpect(jsonPath("$.instance", is("/comments")));
+    }
+
+    @Test
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenDeletingComment() throws Exception {
+        // given
+        Long commentId = 1L;
+
+        // when
+        doThrow(new AccessToManageEntityDeniedException("Comment", "/comments"))
+                .when(commentService)
+                .deleteCommentById(eq(commentId), any(), any());
+
+        // then
+        mockMvc.perform(delete("/comments/" + commentId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Comment denied")))
                 .andExpect(jsonPath("$.instance", is("/comments")));
     }
 
