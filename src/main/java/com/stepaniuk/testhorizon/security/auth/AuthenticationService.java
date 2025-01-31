@@ -94,7 +94,7 @@ public class AuthenticationService {
 
         sendVerificationEmail(email, savedEmailCode.getCode());
 
-        return userMapper.toResponse(savedUser);
+        return userMapper.toResponse(savedUser, null);
     }
 
     public AuthenticationResponse authenticate(LoginRequest request, String correlationId) {

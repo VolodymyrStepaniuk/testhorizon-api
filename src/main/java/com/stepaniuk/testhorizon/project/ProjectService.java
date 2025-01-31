@@ -11,7 +11,10 @@ import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameExce
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
+import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
+
 @Service
 @RequiredArgsConstructor
 public class ProjectService {
@@ -33,7 +39,7 @@ public class ProjectService {
     private final ProjectStatusRepository projectStatusRepository;
     private final ProjectProducer projectProducer;
 
-    public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest, Long ownerId, String correlationId){
+    public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest, Long ownerId, String correlationId) {
         Project project = new Project();
 
         project.setOwnerId(ownerId);
@@ -59,15 +65,19 @@ public class ProjectService {
         return projectMapper.toResponse(savedProject);
     }
 
-    public ProjectResponse getProjectById(Long id){
+    public ProjectResponse getProjectById(Long id) {
         return projectRepository.findById(id)
                 .map(projectMapper::toResponse)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
     }
 
-    public void deleteProjectById(Long id, String correlationId){
+    public void deleteProjectById(Long id, String correlationId, AuthInfo authInfo) {
         var project = projectRepository.findById(id)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
+
+        if (hasNoAccessToManageProject(project.getOwnerId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("Project", "/projects");
+        }
 
         projectRepository.delete(project);
 
@@ -79,33 +89,37 @@ public class ProjectService {
         );
     }
 
-    public ProjectResponse updateProject(Long id, ProjectUpdateRequest projectUpdateRequest, String correlationId){
+    public ProjectResponse updateProject(Long id, ProjectUpdateRequest projectUpdateRequest, String correlationId, AuthInfo authInfo) {
         var project = projectRepository.findById(id)
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
 
+        if (hasNoAccessToManageProject(project.getOwnerId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("Project", "/projects");
+        }
+
         var projectData = new ProjectUpdatedEvent.Data();
 
-        if(projectUpdateRequest.getTitle() != null) {
+        if (projectUpdateRequest.getTitle() != null) {
             project.setTitle(projectUpdateRequest.getTitle());
             projectData.setTitle(projectUpdateRequest.getTitle());
         }
 
-        if(projectUpdateRequest.getDescription() != null) {
+        if (projectUpdateRequest.getDescription() != null) {
             project.setDescription(projectUpdateRequest.getDescription());
             projectData.setDescription(projectUpdateRequest.getDescription());
         }
 
-        if(projectUpdateRequest.getInstructions() != null) {
+        if (projectUpdateRequest.getInstructions() != null) {
             project.setInstructions(projectUpdateRequest.getInstructions());
             projectData.setInstructions(projectUpdateRequest.getInstructions());
         }
 
-        if(projectUpdateRequest.getImageUrls() != null) {
+        if (projectUpdateRequest.getImageUrls() != null) {
             project.setImageUrls(projectUpdateRequest.getImageUrls());
             projectData.setImageUrls(projectUpdateRequest.getImageUrls());
         }
 
-        if(projectUpdateRequest.getStatus() != null) {
+        if (projectUpdateRequest.getStatus() != null) {
             project.setStatus(
                     projectStatusRepository.findByName(projectUpdateRequest.getStatus())
                             .orElseThrow(() -> new NoSuchProjectStatusByNameException(projectUpdateRequest.getStatus()))
@@ -129,7 +143,7 @@ public class ProjectService {
     public PagedModel<ProjectResponse> getAllProjects(Pageable pageable,
                                                       @Nullable Long ownerId,
                                                       @Nullable String title,
-                                                      @Nullable ProjectStatusName statusName){
+                                                      @Nullable ProjectStatusName statusName) {
 
         Specification<Project> specification = Specification.where(null);
 
@@ -139,7 +153,7 @@ public class ProjectService {
             );
         }
 
-        if(title != null){
+        if (title != null) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
                     .like(criteriaBuilder.lower(root.get("title")), "%" + title.toLowerCase() + "%")
             );
@@ -157,9 +171,13 @@ public class ProjectService {
         var projects = projectRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-            projects.map(
-                projectMapper::toResponse
-            ), URI.create("/projects")
+                projects.map(
+                        projectMapper::toResponse
+                ), URI.create("/projects")
         );
+    }
+
+    private boolean hasNoAccessToManageProject(Long ownerId, AuthInfo authInfo) {
+        return !(isOwner(authInfo, ownerId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()));
     }
 }

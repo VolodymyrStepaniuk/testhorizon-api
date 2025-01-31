@@ -6,7 +6,10 @@ import com.stepaniuk.testhorizon.event.test.TestEvent;
 import com.stepaniuk.testhorizon.event.test.TestUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.test.TestCreateRequest;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
+import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.test.type.TestType;
@@ -55,12 +58,16 @@ class TestServiceTest {
     @MockitoBean
     private TestTypeRepository testTypeRepository;
 
+    @MockitoBean
+    private ProjectRepository projectRepository;
+
     @org.junit.jupiter.api.Test
     void shouldReturnTestResponseWhenCreatingTest() {
         // given
         var testCreateRequest = new TestCreateRequest(1L, 1L, "title", "description", "instructions", "githubUrl", TestTypeName.UNIT);
         var testType = new TestType(1L, TestTypeName.UNIT);
 
+        when(projectRepository.existsById(1L)).thenReturn(true);
         when(testTypeRepository.findByName(TestTypeName.UNIT)).thenReturn(Optional.of(testType));
         when(testRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         final var receivedEventWrapper = new TestCreatedEvent[1];
@@ -101,6 +108,7 @@ class TestServiceTest {
         var correlationId = UUID.randomUUID().toString();
         var testCreateRequest = new TestCreateRequest(1L, 1L, "title", "description", "instructions", "githubUrl", TestTypeName.INTEGRATION);
 
+        when(projectRepository.existsById(1L)).thenReturn(true);
         when(testTypeRepository.findByName(TestTypeName.INTEGRATION)).thenReturn(Optional.empty());
 
         // when && then
@@ -146,6 +154,7 @@ class TestServiceTest {
         // given
         Test testToUpdate = getNewTestWithAllFields();
         var testUpdateRequest = new TestUpdateRequest(null, "newTitle", null, null, null, null);
+        var authInfo = new AuthInfo(1L, List.of());
 
         when(testRepository.findById(1L)).thenReturn(Optional.of(testToUpdate));
         when(testRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -158,7 +167,7 @@ class TestServiceTest {
         );
 
         // when
-        var testResponse = testService.updateTest(1L, testUpdateRequest, UUID.randomUUID().toString());
+        var testResponse = testService.updateTest(1L, testUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(testResponse);
@@ -186,18 +195,20 @@ class TestServiceTest {
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestByIdExceptionWhenChangingTitleOfNonExistingTest() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         var testUpdateRequest = new TestUpdateRequest(null, "newTitle", null, null, null, null);
 
         when(testRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestByIdException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId));
+        assertThrows(NoSuchTestByIdException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId, authInfo));
     }
 
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestTypeByNameExceptionWhenChangingTypeWithNonExistingType() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Test testToUpdate = getNewTestWithAllFields();
         var testUpdateRequest = new TestUpdateRequest(null, null, null, null, null, TestTypeName.INTEGRATION);
@@ -206,13 +217,28 @@ class TestServiceTest {
         when(testTypeRepository.findByName(TestTypeName.INTEGRATION)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId));
+        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId, authInfo));
+    }
+
+    @org.junit.jupiter.api.Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenChangingTest() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        Test testToUpdate = getNewTestWithAllFields();
+        var testUpdateRequest = new TestUpdateRequest(null, "newTitle", null, null, null, null);
+
+        when(testRepository.findById(1L)).thenReturn(Optional.of(testToUpdate));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> testService.updateTest(1L, testUpdateRequest, correlationId, authInfo));
     }
 
     @org.junit.jupiter.api.Test
     void shouldDeleteAndReturnVoidWhenDeletingExistingTest() {
         // given
         Test testToDelete = getNewTestWithAllFields();
+        var authInfo = new AuthInfo(1L, List.of());
         final var receivedEventWrapper = new TestDeletedEvent[1];
 
         when(
@@ -225,7 +251,7 @@ class TestServiceTest {
         when(testRepository.findById(1L)).thenReturn(Optional.of(testToDelete));
 
         // when
-        testService.deleteTestById(1L, UUID.randomUUID().toString());
+        testService.deleteTestById(1L, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -238,11 +264,25 @@ class TestServiceTest {
     @org.junit.jupiter.api.Test
     void shouldThrowNoSuchTestByIdExceptionWhenDeletingNonExistingTest() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         when(testRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestByIdException.class, () -> testService.deleteTestById(1L, correlationId));
+        assertThrows(NoSuchTestByIdException.class, () -> testService.deleteTestById(1L, correlationId, authInfo));
+    }
+
+    @org.junit.jupiter.api.Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingTest() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        Test testToDelete = getNewTestWithAllFields();
+
+        when(testRepository.findById(1L)).thenReturn(Optional.of(testToDelete));
+
+        // when && then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> testService.deleteTestById(1L, correlationId, authInfo));
     }
 
     @org.junit.jupiter.api.Test

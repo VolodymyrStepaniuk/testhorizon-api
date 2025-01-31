@@ -10,6 +10,7 @@ import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameExce
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
@@ -232,6 +233,15 @@ public class GeneralControllerExceptionHandler {
                 "Password reset token expired: " + e.getToken());
         problemDetail.setTitle("Password reset token expired");
         problemDetail.setInstance(URI.create("/auth/reset-password"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {AccessToManageEntityDeniedException.class})
+    public ProblemDetail handleAccessToManageEntityDenied(AccessToManageEntityDeniedException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                "Access to manage " + e.getEntityName() + " denied");
+        problemDetail.setTitle("Access denied");
+        problemDetail.setInstance(URI.create(e.getEntityUrl()));
         return problemDetail;
     }
 

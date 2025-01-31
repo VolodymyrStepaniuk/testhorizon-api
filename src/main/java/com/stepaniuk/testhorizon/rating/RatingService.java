@@ -33,9 +33,10 @@ public class RatingService {
 
         Long userId = request.getUserId();
 
-        if(userId.equals(ratedByUserId)) {
+        if (userId.equals(ratedByUserId)) {
             throw new UserCannotChangeOwnRatingException(ratedByUserId);
         }
+        
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchUserByIdException(userId));
 

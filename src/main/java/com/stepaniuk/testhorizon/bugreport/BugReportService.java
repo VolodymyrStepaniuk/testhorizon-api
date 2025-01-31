@@ -15,7 +15,12 @@ import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
+import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +32,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
+import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
+
 @Service
 @RequiredArgsConstructor
 public class BugReportService {
@@ -37,11 +45,18 @@ public class BugReportService {
     private final BugReportStatusRepository bugReportStatusRepository;
     private final BugReportSeverityRepository bugReportSeverityRepository;
     private final BugReportProducer bugReportProducer;
+    private final ProjectRepository projectRepository;
 
     public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId, String correlationId) {
         BugReport bugReport = new BugReport();
 
-        bugReport.setProjectId(bugReportCreateRequest.getProjectId());
+        var projectId = bugReportCreateRequest.getProjectId();
+
+        if (!projectRepository.existsById(projectId)) {
+            throw new NoSuchProjectByIdException(projectId);
+        }
+
+        bugReport.setProjectId(projectId);
         bugReport.setTitle(bugReportCreateRequest.getTitle());
         bugReport.setDescription(bugReportCreateRequest.getDescription());
         bugReport.setEnvironment(bugReportCreateRequest.getEnvironment());
@@ -77,9 +92,13 @@ public class BugReportService {
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
     }
 
-    public void deleteBugReportById(Long id, String correlationId) {
+    public void deleteBugReportById(Long id, String correlationId, AuthInfo authInfo) {
         var bugReport = bugReportRepository.findById(id)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
+
+        if (hasNoAccessToManageBugReport(bugReport.getReporterId(), bugReport.getProjectId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("BugReport", "/bug-reports");
+        }
 
         bugReportRepository.delete(bugReport);
 
@@ -91,9 +110,13 @@ public class BugReportService {
         );
     }
 
-    public BugReportResponse updateBugReport(Long bugReportId, BugReportUpdateRequest bugReportUpdateRequest, String correlationId) {
+    public BugReportResponse updateBugReport(Long bugReportId, BugReportUpdateRequest bugReportUpdateRequest, String correlationId, AuthInfo authInfo) {
         var bugReport = bugReportRepository.findById(bugReportId)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(bugReportId));
+
+        if (hasNoAccessToManageBugReport(bugReport.getReporterId(), bugReport.getProjectId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("BugReport", "/bug-reports");
+        }
 
         var bugReportData = new BugReportUpdatedEvent.Data();
 
@@ -203,5 +226,11 @@ public class BugReportService {
                         bugReportMapper::toResponse
                 ), URI.create("/bug-reports")
         );
+    }
+
+    private boolean hasNoAccessToManageBugReport(Long reporterId, Long projectId, AuthInfo authInfo) {
+        Long ownerId = projectRepository.findProjectOwnerIdById(projectId);
+
+        return !(isOwner(authInfo, reporterId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()) || isOwner(authInfo, ownerId));
     }
 }

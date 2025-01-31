@@ -31,12 +31,12 @@ public class CommentController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<CommentResponse> updateComment(@PathVariable Long id, @Valid @RequestBody CommentUpdateRequest commentUpdateRequest, AuthInfo authInfo) {
-        return ResponseEntity.ok(commentService.updateComment(id, authInfo.getUserId(), commentUpdateRequest, UUID.randomUUID().toString()));
+        return ResponseEntity.ok(commentService.updateComment(id, authInfo.getUserId(), commentUpdateRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCommentById(@PathVariable Long id) {
-        commentService.deleteCommentById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteCommentById(@PathVariable Long id, AuthInfo authInfo) {
+        commentService.deleteCommentById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 

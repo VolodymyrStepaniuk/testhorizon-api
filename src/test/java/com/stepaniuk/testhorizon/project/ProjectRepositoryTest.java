@@ -78,6 +78,18 @@ class ProjectRepositoryTest {
     }
 
     @Test
+    void shouldReturnOwnerIdWhenFindById() {
+        // when
+        Optional<Project> optionalProject = projectRepository.findById(1L);
+
+        // then
+        assertTrue(optionalProject.isPresent());
+        Project project = optionalProject.get();
+
+        assertEquals(1L, project.getOwnerId());
+    }
+
+    @Test
     void shouldUpdateProjectWhenChangingTitle() {
         // given
         Project projectToUpdate = projectRepository.findById(1L).orElseThrow();

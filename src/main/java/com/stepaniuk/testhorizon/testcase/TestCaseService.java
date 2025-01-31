@@ -6,12 +6,17 @@ import com.stepaniuk.testhorizon.event.testcase.TestCaseUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseCreateRequest;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseResponse;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
+import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriority;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityRepository;
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -23,11 +28,15 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
+import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
+
 @Service
 @RequiredArgsConstructor
 public class TestCaseService {
 
     private final TestCaseRepository testCaseRepository;
+    private final ProjectRepository projectRepository;
     private final TestCaseMapper testCaseMapper;
     private final PageMapper pageMapper;
     private final TestCasePriorityRepository testCasePriorityRepository;
@@ -36,7 +45,13 @@ public class TestCaseService {
     public TestCaseResponse createTestCase(TestCaseCreateRequest testCaseCreateRequest, Long authorId, String correlationId) {
         TestCase testCase = new TestCase();
 
-        testCase.setProjectId(testCaseCreateRequest.getProjectId());
+        var projectId = testCaseCreateRequest.getProjectId();
+
+        if (!projectRepository.existsById(projectId)) {
+            throw new NoSuchProjectByIdException(projectId);
+        }
+
+        testCase.setProjectId(projectId);
         testCase.setAuthorId(authorId);
         testCase.setTitle(testCaseCreateRequest.getTitle());
         testCase.setDescription(testCaseCreateRequest.getDescription());
@@ -68,9 +83,14 @@ public class TestCaseService {
         return testCaseMapper.toResponse(testCase);
     }
 
-    public void deleteTestCaseById(Long id, String correlationId) {
+    public void deleteTestCaseById(Long id, String correlationId, AuthInfo authInfo) {
+
         var testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestCaseByIdException(id));
+
+        if (hasNoAccessToManageTestCase(testCase.getAuthorId(), testCase.getProjectId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("TestCase", "/test-cases");
+        }
 
         testCaseRepository.delete(testCase);
 
@@ -82,9 +102,13 @@ public class TestCaseService {
         );
     }
 
-    public TestCaseResponse updateTestCase(Long id, TestCaseUpdateRequest testCaseUpdateRequest, String correlationId) {
+    public TestCaseResponse updateTestCase(Long id, TestCaseUpdateRequest testCaseUpdateRequest, String correlationId, AuthInfo authInfo) {
         var testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestCaseByIdException(id));
+
+        if (hasNoAccessToManageTestCase(testCase.getAuthorId(), testCase.getProjectId(), authInfo)) {
+            throw new AccessToManageEntityDeniedException("TestCase", "/test-cases");
+        }
 
         var testCaseData = new TestCaseUpdatedEvent.Data();
 
@@ -168,5 +192,11 @@ public class TestCaseService {
                 testCases.map(testCaseMapper::toResponse),
                 URI.create("/test-cases")
         );
+    }
+
+    private boolean hasNoAccessToManageTestCase(Long ownerId, Long projectId, AuthInfo authInfo) {
+        Long projectOwnerId = projectRepository.findProjectOwnerIdById(projectId);
+
+        return !(isOwner(authInfo, ownerId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()) || isOwner(authInfo, projectOwnerId));
     }
 }

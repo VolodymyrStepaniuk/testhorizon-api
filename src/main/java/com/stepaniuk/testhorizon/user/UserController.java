@@ -22,40 +22,40 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id, AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.getUserById(id, authInfo));
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<UserResponse> getUserByEmail(@PathVariable String email) {
-        return ResponseEntity.ok(userService.getUserByEmail(email));
+    public ResponseEntity<UserResponse> getUserByEmail(@PathVariable String email, AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.getUserByEmail(email, authInfo));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest userRequest) {
-        return ResponseEntity.ok(userService.updateUser(id, userRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest userRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.updateUser(id, userRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUserById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id, AuthInfo authInfo) {
+        userService.deleteUserById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMe(AuthInfo authInfo)
             throws NoSuchUserByIdException {
-        return ResponseEntity.ok(userService.getUserById(authInfo.getUserId()));
+        return ResponseEntity.ok(userService.getUserById(authInfo.getUserId(), authInfo));
     }
 
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateMe(@RequestBody UserUpdateRequest userRequest, AuthInfo authInfo) {
-        return ResponseEntity.ok(userService.updateUser(authInfo.getUserId(), userRequest, UUID.randomUUID().toString()));
+        return ResponseEntity.ok(userService.updateUser(authInfo.getUserId(), userRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMe(AuthInfo authInfo) {
-        userService.deleteUserById(authInfo.getUserId(), UUID.randomUUID().toString());
+        userService.deleteUserById(authInfo.getUserId(), UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 
@@ -63,12 +63,13 @@ public class UserController {
     public ResponseEntity<PagedModel<UserResponse>> getAllUsers(Pageable pageable,
                                                                 @Nullable @RequestParam(required = false) List<Long> ids,
                                                                 @Nullable @RequestParam(required = false) String email,
-                                                                @Nullable @RequestParam(required = false) String fullName) {
-        return ResponseEntity.ok(userService.getAllUsers(pageable, ids, email, fullName));
+                                                                @Nullable @RequestParam(required = false) String fullName,
+                                                                AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.getAllUsers(pageable, ids, email, fullName, authInfo));
     }
 
     @GetMapping("/top")
-    public ResponseEntity<PagedModel<UserResponse>> getTopUsersByRating(Pageable pageable) {
-        return ResponseEntity.ok(userService.getTopUsersByRating(pageable));
+    public ResponseEntity<PagedModel<UserResponse>> getTopUsersByRating(Pageable pageable, AuthInfo authInfo) {
+        return ResponseEntity.ok(userService.getTopUsersByRating(pageable, authInfo));
     }
 }

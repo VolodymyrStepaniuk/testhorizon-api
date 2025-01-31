@@ -9,6 +9,7 @@ import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameExce
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -83,8 +83,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/projects/1")))
                 .andExpect(jsonPath("$._links.update.href", is("http://localhost/projects/1")))
                 .andExpect(jsonPath("$._links.delete.href", is("http://localhost/projects/1")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -110,8 +108,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.title", is("No such project status")))
                 .andExpect(jsonPath("$.detail", is("No project status with name " + ProjectStatusName.ACTIVE)))
                 .andExpect(jsonPath("$.instance", is("/projects")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -174,7 +170,7 @@ class ProjectControllerTest {
         ProjectResponse projectResponse = createProjectResponse();
 
         // when
-        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenReturn(projectResponse);
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any(), any())).thenReturn(projectResponse);
 
         // then
         mockMvc.perform(patch("/projects/" + projectId)
@@ -205,7 +201,7 @@ class ProjectControllerTest {
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("new title", null,
                 null, null, null);
 
-        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenThrow(
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any(), any())).thenThrow(
                 new NoSuchProjectByIdException(projectId)
         );
 
@@ -229,7 +225,7 @@ class ProjectControllerTest {
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest(null, null,
                 ProjectStatusName.ACTIVE, null, List.of());
 
-        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any())).thenThrow(
+        when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any(), any())).thenThrow(
                 new NoSuchProjectStatusByNameException(projectUpdateRequest.getStatus())
         );
 
@@ -241,6 +237,30 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such project status")))
                 .andExpect(jsonPath("$.detail", is("No project status with name " + projectUpdateRequest.getStatus())))
+                .andExpect(jsonPath("$.instance", is("/projects")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenUpdatingProject() throws Exception{
+        // given
+        Long projectId = 1L;
+
+        ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest(null, null,
+                ProjectStatusName.ACTIVE, null, List.of());
+
+        doThrow(new AccessToManageEntityDeniedException("Project", "/projects"))
+                .when(projectService)
+                .updateProject(eq(projectId), eq(projectUpdateRequest), any(), any());
+
+        // when
+        mockMvc.perform(patch("/projects/" + projectId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(projectUpdateRequest)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Project denied")))
                 .andExpect(jsonPath("$.instance", is("/projects")));
     }
 
@@ -265,7 +285,7 @@ class ProjectControllerTest {
 
         doThrow(new NoSuchProjectByIdException(projectId)).
                 when(projectService).
-                deleteProjectById(eq(projectId), any());
+                deleteProjectById(eq(projectId), any(), any());
 
         // when
         mockMvc.perform(delete("/projects/" + projectId)
@@ -275,6 +295,27 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such project")))
                 .andExpect(jsonPath("$.detail", is("No project with id " + projectId)))
+                .andExpect(jsonPath("$.instance", is("/projects")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenDeletingProject() throws Exception {
+        // given
+        Long projectId = 1L;
+
+        doThrow(new AccessToManageEntityDeniedException("Project", "/projects"))
+                .when(projectService)
+                .deleteProjectById(eq(projectId), any(), any());
+
+        // when
+        mockMvc.perform(delete("/projects/" + projectId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Project denied")))
                 .andExpect(jsonPath("$.instance", is("/projects")));
     }
 

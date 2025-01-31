@@ -37,13 +37,13 @@ public class BugReportController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<BugReportResponse> updateBugReport(@PathVariable Long id, @Valid @RequestBody BugReportUpdateRequest bugReportUpdateRequest) {
-        return ResponseEntity.ok(bugReportService.updateBugReport(id, bugReportUpdateRequest, UUID.randomUUID().toString()));
+    public ResponseEntity<BugReportResponse> updateBugReport(@PathVariable Long id, @Valid @RequestBody BugReportUpdateRequest bugReportUpdateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(bugReportService.updateBugReport(id, bugReportUpdateRequest, UUID.randomUUID().toString(), authInfo));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBugReportById(@PathVariable Long id) {
-        bugReportService.deleteBugReportById(id, UUID.randomUUID().toString());
+    public ResponseEntity<Void> deleteBugReportById(@PathVariable Long id, AuthInfo authInfo) {
+        bugReportService.deleteBugReportById(id, UUID.randomUUID().toString(), authInfo);
         return ResponseEntity.noContent().build();
     }
 

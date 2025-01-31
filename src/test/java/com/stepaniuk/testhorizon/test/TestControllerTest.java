@@ -6,6 +6,7 @@ import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.test.type.TestTypeName;
@@ -17,7 +18,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.Link;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -89,8 +89,6 @@ class TestControllerTest {
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/tests/1")))
                 .andExpect(jsonPath("$._links.update.href", is("http://localhost/tests/1")))
                 .andExpect(jsonPath("$._links.delete.href", is("http://localhost/tests/1")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -121,8 +119,6 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.title", is("No such test type")))
                 .andExpect(jsonPath("$.detail", is("No test type with name " + testCreateRequest.getType().name())))
                 .andExpect(jsonPath("$.instance", is("/tests")));
-
-        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -188,7 +184,7 @@ class TestControllerTest {
 
         var testResponse = createTestResponse();
 
-        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenReturn(testResponse);
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any(), any())).thenReturn(testResponse);
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -228,7 +224,7 @@ class TestControllerTest {
                 TestTypeName.ACCEPTANCE
         );
 
-        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenThrow(new NoSuchTestByIdException(testId));
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any(), any())).thenThrow(new NoSuchTestByIdException(testId));
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -257,7 +253,7 @@ class TestControllerTest {
                 TestTypeName.ACCEPTANCE
         );
 
-        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any())).thenThrow(new NoSuchTestTypeByNameException(testUpdateRequest.getType()));
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any(), any())).thenThrow(new NoSuchTestTypeByNameException(testUpdateRequest.getType()));
 
         // then
         mockMvc.perform(patch("/tests/" + testId)
@@ -268,6 +264,35 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such test type")))
                 .andExpect(jsonPath("$.detail", is("No test type with name " + testUpdateRequest.getType())))
+                .andExpect(jsonPath("$.instance", is("/tests")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenUpdatingTest() throws Exception {
+        // given
+        var testId = 1L;
+
+        var testUpdateRequest = new TestUpdateRequest(
+                1L,
+                "title",
+                "description",
+                "instructions",
+                "https://github.com",
+                TestTypeName.ACCEPTANCE
+        );
+
+        when(testService.updateTest(eq(testId), eq(testUpdateRequest), any(), any())).thenThrow(new AccessToManageEntityDeniedException("Test", "/tests"));
+
+        // then
+        mockMvc.perform(patch("/tests/" + testId)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(testUpdateRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Test denied")))
                 .andExpect(jsonPath("$.instance", is("/tests")));
     }
 
@@ -292,7 +317,7 @@ class TestControllerTest {
 
         doThrow(new NoSuchTestByIdException(testId))
                 .when(testService)
-                .deleteTestById(eq(testId), any());
+                .deleteTestById(eq(testId), any(), any());
 
 
         // then
@@ -303,6 +328,28 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such test")))
                 .andExpect(jsonPath("$.detail", is("No test with id " + testId)))
+                .andExpect(jsonPath("$.instance", is("/tests")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionWhenDeletingTest() throws Exception {
+        // given
+        var testId = 1L;
+
+        doThrow(new AccessToManageEntityDeniedException("Test", "/tests"))
+                .when(testService)
+                .deleteTestById(eq(testId), any(), any());
+
+
+        // then
+        mockMvc.perform(delete("/tests/" + testId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Test denied")))
                 .andExpect(jsonPath("$.instance", is("/tests")));
     }
 

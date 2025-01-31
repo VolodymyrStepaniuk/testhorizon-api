@@ -10,9 +10,13 @@ import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
 import com.stepaniuk.testhorizon.payload.comment.exception.CommentAuthorMismatchException;
 import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
-import com.stepaniuk.testhorizon.payload.user.UserResponse;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
-import com.stepaniuk.testhorizon.user.UserService;
+import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.user.UserRepository;
+import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +29,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.UUID;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
+import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
+
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -32,8 +39,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
     private final PageMapper pageMapper;
-    private final UserService userService;
     private final CommentProducer commentProducer;
+    private final UserRepository userRepository;
 
 
     public CommentResponse createComment(CommentCreateRequest commentCreateRequest, Long authorId, String correlationId) {
@@ -57,9 +64,13 @@ public class CommentService {
     }
 
 
-    public CommentResponse updateComment(Long commentId, Long userId, CommentUpdateRequest commentUpdateRequest, String correlationId) {
+    public CommentResponse updateComment(Long commentId, Long userId, CommentUpdateRequest commentUpdateRequest, String correlationId, AuthInfo authInfo) {
         var comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NoSuchCommentByIdException(commentId));
+
+        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)){
+            throw new AccessToManageEntityDeniedException("Comment", "/comments");
+        }
 
         if (!comment.getAuthorId().equals(userId)) {
             throw new CommentAuthorMismatchException(commentId, userId);
@@ -81,9 +92,13 @@ public class CommentService {
         return commentMapper.toResponse(updatedComment, getAuthorInfo(userId));
     }
 
-    public void deleteCommentById(Long id, String correlationId) {
+    public void deleteCommentById(Long id, String correlationId, AuthInfo authInfo) {
         var comment = commentRepository.findById(id)
                 .orElseThrow(() -> new NoSuchCommentByIdException(id));
+
+        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)){
+            throw new AccessToManageEntityDeniedException("Comment", "/comments");
+        }
 
         commentRepository.delete(comment);
 
@@ -96,8 +111,9 @@ public class CommentService {
     }
 
     private UserInfo getAuthorInfo(Long authorId) {
-        UserResponse author = userService.getUserById(authorId);
-        return new UserInfo(author.getFirstName(), author.getLastName());
+       User user = userRepository.findById(authorId)
+                .orElseThrow(() -> new NoSuchUserByIdException(authorId));
+        return new UserInfo(user.getFirstName(), user.getLastName());
     }
 
     public PagedModel<CommentResponse> getAllComments(Pageable pageable,
@@ -133,5 +149,9 @@ public class CommentService {
                 comments.map(comment -> commentMapper.toResponse(comment, getAuthorInfo(comment.getAuthorId()))),
                 URI.create("/comments")
         );
+    }
+
+    private  boolean hasNoAccessToManageComment(Long authorId, AuthInfo authInfo){
+        return !(isOwner(authInfo, authorId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()));
     }
 }

@@ -11,6 +11,7 @@ import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
@@ -204,7 +205,7 @@ class BugReportControllerTest {
         var bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null,
                 null, null, null, null);
 
-        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any())).thenReturn(bugReportResponse);
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any())).thenReturn(bugReportResponse);
 
         // then
         mockMvc.perform(patch("/bug-reports/" + bugReportId).contentType("application/json")
@@ -229,14 +230,14 @@ class BugReportControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnBugNoSuchBugReportByIdExceptionResponseWhenUpdatingBugReport() throws Exception {
+    void shouldReturnErrorResponseBugNoSuchBugReportByIdExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
                 null, null, null);
 
         // when
-        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
                 .thenThrow(new NoSuchBugReportByIdException(bugReportId));
 
         // then
@@ -251,14 +252,14 @@ class BugReportControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnBugNoSuchBugReportSeverityByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
+    void shouldReturnErrorResponseBugNoSuchBugReportSeverityByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
                 null, BugReportSeverityName.LOW, null);
 
         // when
-        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
                 .thenThrow(new NoSuchBugReportSeverityByNameException(bugReportUpdateRequest.getSeverity()));
 
         // then
@@ -273,14 +274,14 @@ class BugReportControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnBugNoSuchBugReportStatusByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
+    void shouldReturnErrorResponseBugNoSuchBugReportStatusByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
                 null, null, BugReportStatusName.CLOSED);
 
         // when
-        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any()))
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
                 .thenThrow(new NoSuchBugReportStatusByNameException(bugReportUpdateRequest.getStatus()));
 
         // then
@@ -290,6 +291,28 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such bug report status")))
                 .andExpect(jsonPath("$.detail", is("No bug report status with name " + bugReportUpdateRequest.getStatus())))
+                .andExpect(jsonPath("$.instance", is("/bug-reports")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionResponseWhenUpdatingBugReport() throws Exception {
+        // given
+        Long bugReportId = 1L;
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
+                null, null, null);
+
+        // when
+        when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
+                .thenThrow(new AccessToManageEntityDeniedException("BugReport", "/bug-reports"));
+
+        // then
+        mockMvc.perform(patch("/bug-reports/" + bugReportId).contentType("application/json")
+                        .content(objectMapper.writeValueAsString(bugReportUpdateRequest)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage BugReport denied")))
                 .andExpect(jsonPath("$.instance", is("/bug-reports")));
     }
 
@@ -306,13 +329,13 @@ class BugReportControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnBugNoSuchBugReportByIdExceptionResponseWhenDeletingBugReport() throws Exception {
+    void shouldReturnErrorResponseBugNoSuchBugReportByIdExceptionResponseWhenDeletingBugReport() throws Exception {
         // when
         Long bugReportId = 1L;
 
         doThrow(new NoSuchBugReportByIdException(bugReportId))
                 .when(bugReportService)
-                .deleteBugReportById(eq(bugReportId), any());
+                .deleteBugReportById(eq(bugReportId), any(), any());
 
         // then
         mockMvc.perform(delete("/bug-reports/" + bugReportId)
@@ -322,6 +345,27 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such bug report")))
                 .andExpect(jsonPath("$.detail", is("No bug report with id 1")))
+                .andExpect(jsonPath("$.instance", is("/bug-reports")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseAccessToManageEntityDeniedExceptionResponseWhenDeletingBugReport() throws Exception {
+        // when
+        Long bugReportId = 1L;
+
+        doThrow(new AccessToManageEntityDeniedException("BugReport", "/bug-reports"))
+                .when(bugReportService)
+                .deleteBugReportById(eq(bugReportId), any(), any());
+
+        // then
+        mockMvc.perform(delete("/bug-reports/" + bugReportId)
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage BugReport denied")))
                 .andExpect(jsonPath("$.instance", is("/bug-reports")));
     }
 

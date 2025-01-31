@@ -10,10 +10,12 @@ import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
 import com.stepaniuk.testhorizon.payload.comment.exception.CommentAuthorMismatchException;
 import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdException;
-import com.stepaniuk.testhorizon.payload.user.UserResponse;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
-import com.stepaniuk.testhorizon.user.UserService;
+import com.stepaniuk.testhorizon.user.User;
+import com.stepaniuk.testhorizon.user.UserRepository;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -31,6 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -53,16 +56,15 @@ class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @MockitoBean
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Test
     void shouldReturnCommentResponseWhenCreatingComment() {
         // given
         CommentCreateRequest commentCreateRequest = new CommentCreateRequest(CommentEntityType.TEST, 1L, "Comment content");
         Long authorId = 1L;
-        UserResponse user = getNewUserResponseWithAllFields();
-
-        when(userService.getUserById(authorId)).thenReturn(user);
+        User user = getNewUserResponseWithAllFields();
+        when(userRepository.findById(authorId)).thenReturn(java.util.Optional.of(user));
         when(commentRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         final var receivedEventWrapper = new CommentCreatedEvent[1];
         when(
@@ -97,12 +99,13 @@ class CommentServiceTest {
         // given
         Long commentId = 1L;
         Long userId = 1L;
+        var authInfo = new AuthInfo(1L, List.of());
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
         Comment comment = getNewCommentWithAllFields(commentId);
-        UserResponse user = getNewUserResponseWithAllFields();
+        User user = getNewUserResponseWithAllFields();
 
         // when
-        when(userService.getUserById(userId)).thenReturn(user);
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
         when(commentRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
@@ -114,7 +117,7 @@ class CommentServiceTest {
                 )
         );
 
-        CommentResponse commentResponse = commentService.updateComment(commentId, userId, commentUpdateRequest, UUID.randomUUID().toString());
+        CommentResponse commentResponse = commentService.updateComment(commentId, userId, commentUpdateRequest, UUID.randomUUID().toString(), authInfo);
 
         // then
         assertNotNull(commentResponse);
@@ -139,6 +142,7 @@ class CommentServiceTest {
     @Test
     void shouldThrowNoSuchCommentByIdExceptionWhenUpdatingNonExistingComment() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
         Long userId = 1L;
@@ -148,12 +152,13 @@ class CommentServiceTest {
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.empty());
 
         // then
-        assertThrows(NoSuchCommentByIdException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId));
+        assertThrows(NoSuchCommentByIdException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId, authInfo));
     }
 
     @Test
     void shouldThrowCommentAuthorMismatchExceptionWhenUpdatingCommentWithDifferentAuthor() {
         // given
+        var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
         Long userId = 2L;
@@ -164,7 +169,24 @@ class CommentServiceTest {
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
 
         // then
-        assertThrows(CommentAuthorMismatchException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId));
+        assertThrows(CommentAuthorMismatchException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenUpdatingCommentWithoutAccess() {
+        // given
+        var authInfo = new AuthInfo(2L, List.of());
+        var correlationId = UUID.randomUUID().toString();
+        Long commentId = 1L;
+        Long userId = 1L;
+        CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
+        Comment comment = getNewCommentWithAllFields(commentId);
+
+        // when
+        when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
+
+        // then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> commentService.updateComment(commentId, userId, commentUpdateRequest, correlationId, authInfo));
     }
 
     @Test
@@ -172,6 +194,7 @@ class CommentServiceTest {
         // given
         Long commentId = 1L;
         Comment comment = getNewCommentWithAllFields(commentId);
+        var authInfo = new AuthInfo(1L, List.of());
 
         // when
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
@@ -184,7 +207,7 @@ class CommentServiceTest {
         );
 
         // when
-        commentService.deleteCommentById(commentId, UUID.randomUUID().toString());
+        commentService.deleteCommentById(commentId, UUID.randomUUID().toString(), authInfo);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -199,12 +222,28 @@ class CommentServiceTest {
         // given
         var correlationId = UUID.randomUUID().toString();
         Long commentId = 1L;
+        var authInfo = new AuthInfo(1L, List.of());
 
         // when
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.empty());
 
         // then
-        assertThrows(NoSuchCommentByIdException.class, () -> commentService.deleteCommentById(commentId, correlationId));
+        assertThrows(NoSuchCommentByIdException.class, () -> commentService.deleteCommentById(commentId, correlationId, authInfo));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingCommentWithoutAccess() {
+        // given
+        var correlationId = UUID.randomUUID().toString();
+        Long commentId = 1L;
+        Comment comment = getNewCommentWithAllFields(commentId);
+        var authInfo = new AuthInfo(2L, List.of());
+
+        // when
+        when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
+
+        // then
+        assertThrows(AccessToManageEntityDeniedException.class, () -> commentService.deleteCommentById(commentId, correlationId, authInfo));
     }
 
     @Test
@@ -216,7 +255,7 @@ class CommentServiceTest {
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userService.getUserById(any())).thenReturn(user);
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
 
         // when
         var comments = commentService.getAllComments(pageable, null);
@@ -249,7 +288,7 @@ class CommentServiceTest {
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userService.getUserById(any())).thenReturn(user);
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
 
         // when
         var comments = commentService.getAllComments(pageable, authorId);
@@ -284,7 +323,7 @@ class CommentServiceTest {
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findByEntityTypeAndEntityId(pageable, entityType, entityId)).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userService.getUserById(any())).thenReturn(user);
+        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
 
         // when
         var comments = commentService.getCommentsByEntity(pageable, entityId, entityType);
@@ -348,10 +387,10 @@ class CommentServiceTest {
         return new Comment(id, 1L, CommentEntityType.TEST, 1L, "Comment content", timeOfCreation, timeOfModification);
     }
 
-    private static UserResponse getNewUserResponseWithAllFields() {
+    private static User getNewUserResponseWithAllFields() {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        return new UserResponse(1L, "email@gmail.com", "Doe", "Doe", 129, timeOfCreation, timeOfModification);
+        return new User(1L, "John", "Doe", "email@gmail.com", 0, "password", true, true, true, true, Set.of(), timeOfCreation, timeOfModification);
     }
 }
