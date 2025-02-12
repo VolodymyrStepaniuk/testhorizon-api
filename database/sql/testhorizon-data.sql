@@ -100,3 +100,7 @@ VALUES (1, 'Great work!', NOW(), 2, 5, 1),
 INSERT INTO comments (id, author_id, content, created_at, updated_at, entity_type, entity_id)
 VALUES (1, 1, 'Comment 1', NOW(), NOW(), 'PROJECT', 1),
        (2, 2, 'Comment 2', NOW(), NOW(), 'TEST_CASE', 1);
+
+-- Insert data into files table
+INSERT INTO files (id, created_at, entity_id, entity_type, original_name)
+VALUES ('00000000-0000-0000-0000-000000000001', NOW(), 1, 'TEST', 'file.txt');

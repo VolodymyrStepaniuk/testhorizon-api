@@ -67,6 +67,18 @@ services:
     volumes:
       - zookeeper_data:/bitnami
 
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - AWS_DEFAULT_REGION=us-east-2
+      - DEBUG=1
+    volumes:
+      - ./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   postgres_data:
   pgadmin_data:

@@ -48,14 +48,6 @@ public class BugReport {
     @Column(name = "reporter_id", nullable = false)
     private Long reporterId;
 
-    @Type(ListArrayType.class)
-    @Column(name = "image_urls", columnDefinition = "text[]", nullable = false)
-    private List<String> imageUrls;
-
-    @Type(ListArrayType.class)
-    @Column(name = "video_urls", columnDefinition = "text[]", nullable = false)
-    private List<String> videoUrls;
-
     @ManyToOne
     @JoinColumn(name = "severity_id")
     private BugReportSeverity severity;
@@ -96,7 +88,6 @@ public class BugReport {
                 "description = " + description + ", " +
                 "environment = " + environment + ", " +
                 "reporterId = " + reporterId + ", " +
-                "imageUrls = " + imageUrls + ", " +
                 "severity = " + severity + ", " +
                 "status = " + status + ", " +
                 "createdAt = " + createdAt + ", " +

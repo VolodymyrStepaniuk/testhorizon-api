@@ -6,13 +6,13 @@ import com.stepaniuk.testhorizon.event.project.ProjectUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import jakarta.annotation.Nullable;
@@ -47,7 +47,6 @@ public class ProjectService {
         project.setDescription(projectCreateRequest.getDescription());
         project.setInstructions(projectCreateRequest.getInstructions());
         project.setGithubUrl(projectCreateRequest.getGithubUrl());
-        project.setImageUrls(projectCreateRequest.getImageUrls());
         project.setStatus(
                 projectStatusRepository.findByName(ProjectStatusName.ACTIVE)
                         .orElseThrow(() -> new NoSuchProjectStatusByNameException(ProjectStatusName.ACTIVE))
@@ -112,11 +111,6 @@ public class ProjectService {
         if (projectUpdateRequest.getInstructions() != null) {
             project.setInstructions(projectUpdateRequest.getInstructions());
             projectData.setInstructions(projectUpdateRequest.getInstructions());
-        }
-
-        if (projectUpdateRequest.getImageUrls() != null) {
-            project.setImageUrls(projectUpdateRequest.getImageUrls());
-            projectData.setImageUrls(projectUpdateRequest.getImageUrls());
         }
 
         if (projectUpdateRequest.getStatus() != null) {

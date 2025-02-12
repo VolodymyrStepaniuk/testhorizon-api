@@ -13,7 +13,6 @@ import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
 import java.time.Instant;
-import java.util.List;
 
 
 @Getter
@@ -46,12 +45,6 @@ public class BugReportResponse extends RepresentationModel<BugReportResponse> {
     @Environment
     @NotNull
     private String environment;
-
-    @NotNull
-    private List<@ImageUrl String> imageUrls;
-
-    @NotNull
-    private List<@VideoUrl String> videoUrls;
 
     @NotNull
     private BugReportSeverityName severity;

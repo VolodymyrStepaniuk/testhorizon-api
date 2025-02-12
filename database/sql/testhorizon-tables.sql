@@ -365,3 +365,20 @@ ALTER SEQUENCE password_reset_tokens_id_seq
 
 ALTER TABLE password_reset_tokens
     OWNER TO postgres_container;
+
+-- Table: files
+
+DROP TABLE IF EXISTS files;
+
+CREATE TABLE IF NOT EXISTS files
+(
+    id            UUID                        NOT NULL
+        PRIMARY KEY,
+    created_at    TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    entity_id     BIGINT                      NOT NULL,
+    entity_type   VARCHAR(255)                NOT NULL,
+    original_name VARCHAR(255)                NOT NULL
+);
+
+ALTER TABLE files
+    OWNER TO postgres_container;

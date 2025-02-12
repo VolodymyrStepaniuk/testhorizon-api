@@ -29,7 +29,7 @@ class BugReportRepositoryTest {
         BugReportSeverity severity = new BugReportSeverity(1L, BugReportSeverityName.HIGH);
         BugReportStatus status = new BugReportStatus(1L, BugReportStatusName.OPENED);
         BugReport bugReportToSave = new BugReport(null, 1L, "Bug Report Title", "Description",
-                "Enviroment",1L, List.of(),List.of(), severity, status, Instant.now(), Instant.now());
+                "Enviroment",1L,severity, status, Instant.now(), Instant.now());
 
         // when
         BugReport savedBugReport = bugReportRepository.save(bugReportToSave);
@@ -42,8 +42,6 @@ class BugReportRepositoryTest {
         assertEquals(bugReportToSave.getDescription(), savedBugReport.getDescription());
         assertEquals(bugReportToSave.getEnvironment(), savedBugReport.getEnvironment());
         assertEquals(bugReportToSave.getReporterId(), savedBugReport.getReporterId());
-        assertEquals(bugReportToSave.getImageUrls(), savedBugReport.getImageUrls());
-        assertEquals(bugReportToSave.getVideoUrls(), savedBugReport.getVideoUrls());
         assertEquals(bugReportToSave.getSeverity(), savedBugReport.getSeverity());
         assertEquals(bugReportToSave.getStatus(), savedBugReport.getStatus());
         assertEquals(bugReportToSave.getCreatedAt(), savedBugReport.getCreatedAt());
@@ -56,7 +54,7 @@ class BugReportRepositoryTest {
         BugReportSeverity severity = new BugReportSeverity(1L, BugReportSeverityName.HIGH);
         BugReportStatus status = new BugReportStatus(1L, BugReportStatusName.OPENED);
         BugReport bugReportToSave = new BugReport(null, 1L, null, "Description",
-                "Enviroment",1L, List.of(), List.of(), severity, status, Instant.now(), Instant.now());
+                "Enviroment",1L,  severity, status, Instant.now(), Instant.now());
 
         // when && then
         assertThrows(DataIntegrityViolationException.class, () -> bugReportRepository.save(bugReportToSave));
@@ -76,8 +74,6 @@ class BugReportRepositoryTest {
         assertEquals("Bug report description", bugReport.getDescription());
         assertEquals("Bug report environment", bugReport.getEnvironment());
         assertEquals(1L, bugReport.getReporterId());
-        assertFalse(bugReport.getImageUrls().isEmpty());
-        assertFalse(bugReport.getVideoUrls().isEmpty());
         assertEquals(BugReportSeverityName.LOW, bugReport.getSeverity().getName());
         assertEquals(BugReportStatusName.OPENED, bugReport.getStatus().getName());
         assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), bugReport.getCreatedAt());

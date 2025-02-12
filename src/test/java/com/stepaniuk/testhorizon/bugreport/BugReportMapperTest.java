@@ -12,7 +12,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +31,7 @@ class BugReportMapperTest {
         BugReportSeverity bugReportSeverity = new BugReportSeverity(1L, BugReportSeverityName.CRITICAL);
         BugReportStatus bugReportStatus = new BugReportStatus(1L, BugReportStatusName.OPENED);
         BugReport bugReport = new BugReport(null, 1L,  "Bug report title", "Bug report description",
-                "Bug report environment", 1L, List.of("https://image.com"), List.of("https://video.com"),
+                "Bug report environment", 1L,
                 bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
 
         // when
@@ -48,8 +47,6 @@ class BugReportMapperTest {
         assertEquals(bugReport.getReporterId(), bugReportResponse.getReporterId());
         assertEquals(bugReport.getSeverity().getName(), bugReportResponse.getSeverity());
         assertEquals(bugReport.getStatus().getName(), bugReportResponse.getStatus());
-        assertEquals(bugReport.getImageUrls(), bugReportResponse.getImageUrls());
-        assertEquals(bugReport.getVideoUrls(), bugReportResponse.getVideoUrls());
         assertEquals(bugReport.getCreatedAt(), bugReportResponse.getCreatedAt());
         assertEquals(bugReport.getUpdatedAt(), bugReportResponse.getUpdatedAt());
         assertTrue(bugReportResponse.hasLinks());

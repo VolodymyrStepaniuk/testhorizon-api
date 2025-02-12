@@ -47,11 +47,6 @@ public class Project {
     private String githubUrl;
 
     // Add tags
-
-    @Type(ListArrayType.class)
-    @Column(name = "image_urls", columnDefinition = "text[]", nullable = false)
-    private List<String> imageUrls;
-
     @ManyToOne
     @JoinColumn(name = "status_id")
     private ProjectStatus status;
@@ -88,7 +83,6 @@ public class Project {
                 "description = " + description + ", " +
                 "instructions = " + instructions + ", " +
                 "githubUrl = " + githubUrl + ", " +
-                "imageUrls = " + imageUrls + ", " +
                 "status = " + status + ", " +
                 "createdAt = " + createdAt + ", " +
                 "updatedAt = " + updatedAt + ")";

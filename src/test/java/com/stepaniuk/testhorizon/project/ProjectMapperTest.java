@@ -10,7 +10,6 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +28,7 @@ class ProjectMapperTest {
         ProjectStatus projectStatus = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
 
         Project project = new Project(null, 1L, "Project title", "Project description",
-                "Project instructions", "github.com/user/repo", List.of("image1", "image2"), projectStatus, timeOfCreation, timeOfModification);
+                "Project instructions", "github.com/user/repo", projectStatus, timeOfCreation, timeOfModification);
 
         // when
         ProjectResponse projectResponse = projectMapper.toResponse(project);
@@ -42,7 +41,6 @@ class ProjectMapperTest {
         assertEquals(project.getDescription(), projectResponse.getDescription());
         assertEquals(project.getInstructions(), projectResponse.getInstructions());
         assertEquals(project.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(project.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(project.getStatus().getName(), projectResponse.getStatus());
         assertEquals(project.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(project.getUpdatedAt(), projectResponse.getUpdatedAt());

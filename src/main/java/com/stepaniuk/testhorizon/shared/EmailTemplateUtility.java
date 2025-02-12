@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.shared;
 
-import com.stepaniuk.testhorizon.shared.exception.FailedToLoadEmailTemplateException;
+import com.stepaniuk.testhorizon.shared.exceptions.FailedToLoadEmailTemplateException;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.BufferedReader;

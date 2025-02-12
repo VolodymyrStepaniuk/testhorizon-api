@@ -12,7 +12,6 @@ import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -44,9 +43,6 @@ public class ProjectResponse extends RepresentationModel<ProjectResponse> {
     @GithubUrl
     @NotNull
     private String githubUrl;
-
-    @NotNull
-    private List<@ImageUrl String> imageUrls;
 
     @NotNull
     private ProjectStatusName status;

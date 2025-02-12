@@ -36,6 +36,11 @@ spring:
       access-expiration-time: 3600000
       refresh-expiration-time: 86400000
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   mail:
     host: smtp.gmail.com
     port: 587
@@ -48,8 +53,25 @@ spring:
           starttls:
             enable: true
 
+  cloud:
+    aws:
+      s3:
+        enabled: true
+        endpoint: ${AWS_ENDPOINT}
+      region:
+        static: ${AWS_REGION}
+      credentials:
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+      endpoint: ${AWS_ENDPOINT}
+
+
   config:
     import: "optional:file:.env[.properties]"
+
+s3:
+  bucket:
+      name: ${AWS_BUCKET_NAME}
 
 server:
   port: 3010

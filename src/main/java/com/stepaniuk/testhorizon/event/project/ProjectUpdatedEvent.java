@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.beans.ConstructorProperties;
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
@@ -41,9 +40,6 @@ public class ProjectUpdatedEvent extends ProjectEvent {
 
         @Nullable
         private String instructions;
-
-        @Nullable
-        private List<String> imageUrls;
 
     }
 }

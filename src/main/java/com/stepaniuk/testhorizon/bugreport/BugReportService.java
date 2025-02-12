@@ -16,9 +16,9 @@ import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.project.ProjectRepository;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.user.authority.AuthorityName;
 import jakarta.annotation.Nullable;
@@ -61,8 +61,6 @@ public class BugReportService {
         bugReport.setDescription(bugReportCreateRequest.getDescription());
         bugReport.setEnvironment(bugReportCreateRequest.getEnvironment());
         bugReport.setReporterId(reporterId);
-        bugReport.setImageUrls(bugReportCreateRequest.getImageUrls());
-        bugReport.setVideoUrls(bugReportCreateRequest.getVideoUrls());
 
         bugReport.setSeverity(
                 bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())
@@ -133,15 +131,6 @@ public class BugReportService {
         if (bugReportUpdateRequest.getEnvironment() != null && !bugReportUpdateRequest.getEnvironment().isEmpty()) {
             bugReport.setEnvironment(bugReportUpdateRequest.getEnvironment());
             bugReportData.setEnvironment(bugReportUpdateRequest.getEnvironment());
-        }
-        if (bugReportUpdateRequest.getImageUrls() != null && !bugReportUpdateRequest.getImageUrls().isEmpty()) {
-            bugReport.setImageUrls(bugReportUpdateRequest.getImageUrls());
-            bugReportData.setImageUrls(bugReportUpdateRequest.getImageUrls());
-        }
-
-        if (bugReportUpdateRequest.getVideoUrls() != null && !bugReportUpdateRequest.getVideoUrls().isEmpty()) {
-            bugReport.setVideoUrls(bugReportUpdateRequest.getVideoUrls());
-            bugReportData.setVideoUrls(bugReportUpdateRequest.getVideoUrls());
         }
 
         if (bugReportUpdateRequest.getSeverity() != null) {
