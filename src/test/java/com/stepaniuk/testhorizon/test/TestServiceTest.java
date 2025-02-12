@@ -9,7 +9,7 @@ import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
 import com.stepaniuk.testhorizon.project.ProjectRepository;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.test.type.TestType;

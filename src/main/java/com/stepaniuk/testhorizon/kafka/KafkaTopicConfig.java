@@ -57,4 +57,10 @@ public class KafkaTopicConfig {
         return TopicBuilder.name("bug-reports")
                 .build();
     }
+
+    @Bean
+    public NewTopic fileTopic() {
+        return TopicBuilder.name("files")
+                .build();
+    }
 }

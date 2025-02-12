@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.beans.ConstructorProperties;
 import java.time.Instant;
-import java.util.List;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
@@ -39,12 +38,6 @@ public class BugReportUpdatedEvent extends BugReportEvent {
 
         @Nullable
         private String environment;
-
-        @Nullable
-        private List<String> imageUrls;
-
-        @Nullable
-        private List<String> videoUrls;
 
         @Nullable
         private BugReportSeverityName severity;

@@ -9,8 +9,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.List;
-
 @Getter
 @AllArgsConstructor
 @ToString
@@ -32,12 +30,6 @@ public class BugReportCreateRequest {
     @Environment
     @NotNull
     private String environment;
-
-    @NotNull
-    private List<@ImageUrl String> imageUrls;
-
-    @NotNull
-    private List<@VideoUrl String> videoUrls;
 
     @NotNull
     private BugReportSeverityName severity;

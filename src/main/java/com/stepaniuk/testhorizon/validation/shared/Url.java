@@ -13,8 +13,8 @@ import java.lang.annotation.*;
 @Constraint(validatedBy = {})
 @Length(min = 1, max = 2048)
 @URL
-public @interface ImageUrl {
-    String message() default "{validation.constraints.shared.imageUrl}";
+public @interface Url {
+    String message() default "{validation.constraints.shared.url}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

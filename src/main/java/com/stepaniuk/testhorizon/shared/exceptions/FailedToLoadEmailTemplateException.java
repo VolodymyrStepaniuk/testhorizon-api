@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.shared.exception;
+package com.stepaniuk.testhorizon.shared.exceptions;
 
 public class FailedToLoadEmailTemplateException extends RuntimeException{
 

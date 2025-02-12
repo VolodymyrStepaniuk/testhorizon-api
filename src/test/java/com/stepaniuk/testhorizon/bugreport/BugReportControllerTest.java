@@ -11,7 +11,7 @@ import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
@@ -62,7 +62,7 @@ class BugReportControllerTest {
         Long reporterId = 1L;
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
-                "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
+                "environment", BugReportSeverityName.CRITICAL);
 
         var response = getResponse();
 
@@ -80,8 +80,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$.imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$.videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$.severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$.status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -100,7 +98,7 @@ class BugReportControllerTest {
         Long reporterId = 1L;
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
-                "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
+                "environment", BugReportSeverityName.CRITICAL);
 
         // when
         when(bugReportService.createBugReport(eq(bugReportCreateRequest), eq(reporterId), any()))
@@ -127,7 +125,7 @@ class BugReportControllerTest {
         Long reporterId = 1L;
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(1L, "title", "description",
-                "environment", List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL);
+                "environment", BugReportSeverityName.CRITICAL);
 
         // when
         when(bugReportService.createBugReport(eq(bugReportCreateRequest), eq(reporterId), any()))
@@ -166,8 +164,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$.imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$.videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$.severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$.status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -203,7 +199,7 @@ class BugReportControllerTest {
         var bugReportResponse = getResponse();
 
         var bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null,
-                null, null, null, null);
+                null, null);
 
         when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any())).thenReturn(bugReportResponse);
 
@@ -217,8 +213,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.title", is(bugReportResponse.getTitle())))
                 .andExpect(jsonPath("$.description", is(bugReportResponse.getDescription())))
                 .andExpect(jsonPath("$.environment", is(bugReportResponse.getEnvironment())))
-                .andExpect(jsonPath("$.imageUrls", is(bugReportResponse.getImageUrls())))
-                .andExpect(jsonPath("$.videoUrls", is(bugReportResponse.getVideoUrls())))
                 .andExpect(jsonPath("$.severity", is(bugReportResponse.getSeverity().name())))
                 .andExpect(jsonPath("$.status", is(bugReportResponse.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(bugReportResponse.getCreatedAt())))
@@ -234,7 +228,7 @@ class BugReportControllerTest {
         // given
         Long bugReportId = 1L;
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
-                null, null, null);
+                null);
 
         // when
         when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
@@ -255,8 +249,7 @@ class BugReportControllerTest {
     void shouldReturnErrorResponseBugNoSuchBugReportSeverityByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
-                null, BugReportSeverityName.LOW, null);
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, BugReportSeverityName.LOW, null);
 
         // when
         when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
@@ -277,7 +270,7 @@ class BugReportControllerTest {
     void shouldReturnErrorResponseBugNoSuchBugReportStatusByNameExceptionResponseWhenUpdatingBugReport() throws Exception {
         // given
         Long bugReportId = 1L;
-        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
+        BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null,
                 null, null, BugReportStatusName.CLOSED);
 
         // when
@@ -300,7 +293,7 @@ class BugReportControllerTest {
         // given
         Long bugReportId = 1L;
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null,
-                null, null, null);
+                null);
 
         // when
         when(bugReportService.updateBugReport(eq(bugReportId), eq(bugReportUpdateRequest), any(), any()))
@@ -396,8 +389,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -435,8 +426,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -474,8 +463,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -513,8 +500,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -552,8 +537,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -591,8 +574,6 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].imageUrls", is(response.getImageUrls())))
-                .andExpect(jsonPath("$._embedded.bugReports[0].videoUrls", is(response.getVideoUrls())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].severity", is(response.getSeverity().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -607,7 +588,7 @@ class BugReportControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new BugReportResponse(1L, 1L, 1L, "title", "description", "environment",
-                List.of("https://image.com", "https://image2.com"), List.of("https://video.com"), BugReportSeverityName.CRITICAL, BugReportStatusName.OPENED,
+                BugReportSeverityName.CRITICAL, BugReportStatusName.OPENED,
                 timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/bug-reports/1", "self"));

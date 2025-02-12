@@ -5,7 +5,7 @@ import com.stepaniuk.testhorizon.event.user.UserEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;

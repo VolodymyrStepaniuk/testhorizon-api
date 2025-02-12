@@ -26,7 +26,7 @@ class ProjectRepositoryTest {
         // given
         ProjectStatus projectStatus = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
         Project projectToSave = new Project(null, 1L, "New Project", "Project description",
-                "Project description","github.com",List.of(),projectStatus, Instant.now(), Instant.now());
+                "Project description","github.com",projectStatus, Instant.now(), Instant.now());
 
         // when
         Project savedProject = projectRepository.save(projectToSave);
@@ -39,7 +39,6 @@ class ProjectRepositoryTest {
         assertEquals(projectToSave.getDescription(), savedProject.getDescription());
         assertEquals(projectToSave.getInstructions(), savedProject.getInstructions());
         assertEquals(projectToSave.getGithubUrl(), savedProject.getGithubUrl());
-        assertEquals(projectToSave.getImageUrls(), savedProject.getImageUrls());
         assertEquals(projectToSave.getStatus(), savedProject.getStatus());
         assertEquals(projectToSave.getCreatedAt(), savedProject.getCreatedAt());
         assertEquals(projectToSave.getUpdatedAt(), savedProject.getUpdatedAt());
@@ -50,7 +49,7 @@ class ProjectRepositoryTest {
         // given
         ProjectStatus projectStatus = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
         Project projectToSave = new Project(null, 1L, null, "Project description",
-                "Project description","github.com",List.of(),projectStatus, Instant.now(), Instant.now());
+                "Project description","github.com",projectStatus, Instant.now(), Instant.now());
 
         // when & then
         assertThrows(DataIntegrityViolationException.class, () -> projectRepository.save(projectToSave));
@@ -71,7 +70,6 @@ class ProjectRepositoryTest {
         assertEquals("Project description", project.getDescription());
         assertEquals("Instructions", project.getInstructions());
         assertEquals("github.com", project.getGithubUrl());
-        assertFalse(project.getImageUrls().isEmpty());
         assertEquals(ProjectStatusName.ACTIVE, project.getStatus().getName());
         assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), project.getCreatedAt());
         assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), project.getUpdatedAt());

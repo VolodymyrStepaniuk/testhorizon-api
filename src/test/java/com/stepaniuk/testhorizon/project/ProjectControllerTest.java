@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ class ProjectControllerTest {
         Long userId = 1L;
 
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description", "instructions",
-                "https://github.com", List.of("https://image.com"));
+                "https://github.com");
 
         ProjectResponse projectResponse = createProjectResponse();
 
@@ -76,7 +76,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
                 .andExpect(jsonPath("$.githubUrl", is(projectResponse.getGithubUrl())))
-                .andExpect(jsonPath("$.imageUrls", is(projectResponse.getImageUrls())))
                 .andExpect(jsonPath("$.status", is(projectResponse.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(projectResponse.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(projectResponse.getUpdatedAt())))
@@ -92,7 +91,7 @@ class ProjectControllerTest {
         Long userId = 1L;
 
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description", "instructions",
-                "https://github.com", List.of("https://image.com"));
+                "https://github.com");
 
         when(projectService.createProject(eq(projectCreateRequest), eq(userId), any())).thenThrow(
                 new NoSuchProjectStatusByNameException(ProjectStatusName.ACTIVE)
@@ -130,7 +129,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
                 .andExpect(jsonPath("$.githubUrl", is(projectResponse.getGithubUrl())))
-                .andExpect(jsonPath("$.imageUrls", is(projectResponse.getImageUrls())))
                 .andExpect(jsonPath("$.status", is(projectResponse.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(projectResponse.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(projectResponse.getUpdatedAt())))
@@ -165,7 +163,7 @@ class ProjectControllerTest {
         Long projectId = 1L;
 
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("new title", null,
-                null, null, null);
+                null, null);
 
         ProjectResponse projectResponse = createProjectResponse();
 
@@ -183,7 +181,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
                 .andExpect(jsonPath("$.githubUrl", is(projectResponse.getGithubUrl())))
-                .andExpect(jsonPath("$.imageUrls", is(projectResponse.getImageUrls())))
                 .andExpect(jsonPath("$.status", is(projectResponse.getStatus().name())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(projectResponse.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(projectResponse.getUpdatedAt())))
@@ -199,7 +196,7 @@ class ProjectControllerTest {
         Long projectId = 1L;
 
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("new title", null,
-                null, null, null);
+                null, null);
 
         when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any(), any())).thenThrow(
                 new NoSuchProjectByIdException(projectId)
@@ -223,7 +220,7 @@ class ProjectControllerTest {
         Long projectId = 1L;
 
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest(null, null,
-                ProjectStatusName.ACTIVE, null, List.of());
+                ProjectStatusName.ACTIVE, null);
 
         when(projectService.updateProject(eq(projectId), eq(projectUpdateRequest), any(), any())).thenThrow(
                 new NoSuchProjectStatusByNameException(projectUpdateRequest.getStatus())
@@ -247,7 +244,7 @@ class ProjectControllerTest {
         Long projectId = 1L;
 
         ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest(null, null,
-                ProjectStatusName.ACTIVE, null, List.of());
+                ProjectStatusName.ACTIVE, null);
 
         doThrow(new AccessToManageEntityDeniedException("Project", "/projects"))
                 .when(projectService)
@@ -346,7 +343,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
                 .andExpect(jsonPath("$._embedded.projects[0].githubUrl", is(response.getGithubUrl())))
-                .andExpect(jsonPath("$._embedded.projects[0].imageUrls", is(response.getImageUrls())))
                 .andExpect(jsonPath("$._embedded.projects[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.projects[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.projects[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
@@ -383,7 +379,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
                 .andExpect(jsonPath("$._embedded.projects[0].githubUrl", is(response.getGithubUrl())))
-                .andExpect(jsonPath("$._embedded.projects[0].imageUrls", is(response.getImageUrls())))
                 .andExpect(jsonPath("$._embedded.projects[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.projects[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.projects[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
@@ -420,7 +415,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
                 .andExpect(jsonPath("$._embedded.projects[0].githubUrl", is(response.getGithubUrl())))
-                .andExpect(jsonPath("$._embedded.projects[0].imageUrls", is(response.getImageUrls())))
                 .andExpect(jsonPath("$._embedded.projects[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.projects[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.projects[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
@@ -457,7 +451,6 @@ class ProjectControllerTest {
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
                 .andExpect(jsonPath("$._embedded.projects[0].githubUrl", is(response.getGithubUrl())))
-                .andExpect(jsonPath("$._embedded.projects[0].imageUrls", is(response.getImageUrls())))
                 .andExpect(jsonPath("$._embedded.projects[0].status", is(response.getStatus().name())))
                 .andExpect(jsonPath("$._embedded.projects[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.projects[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
@@ -477,7 +470,6 @@ class ProjectControllerTest {
                 "description",
                 "instructions",
                 "https://github.com",
-                List.of("https://image.com"),
                 ProjectStatusName.ACTIVE,
                 timeOfCreation,
                 timeOfModification

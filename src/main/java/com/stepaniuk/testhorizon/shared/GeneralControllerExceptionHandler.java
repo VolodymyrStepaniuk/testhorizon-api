@@ -1,16 +1,18 @@
 package com.stepaniuk.testhorizon.shared;
 
+import com.stepaniuk.testhorizon.aws.exceptions.NoSuchFilesByNamesException;
+import com.stepaniuk.testhorizon.aws.exceptions.UnableUploadFileException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
-import com.stepaniuk.testhorizon.payload.comment.exception.CommentAuthorMismatchException;
-import com.stepaniuk.testhorizon.payload.comment.exception.NoSuchCommentByIdException;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
+import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
@@ -242,6 +244,24 @@ public class GeneralControllerExceptionHandler {
                 "Access to manage " + e.getEntityName() + " denied");
         problemDetail.setTitle("Access denied");
         problemDetail.setInstance(URI.create(e.getEntityUrl()));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchFilesByNamesException.class})
+    public ProblemDetail handleNoSuchFilesByNamesException(NoSuchFilesByNamesException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No files with names: " + e.getFileNames());
+        problemDetail.setTitle("No such files");
+        problemDetail.setInstance(URI.create("/files"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {UnableUploadFileException.class})
+    public ProblemDetail handleUnableUploadFileException(UnableUploadFileException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Unable to upload file: " + e.getFileName());
+        problemDetail.setTitle("Unable to upload file");
+        problemDetail.setInstance(URI.create("/files"));
         return problemDetail;
     }
 

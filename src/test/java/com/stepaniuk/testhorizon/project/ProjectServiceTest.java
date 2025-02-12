@@ -6,14 +6,14 @@ import com.stepaniuk.testhorizon.event.project.ProjectEvent;
 import com.stepaniuk.testhorizon.event.project.ProjectUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectByIdException;
-import com.stepaniuk.testhorizon.project.exception.NoSuchProjectStatusByNameException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
-import com.stepaniuk.testhorizon.shared.exception.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -60,10 +60,10 @@ class ProjectServiceTest {
 
 
     @Test
-    void shouldReturnProjectResponseWhenCreatingProject(){
+    void shouldReturnProjectResponseWhenCreatingProject() {
         // given
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description",
-                "instructions", "githubUrl", List.of("imageUrl1", "imageUrl2"));
+                "instructions", "githubUrl");
 
         when(projectRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(projectStatusRepository.findByName(ProjectStatusName.ACTIVE)).thenReturn(Optional.of(new ProjectStatus(1L, ProjectStatusName.ACTIVE)));
@@ -85,7 +85,6 @@ class ProjectServiceTest {
         assertEquals(projectCreateRequest.getDescription(), projectResponse.getDescription());
         assertEquals(projectCreateRequest.getInstructions(), projectResponse.getInstructions());
         assertEquals(projectCreateRequest.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(projectCreateRequest.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(ProjectStatusName.ACTIVE, projectResponse.getStatus());
         assertTrue(projectResponse.hasLinks());
 
@@ -98,11 +97,11 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectStatusByNameExceptionWhenCreatingProject(){
+    void shouldThrowNoSuchProjectStatusByNameExceptionWhenCreatingProject() {
         // given
         var correlationId = UUID.randomUUID().toString();
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description",
-                "instructions", "githubUrl", List.of("imageUrl1", "imageUrl2"));
+                "instructions", "githubUrl");
 
         when(projectStatusRepository.findByName(ProjectStatusName.ACTIVE)).thenReturn(Optional.empty());
 
@@ -111,7 +110,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldReturnProjectResponseWhenGettingProjectById(){
+    void shouldReturnProjectResponseWhenGettingProjectById() {
         // given
         Project project = getNewProjectWithAllFields();
 
@@ -128,7 +127,6 @@ class ProjectServiceTest {
         assertEquals(project.getDescription(), projectResponse.getDescription());
         assertEquals(project.getInstructions(), projectResponse.getInstructions());
         assertEquals(project.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(project.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(project.getStatus().getName(), projectResponse.getStatus());
         assertEquals(project.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(project.getUpdatedAt(), projectResponse.getUpdatedAt());
@@ -136,7 +134,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectByIdExceptionWhenGettingProjectById(){
+    void shouldThrowNoSuchProjectByIdExceptionWhenGettingProjectById() {
         // given
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -145,10 +143,10 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldUpdateAndReturnProjectResponseWhenChangingProjectTitle(){
+    void shouldUpdateAndReturnProjectResponseWhenChangingProjectTitle() {
         // given
         Project projectToUpdate = getNewProjectWithAllFields();
-        var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
+        var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null);
         var authInfo = new AuthInfo(1L, List.of());
         when(projectRepository.findById(1L)).thenReturn(java.util.Optional.of(projectToUpdate));
         when(projectRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
@@ -171,7 +169,6 @@ class ProjectServiceTest {
         assertEquals(projectToUpdate.getDescription(), updatedProjectResponse.getDescription());
         assertEquals(projectToUpdate.getInstructions(), updatedProjectResponse.getInstructions());
         assertEquals(projectToUpdate.getGithubUrl(), updatedProjectResponse.getGithubUrl());
-        assertEquals(projectToUpdate.getImageUrls(), updatedProjectResponse.getImageUrls());
         assertEquals(projectToUpdate.getStatus().getName(), updatedProjectResponse.getStatus());
         assertEquals(projectToUpdate.getCreatedAt(), updatedProjectResponse.getCreatedAt());
         assertEquals(projectToUpdate.getUpdatedAt(), updatedProjectResponse.getUpdatedAt());
@@ -187,11 +184,11 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectByIdExceptionWhenUpdatingProject(){
+    void shouldThrowNoSuchProjectByIdExceptionWhenUpdatingProject() {
         // given
         var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
-        ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
+        ProjectUpdateRequest projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null);
 
         when(projectRepository.findById(10L)).thenReturn(Optional.empty());
 
@@ -200,12 +197,12 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectStatusByNameExceptionWhenUpdatingProject(){
+    void shouldThrowNoSuchProjectStatusByNameExceptionWhenUpdatingProject() {
         // given
         var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Project projectToUpdate = getNewProjectWithAllFields();
-        var projectUpdateRequest = new ProjectUpdateRequest(null, null, ProjectStatusName.INACTIVE, null, List.of());
+        var projectUpdateRequest = new ProjectUpdateRequest(null, null, ProjectStatusName.INACTIVE, null);
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToUpdate));
         when(projectStatusRepository.findByName(ProjectStatusName.INACTIVE)).thenReturn(Optional.empty());
@@ -215,12 +212,12 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowAccessDeniedExceptionWhenUpdatingProject(){
+    void shouldThrowAccessDeniedExceptionWhenUpdatingProject() {
         // given
         var authInfo = new AuthInfo(2L, List.of());
         var correlationId = UUID.randomUUID().toString();
         Project projectToUpdate = getNewProjectWithAllFields();
-        var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null, null);
+        var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null);
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(projectToUpdate));
 
@@ -229,7 +226,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldDeleteAndReturnVoidWhenDeletingExistingProject(){
+    void shouldDeleteAndReturnVoidWhenDeletingExistingProject() {
         // given
         Project projectToDelete = getNewProjectWithAllFields();
         var authInfo = new AuthInfo(1L, List.of());
@@ -253,7 +250,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectByIdExceptionWhenDeletingProject(){
+    void shouldThrowNoSuchProjectByIdExceptionWhenDeletingProject() {
         // given
         var authInfo = new AuthInfo(1L, List.of());
         var correlationId = UUID.randomUUID().toString();
@@ -264,7 +261,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingProject(){
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenDeletingProject() {
         // given
         var authInfo = new AuthInfo(2L, List.of());
         var correlationId = UUID.randomUUID().toString();
@@ -276,13 +273,13 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllProjects(){
+    void shouldReturnPagedModelWhenGettingAllProjects() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var projectToFind = new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
-                List.of("imageUrl1", "imageUrl2"), new ProjectStatus(1L, ProjectStatusName.ACTIVE),
+                new ProjectStatus(1L, ProjectStatusName.ACTIVE),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -306,7 +303,6 @@ class ProjectServiceTest {
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
         assertEquals(projectToFind.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(projectToFind.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(projectToFind.getStatus().getName(), projectResponse.getStatus());
         assertEquals(projectToFind.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(projectToFind.getUpdatedAt(), projectResponse.getUpdatedAt());
@@ -314,7 +310,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllProjectsByOwnerId(){
+    void shouldReturnPagedModelWhenGettingAllProjectsByOwnerId() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -322,7 +318,7 @@ class ProjectServiceTest {
         Long ownerId = 1L;
 
         var projectToFind = new Project(1L, ownerId, "title", "description", "instructions", "githubUrl",
-                List.of("imageUrl1", "imageUrl2"), new ProjectStatus(1L, ProjectStatusName.ACTIVE),
+                new ProjectStatus(1L, ProjectStatusName.ACTIVE),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -345,7 +341,6 @@ class ProjectServiceTest {
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
         assertEquals(projectToFind.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(projectToFind.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(projectToFind.getStatus().getName(), projectResponse.getStatus());
         assertEquals(projectToFind.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(projectToFind.getUpdatedAt(), projectResponse.getUpdatedAt());
@@ -353,7 +348,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllProjectsByTitle(){
+    void shouldReturnPagedModelWhenGettingAllProjectsByTitle() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -361,7 +356,7 @@ class ProjectServiceTest {
         String title = "title";
 
         var projectToFind = new Project(1L, 1L, title, "description", "instructions", "githubUrl",
-                List.of("imageUrl1", "imageUrl2"), new ProjectStatus(1L, ProjectStatusName.ACTIVE),
+                new ProjectStatus(1L, ProjectStatusName.ACTIVE),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -384,7 +379,6 @@ class ProjectServiceTest {
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
         assertEquals(projectToFind.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(projectToFind.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(projectToFind.getStatus().getName(), projectResponse.getStatus());
         assertEquals(projectToFind.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(projectToFind.getUpdatedAt(), projectResponse.getUpdatedAt());
@@ -392,7 +386,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllProjectsByStatus(){
+    void shouldReturnPagedModelWhenGettingAllProjectsByStatus() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
@@ -400,7 +394,7 @@ class ProjectServiceTest {
         ProjectStatusName statusName = ProjectStatusName.ACTIVE;
 
         var projectToFind = new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
-                List.of("imageUrl1", "imageUrl2"), new ProjectStatus(1L, statusName),
+                new ProjectStatus(1L, statusName),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
@@ -424,7 +418,6 @@ class ProjectServiceTest {
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
         assertEquals(projectToFind.getGithubUrl(), projectResponse.getGithubUrl());
-        assertEquals(projectToFind.getImageUrls(), projectResponse.getImageUrls());
         assertEquals(statusName, projectResponse.getStatus());
         assertEquals(projectToFind.getCreatedAt(), projectResponse.getCreatedAt());
         assertEquals(projectToFind.getUpdatedAt(), projectResponse.getUpdatedAt());
@@ -432,7 +425,7 @@ class ProjectServiceTest {
     }
 
     @Test
-    void shouldThrowNoSuchProjectStatusByNameExceptionWhenGettingAllProjectsByStatus(){
+    void shouldThrowNoSuchProjectStatusByNameExceptionWhenGettingAllProjectsByStatus() {
         // given
         ProjectStatusName statusName = ProjectStatusName.ACTIVE;
         Pageable pageable = PageRequest.of(0, 2);
@@ -462,6 +455,6 @@ class ProjectServiceTest {
         ProjectStatus status = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
 
         return new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
-                List.of("imageUrl1", "imageUrl2"), status, timeOfCreation, timeOfModification);
+                status, timeOfCreation, timeOfModification);
     }
 }

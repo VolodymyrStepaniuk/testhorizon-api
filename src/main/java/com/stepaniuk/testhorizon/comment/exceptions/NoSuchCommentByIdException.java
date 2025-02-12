@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.payload.comment.exception;
+package com.stepaniuk.testhorizon.comment.exceptions;
 
 import lombok.Getter;
 

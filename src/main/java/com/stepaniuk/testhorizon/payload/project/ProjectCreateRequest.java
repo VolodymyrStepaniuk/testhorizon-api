@@ -8,8 +8,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.List;
-
 @Getter
 @AllArgsConstructor
 @ToString
@@ -31,7 +29,4 @@ public class ProjectCreateRequest {
     @GithubUrl
     @NotNull
     private String githubUrl;
-
-    @NotNull
-    private List<@ImageUrl String> imageUrls;
 }
