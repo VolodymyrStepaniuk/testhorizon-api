@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.aws.s3;
 
+import com.stepaniuk.testhorizon.types.files.FileEntityType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,7 +31,8 @@ public class File {
     private String originalName;
 
     @Column(name = "entity_type", nullable = false)
-    private String entityType;
+    @Enumerated(EnumType.STRING)
+    private FileEntityType entityType;
 
     @Column(name = "entity_id", nullable = false)
     private Long entityId;

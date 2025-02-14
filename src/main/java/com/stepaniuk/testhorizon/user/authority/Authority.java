@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.user.authority;
 
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

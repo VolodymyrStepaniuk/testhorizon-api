@@ -6,7 +6,7 @@ import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
-import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;

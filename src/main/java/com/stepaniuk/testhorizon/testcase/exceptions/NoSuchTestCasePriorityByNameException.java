@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.testcase.exceptions;
 
-import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
+
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import lombok.Getter;
 
 /**

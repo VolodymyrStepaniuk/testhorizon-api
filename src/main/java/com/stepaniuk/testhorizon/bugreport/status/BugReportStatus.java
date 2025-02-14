@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.bugreport.status;
 
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

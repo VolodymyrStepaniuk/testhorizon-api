@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.test.type;
 
+import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

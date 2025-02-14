@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import com.stepaniuk.testhorizon.user.authority.Authority;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;

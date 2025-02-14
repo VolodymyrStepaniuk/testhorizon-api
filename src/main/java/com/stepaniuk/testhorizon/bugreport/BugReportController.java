@@ -1,11 +1,12 @@
 package com.stepaniuk.testhorizon.bugreport;
 
-import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityName;
-import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
+
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

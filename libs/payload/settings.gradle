@@ -1,0 +1,4 @@
+rootProject.name = "payload"
+
+includeBuild("../validation")
+includeBuild("../types")

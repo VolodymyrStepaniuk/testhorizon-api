@@ -4,7 +4,7 @@ import com.stepaniuk.testhorizon.payload.testcase.TestCaseCreateRequest;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseResponse;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;

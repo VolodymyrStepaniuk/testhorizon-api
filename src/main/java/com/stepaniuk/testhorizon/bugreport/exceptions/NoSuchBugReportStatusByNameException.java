@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.bugreport.exceptions;
 
-import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
+
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import lombok.Getter;
 
 /**

@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.comment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
