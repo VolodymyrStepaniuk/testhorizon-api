@@ -6,6 +6,7 @@ import com.stepaniuk.testhorizon.event.file.FileDeleteEvent;
 import com.stepaniuk.testhorizon.event.file.FileUploadEvent;
 import com.stepaniuk.testhorizon.payload.file.FileResponse;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.types.files.FileEntityType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -44,7 +45,7 @@ public class S3Service {
     private String s3EndpointUrl;
 
 
-    public PagedModel<FileResponse> uploadFiles(List<MultipartFile> files, String entityType, Long entityId, String correlationId) {
+    public PagedModel<FileResponse> uploadFiles(List<MultipartFile> files, FileEntityType entityType, Long entityId, String correlationId) {
         String folderPath = buildFolderPath(entityType, entityId);
         createFolderIfNotExists(folderPath);
 
@@ -60,7 +61,7 @@ public class S3Service {
         );
     }
 
-    private FileResponse processFile(MultipartFile file, String folderPath, String entityType, Long entityId, String correlationId) {
+    private FileResponse processFile(MultipartFile file, String folderPath, FileEntityType entityType, Long entityId, String correlationId) {
         String fileName = file.getOriginalFilename();
         String filePath = buildFilePath(folderPath, fileName);
 
@@ -82,7 +83,7 @@ public class S3Service {
         return fileMapper.toResponse(fileUrl);
     }
 
-    public void deleteFiles(String entityType, Long entityId, List<String> fileNames, Pageable pageable, String correlationId) {
+    public void deleteFiles(FileEntityType entityType, Long entityId, List<String> fileNames, Pageable pageable, String correlationId) {
         Page<File> files = getFilesByNames(entityType, entityId, fileNames, pageable);
 
         if (files.isEmpty()) {
@@ -101,7 +102,7 @@ public class S3Service {
         fileRepository.deleteAll(files);
     }
 
-    public void deleteFolder(String entityType, Long entityId, String correlationId) {
+    public void deleteFolder(FileEntityType entityType, Long entityId, String correlationId) {
         String folderKey = buildFolderPath(entityType, entityId);
 
         List<S3Object> objects = listObjectsInFolder(folderKey);
@@ -125,11 +126,11 @@ public class S3Service {
         }
     }
 
-    public PagedModel<FileResponse> listFiles(String entityType, Long entityId) {
+    public PagedModel<FileResponse> listFiles(FileEntityType entityType, Long entityId) {
         return listFilesInS3(entityType, entityId);
     }
 
-    private String buildFolderPath(String entityType, Long entityId) {
+    private String buildFolderPath(FileEntityType entityType, Long entityId) {
         return String.format("%s/%s", entityType, entityId);
     }
 
@@ -152,7 +153,7 @@ public class S3Service {
                 .isEmpty();
     }
 
-    private Page<File> getFilesByNames(String entityType, Long entityId, List<String> fileNames, Pageable pageable) {
+    private Page<File> getFilesByNames(FileEntityType entityType, Long entityId, List<String> fileNames, Pageable pageable) {
         Specification<File> spec = (root, query, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("entityType"), entityType),
                 criteriaBuilder.equal(root.get("entityId"), entityId),
@@ -178,7 +179,7 @@ public class S3Service {
                 RequestBody.fromBytes(file.getBytes()));
     }
 
-    private File createFileEntity(String fileName, String entityType, Long entityId) {
+    private File createFileEntity(String fileName, FileEntityType entityType, Long entityId) {
         return new File(null, fileName, entityType, entityId, null);
     }
 
@@ -212,7 +213,7 @@ public class S3Service {
                 .build());
     }
 
-    private PagedModel<FileResponse> listFilesInS3(String entityType, Long entityId) {
+    private PagedModel<FileResponse> listFilesInS3(FileEntityType entityType, Long entityId) {
 
         String folderName = buildFolderPath(entityType, entityId);
         List<S3Object> objects = listS3Objects(folderName);

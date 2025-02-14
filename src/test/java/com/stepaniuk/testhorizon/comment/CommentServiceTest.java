@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentEvent;

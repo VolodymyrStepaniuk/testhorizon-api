@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.bugreport.exceptions;
 
-import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityName;
+
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
 import lombok.Getter;
 
 /**

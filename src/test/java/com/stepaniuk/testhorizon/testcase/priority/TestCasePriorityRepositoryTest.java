@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.testcase.priority;
 
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;

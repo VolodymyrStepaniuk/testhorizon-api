@@ -13,6 +13,10 @@ java {
 	}
 }
 
+bootJar {
+	archiveFileName = "${archiveBaseName.get()}-${version}-all.jar"
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -35,6 +39,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+
+	//custom
+	implementation 'com.stepaniuk.testhorizon:events'
+	implementation 'com.stepaniuk.testhorizon:payload'
+	implementation 'com.stepaniuk.testhorizon:validation'
+	implementation 'com.stepaniuk.testhorizon:types'
 
 	// aws
 	// https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-aws

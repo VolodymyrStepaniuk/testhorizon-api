@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;

@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.test.exceptions;
 
-import com.stepaniuk.testhorizon.test.type.TestTypeName;
+
+import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import lombok.Getter;
 
 /**

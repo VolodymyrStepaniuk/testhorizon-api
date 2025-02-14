@@ -2,7 +2,7 @@ package com.stepaniuk.testhorizon.user;
 
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.annotation.Nullable;
 import org.mapstruct.*;
 import org.springframework.hateoas.Link;

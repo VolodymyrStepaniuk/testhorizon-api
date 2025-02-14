@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.user.exceptions;
 
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import lombok.Getter;
 /**
  * Exception thrown when no authority is found in the database

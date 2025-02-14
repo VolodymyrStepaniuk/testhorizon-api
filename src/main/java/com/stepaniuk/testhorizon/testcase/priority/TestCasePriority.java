@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.testcase.priority;
 
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

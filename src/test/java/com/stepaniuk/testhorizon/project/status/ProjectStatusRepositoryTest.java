@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.project.status;
 
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;

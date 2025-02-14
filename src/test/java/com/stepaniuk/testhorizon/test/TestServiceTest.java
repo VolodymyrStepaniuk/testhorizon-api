@@ -13,7 +13,7 @@ import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedExc
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.test.type.TestType;
-import com.stepaniuk.testhorizon.test.type.TestTypeName;
+import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import com.stepaniuk.testhorizon.test.type.TestTypeRepository;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import org.apache.kafka.clients.producer.ProducerRecord;

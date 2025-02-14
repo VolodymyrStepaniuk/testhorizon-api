@@ -4,10 +4,10 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdExcepti
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverity;
-import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityRepository;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
-import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusRepository;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportCreatedEvent;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportDeletedEvent;

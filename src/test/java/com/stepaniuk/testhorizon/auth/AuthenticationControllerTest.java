@@ -11,7 +11,7 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordR
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
 import com.stepaniuk.testhorizon.user.exceptions.*;

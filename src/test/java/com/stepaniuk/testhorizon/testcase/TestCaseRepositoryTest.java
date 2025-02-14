@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.testcase;
 
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriority;
-import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityName;
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

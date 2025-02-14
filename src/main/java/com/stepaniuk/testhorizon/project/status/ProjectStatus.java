@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.project.status;
 
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

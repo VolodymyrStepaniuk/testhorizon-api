@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.project;
 
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
-import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

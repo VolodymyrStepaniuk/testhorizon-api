@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.testcase.priority;
 
+import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

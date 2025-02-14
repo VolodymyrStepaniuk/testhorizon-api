@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.aws.s3;
 
 import com.stepaniuk.testhorizon.payload.file.FileResponse;
+import com.stepaniuk.testhorizon.types.files.FileEntityType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
@@ -20,7 +21,7 @@ public class FileController {
 
     @PostMapping("/{entityType}/{id}")
     public ResponseEntity<PagedModel<FileResponse>> uploadFiles(
-            @PathVariable String entityType,
+            @PathVariable FileEntityType entityType,
             @PathVariable Long id,
             @RequestParam("files") List<MultipartFile> files) {
 
@@ -29,7 +30,7 @@ public class FileController {
 
     @DeleteMapping("/{entityType}/{id}")
     public ResponseEntity<Void> deleteFiles(
-            @PathVariable String entityType,
+            @PathVariable FileEntityType entityType,
             @PathVariable Long id,
             @RequestParam List<String> fileNames,
             Pageable pageable) {
@@ -41,7 +42,7 @@ public class FileController {
 
     @DeleteMapping("/delete-folder/{entityType}/{id}")
     public ResponseEntity<Void> deleteFolder(
-            @PathVariable String entityType,
+            @PathVariable FileEntityType entityType,
             @PathVariable Long id) {
 
         s3Service.deleteFolder(entityType, id, UUID.randomUUID().toString());
@@ -50,7 +51,7 @@ public class FileController {
 
     @GetMapping("/list/{entityType}/{id}")
     public ResponseEntity<PagedModel<FileResponse>> listFilesByEntityTypeAndId(
-            @PathVariable String entityType,
+            @PathVariable FileEntityType entityType,
             @PathVariable Long id) {
 
         return ResponseEntity.ok(s3Service.listFiles(entityType, id));
