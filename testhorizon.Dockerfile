@@ -12,12 +12,12 @@ COPY lombok.config lombok.config
 
 RUN chmod +x gradlew
 RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build -x test
+RUN ls -R /workspace/testhorizon/build/libs/
 
-# Prepare the runtime image
+# Runtime image
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy the JAR from the build stage
-COPY --from=build /workspace/build/libs/*.jar testhorizon.jar
+COPY --from=build /workspace/testhorizon/build/libs/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "testhorizon.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
