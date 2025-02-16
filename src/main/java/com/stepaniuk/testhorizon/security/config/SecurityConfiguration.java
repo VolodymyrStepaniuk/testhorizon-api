@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.security.config;
 
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfoHandlerMethodArgumentResolver;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

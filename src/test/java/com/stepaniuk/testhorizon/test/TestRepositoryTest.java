@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.test;
 
 import com.stepaniuk.testhorizon.test.type.TestType;
-import com.stepaniuk.testhorizon.test.type.TestTypeName;
+import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;

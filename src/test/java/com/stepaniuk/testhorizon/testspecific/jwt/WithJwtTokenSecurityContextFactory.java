@@ -3,7 +3,7 @@ package com.stepaniuk.testhorizon.testspecific.jwt;
 import com.stepaniuk.testhorizon.security.JwtProvider;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.authority.Authority;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;

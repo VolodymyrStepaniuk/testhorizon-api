@@ -2,7 +2,7 @@ package com.stepaniuk.testhorizon.test;
 
 import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.test.type.TestType;
-import com.stepaniuk.testhorizon.test.type.TestTypeName;
+import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;

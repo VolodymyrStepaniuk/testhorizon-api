@@ -18,7 +18,7 @@ import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapperImpl;
 import com.stepaniuk.testhorizon.user.UserRepository;
 import com.stepaniuk.testhorizon.user.authority.Authority;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCode;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;

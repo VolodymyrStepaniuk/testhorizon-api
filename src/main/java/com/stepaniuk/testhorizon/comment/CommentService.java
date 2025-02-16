@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+
 import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentUpdatedEvent;
@@ -13,9 +13,10 @@ import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserRepository;
-import com.stepaniuk.testhorizon.user.authority.AuthorityName;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;

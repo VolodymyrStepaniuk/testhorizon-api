@@ -9,6 +9,7 @@ import com.stepaniuk.testhorizon.event.file.FileUploadEvent;
 import com.stepaniuk.testhorizon.payload.file.FileResponse;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import com.stepaniuk.testhorizon.types.files.FileEntityType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -69,7 +70,7 @@ class S3ServiceTest {
         List<MultipartFile> files = List.of(
                 new MockMultipartFile("file1", fileName, "image/jpeg", new byte[0])
         );
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String correlationId = "correlationId";
 
@@ -99,7 +100,7 @@ class S3ServiceTest {
 
         assertEquals(String.format("%s/%s/%s/%s/%s", "http://localhost:4566", "testbucket", entityType, entityId, fileName), fileResponse.getFileUrl());
         assertTrue(fileResponse.getFileUrl().contains(fileName));
-        assertTrue(fileResponse.getFileUrl().contains("entityType"));
+        assertTrue(fileResponse.getFileUrl().contains(entityType.toString()));
         assertTrue(fileResponse.getFileUrl().contains("1"));
 
         var receivedEvent = receivedEventWrapper[0];
@@ -116,7 +117,7 @@ class S3ServiceTest {
         // given
         MultipartFile mockFile = mock(MultipartFile.class);
         List<MultipartFile> files = List.of(mockFile);
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String correlationId = "correlationId";
 
@@ -135,7 +136,7 @@ class S3ServiceTest {
     @Test
     void shouldDeleteAllFilesAndReturnVoid(){
         List<String> fileNames = List.of("file1.jpg");
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
 
         List<File> files = List.of(
@@ -167,7 +168,7 @@ class S3ServiceTest {
     void shouldThrowNoSuchFilesByNamesExceptionWhenDeleteAllFiles() {
         // given
         List<String> fileNames = List.of("file1.jpg");
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String correlationId = UUID.randomUUID().toString();
 
@@ -183,7 +184,7 @@ class S3ServiceTest {
     @Test
     void shouldDeleteFolderWithFiles() {
         // given
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String correlationId = UUID.randomUUID().toString();
         String folderKey = String.format("%s/%s", entityType, entityId);
@@ -206,7 +207,7 @@ class S3ServiceTest {
     @Test
     void shouldDeleteFolderWithoutFiles() {
         // given
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String correlationId = UUID.randomUUID().toString();
 
@@ -225,7 +226,7 @@ class S3ServiceTest {
     @Test
     void shouldReturnPagedModelWithFileResponsesWhenFilesExist() {
         // given
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String folderName = String.format("%s/%s", entityType, entityId);
         List<S3Object> s3Objects = List.of(
@@ -250,7 +251,7 @@ class S3ServiceTest {
     @Test
     void shouldReturnEmptyPagedModelWhenNoFilesExist() {
         // given
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
 
         when(s3Client.listObjectsV2(any(ListObjectsV2Request.class))).thenReturn(ListObjectsV2Response.builder().contents(Collections.emptyList()).build());
@@ -266,7 +267,7 @@ class S3ServiceTest {
     @Test
     void shouldReturnPagedModelWithOnlyExistingFilesInRepository() {
         // given
-        String entityType = "entityType";
+        FileEntityType entityType = FileEntityType.TEST;
         Long entityId = 1L;
         String folderName = String.format("%s/%s", entityType, entityId);
         List<S3Object> s3Objects = List.of(

@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.comment.type.CommentEntityType;
+
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

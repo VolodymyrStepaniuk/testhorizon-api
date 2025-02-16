@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.project.exceptions;
 
-import com.stepaniuk.testhorizon.project.status.ProjectStatusName;
+
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import lombok.Getter;
 
 /**

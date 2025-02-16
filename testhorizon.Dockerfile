@@ -1,24 +1,23 @@
 # syntax=docker/dockerfile:experimental
 FROM eclipse-temurin:17-jdk-alpine AS build
-WORKDIR /workspace
+WORKDIR /workspace/testhorizon
 
-# Copy Gradle wrapper and project files
 COPY gradle gradle
 COPY gradlew .
 COPY settings.gradle .
 COPY build.gradle .
 COPY src src
+COPY libs libs
 COPY lombok.config lombok.config
 
-# Use Gradle to build the project and generate the JAR
 RUN chmod +x gradlew
 RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build -x test
+RUN ls -R /workspace/testhorizon/build/libs/
 
-# Prepare the runtime image
+# Runtime image
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy the JAR from the build stage
-COPY --from=build /workspace/build/libs/*.jar testhorizon.jar
+COPY --from=build /workspace/testhorizon/build/libs/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "testhorizon.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

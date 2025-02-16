@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.aws.s3;
 
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
+import com.stepaniuk.testhorizon.types.files.FileEntityType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -23,7 +24,7 @@ class FileRepositoryTest {
     @Test
     void shouldSaveFile() {
         // given
-        File fileToSave = new File(null, "originalName", "entityType", 1L, Instant.now());
+        File fileToSave = new File(null, "originalName", FileEntityType.TEST, 1L, Instant.now());
 
         // when
         File savedFile = fileRepository.save(fileToSave);
@@ -40,7 +41,7 @@ class FileRepositoryTest {
     @Test
     void shouldThrowExceptionWhenSavingFileWithoutOriginalName() {
         // given
-        File fileToSave = new File(null, null, "entityType", 1L, Instant.now());
+        File fileToSave = new File(null, null, FileEntityType.TEST, 1L, Instant.now());
 
         // when & then
         assertThrows(DataIntegrityViolationException.class, () -> fileRepository.save(fileToSave));
@@ -59,7 +60,7 @@ class FileRepositoryTest {
 
         assertEquals(UUID.fromString("00000000-0000-0000-0000-000000000001"), file.getId());
         assertEquals("file.txt", file.getOriginalName());
-        assertEquals("TEST", file.getEntityType());
+        assertEquals(FileEntityType.TEST, file.getEntityType());
         assertEquals(1L, file.getEntityId());
         assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), file.getCreatedAt());
     }
@@ -121,7 +122,7 @@ class FileRepositoryTest {
     @Test
     void shouldReturnTrueWhenFileExistsByOriginalNameAndEntityTypeAndEntityId() {
         // when
-        boolean exists = fileRepository.existsByOriginalNameAndEntityTypeAndEntityId("file.txt", "TEST", 1L);
+        boolean exists = fileRepository.existsByOriginalNameAndEntityTypeAndEntityId("file.txt", FileEntityType.TEST, 1L);
 
         // then
         assertTrue(exists);
@@ -130,7 +131,7 @@ class FileRepositoryTest {
     @Test
     void shouldReturnFalseWhenFileDoesNotExistByOriginalNameAndEntityTypeAndEntityId() {
         // when
-        boolean exists = fileRepository.existsByOriginalNameAndEntityTypeAndEntityId("file.txt", "TEST", 100L);
+        boolean exists = fileRepository.existsByOriginalNameAndEntityTypeAndEntityId("file.txt", FileEntityType.TEST, 100L);
 
         // then
         assertFalse(exists);

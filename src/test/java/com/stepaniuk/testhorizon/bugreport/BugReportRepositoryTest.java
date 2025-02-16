@@ -1,9 +1,9 @@
 package com.stepaniuk.testhorizon.bugreport;
 
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverity;
-import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
-import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
