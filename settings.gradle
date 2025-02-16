@@ -1,6 +1,6 @@
 rootProject.name = 'testhorizon'
 
-includeBuild('/libs/events')
-includeBuild('/libs/payload')
-includeBuild('/libs/validation')
-includeBuild('/libs/types')
+includeBuild('libs/events')
+includeBuild('libs/payload')
+includeBuild('libs/validation')
+includeBuild('libs/types')
