@@ -16,12 +16,8 @@ RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build -x test
 # Prepare the runtime image
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-ARG APP=/workspace/testhorizon
-ARG EXTRACTED=${APP}/build/extracted
 
-COPY --from=build ${EXTRACTED}/dependencies/ ./
-COPY --from=build ${EXTRACTED}/spring-boot-loader/ ./
-COPY --from=build ${EXTRACTED}/snapshot-dependencies/ ./
-COPY --from=build ${EXTRACTED}/application/ ./
+# Copy the JAR from the build stage
+COPY --from=build /workspace/build/libs/*.jar testhorizon.jar
 
-ENTRYPOINT ["java", "org.springframework.boot.loader.JarLauncher"]
+ENTRYPOINT ["java", "-jar", "testhorizon.jar"]
