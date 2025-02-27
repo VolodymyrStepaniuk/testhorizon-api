@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
@@ -166,7 +167,7 @@ public class BugReportService {
     }
 
     public PagedModel<BugReportResponse> getAllBugReports(Pageable pageable,
-                                                          @Nullable Long projectId,
+                                                          @Nullable List<Long> projectIds,
                                                           @Nullable String title,
                                                           @Nullable Long reporterId,
                                                           @Nullable BugReportSeverityName severityName,
@@ -174,9 +175,9 @@ public class BugReportService {
 
         Specification<BugReport> specification = Specification.where(null);
 
-        if (projectId != null) {
+        if (projectIds != null && !projectIds.isEmpty()) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
-                    .equal(root.get("projectId"), projectId)
+                    .in(root.get("projectId")).value(projectIds)
             );
         }
 

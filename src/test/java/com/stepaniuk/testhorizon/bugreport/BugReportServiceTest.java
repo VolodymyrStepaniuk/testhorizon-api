@@ -368,14 +368,14 @@ class BugReportServiceTest {
     void shouldReturnPagedModelWhenGettingAllBugReportsByProjectId() {
         // given
         var bugReportToFind = getNewBugReportWithAllFields();
-        Long projectId = 1L;
+        List<Long> projectIds = List.of(1L);
 
         var pageable = PageRequest.of(0, 2);
 
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
 
         // when
-        var bugReports = bugReportService.getAllBugReports(pageable, projectId, null, null, null, null);
+        var bugReports = bugReportService.getAllBugReports(pageable, projectIds, null, null, null, null);
         var bugReportResponse = bugReports.getContent().iterator().next();
 
         // then
@@ -387,7 +387,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
         assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(projectId, bugReportResponse.getProjectId());
+        assertEquals(projectIds.get(0), bugReportResponse.getProjectId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());

@@ -15,6 +15,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -48,11 +49,10 @@ public class TestCaseController {
 
     @GetMapping
     public ResponseEntity<PagedModel<TestCaseResponse>> getAllTestCases(Pageable pageable,
-                                                                        @Nullable @RequestParam(required = false) Long projectId,
+                                                                        @Nullable @RequestParam(required = false) List<Long> projectIds,
                                                                         @Nullable @RequestParam(required = false) Long authorId,
-                                                                        @Nullable @RequestParam(required = false) TestCasePriorityName priority,
-                                                                        AuthInfo authInfo) {
+                                                                        @Nullable @RequestParam(required = false) TestCasePriorityName priority) {
 
-        return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, projectId, authorId, priority));
+        return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, projectIds, authorId, priority));
     }
 }

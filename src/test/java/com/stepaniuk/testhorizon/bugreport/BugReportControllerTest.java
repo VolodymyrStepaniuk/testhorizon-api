@@ -406,7 +406,7 @@ class BugReportControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(bugReportService.getAllBugReports(pageable, response.getId(), null, null, null, null))
+        when(bugReportService.getAllBugReports(pageable, List.of(response.getId()), null, null, null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/bug-reports"))
@@ -417,7 +417,7 @@ class BugReportControllerTest {
                         .contentType("application/json")
                         .param("page", "0")
                         .param("size", "2")
-                        .param("projectId", response.getId().toString())
+                        .param("projectIds", response.getId().toString())
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))

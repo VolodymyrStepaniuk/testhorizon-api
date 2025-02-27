@@ -324,20 +324,20 @@ class TestServiceTest {
     }
 
     @org.junit.jupiter.api.Test
-    void shouldReturnPagedModelWhenGettingTestsByProjectId() {
+    void shouldReturnPagedModelWhenGettingTestsByProjectIds() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
-        Long projectId = 1L;
+        List<Long> projectIds = List.of(1L);
 
         TestType type = new TestType(1L, TestTypeName.UNIT);
-        var testToFind = new Test(1L, projectId, 1L, 1L, "title", "description", "instructions", "githubUrl", type, timeOfCreation, timeOfModification);
+        var testToFind = new Test(1L, projectIds.get(0), 1L, 1L, "title", "description", "instructions", "githubUrl", type, timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
         when(testRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
 
-        var testResponsePage = testService.getAllTests(pageable, projectId, null, null, null);
+        var testResponsePage = testService.getAllTests(pageable, projectIds, null, null, null);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -348,7 +348,7 @@ class TestServiceTest {
 
         assertNotNull(testResponse);
         assertEquals(testToFind.getId(), testResponse.getId());
-        assertEquals(projectId, testResponse.getProjectId());
+        assertEquals(projectIds.get(0), testResponse.getProjectId());
         assertEquals(testToFind.getTestCaseId(), testResponse.getTestCaseId());
         assertEquals(testToFind.getAuthorId(), testResponse.getAuthorId());
         assertEquals(testToFind.getTitle(), testResponse.getTitle());

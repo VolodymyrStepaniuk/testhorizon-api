@@ -325,13 +325,13 @@ class TestCaseServiceTest {
     }
 
     @Test
-    void shouldReturnPagedModelWhenGettingAllTestCasesAndProjectIdNotNull() {
+    void shouldReturnPagedModelWhenGettingAllTestCasesAndProjectIdsNotEmpty() {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
-        Long projectId = 1L;
+        List<Long> projectIds = List.of(1L);
 
-        var testCaseToFind = new TestCase(1L, projectId, 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
+        var testCaseToFind = new TestCase(1L, projectIds.get(0), 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
                 new TestCasePriority(1L, TestCasePriorityName.LOW), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 1);
@@ -339,7 +339,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
-        var testCaseResponses = testCaseService.getAllTestCases(pageable, projectId, null, null);
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, projectIds, null, null);
         var testCaseResponse = testCaseResponses.getContent().iterator().next();
 
         //then
@@ -349,7 +349,7 @@ class TestCaseServiceTest {
         assertEquals(1, testCaseResponses.getContent().size());
 
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(projectId, testCaseResponse.getProjectId());
+        assertEquals(projectIds.get(0), testCaseResponse.getProjectId());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthorId());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());

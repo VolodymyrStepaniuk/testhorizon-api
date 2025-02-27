@@ -380,13 +380,13 @@ class TestCaseControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenProjectIdNotNull() throws Exception {
+    void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenProjectIdsNotEmpty() throws Exception {
         // given
         var response = createResponse();
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, response.getProjectId(), null, null))
+        when(testCaseService.getAllTestCases(pageable, List.of(response.getProjectId()), null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -397,7 +397,7 @@ class TestCaseControllerTest {
                         .contentType("application/json")
                         .param("page", "0")
                         .param("size", "2")
-                        .param("projectId", response.getId().toString())
+                        .param("projectIds", response.getId().toString())
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))

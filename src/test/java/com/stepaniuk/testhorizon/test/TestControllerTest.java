@@ -391,11 +391,11 @@ class TestControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnPageOfTestResponsesWhenGettingAllTestsWhenProjectIdNotNull() throws Exception {
+    void shouldReturnPageOfTestResponsesWhenGettingAllTestsWhenProjectIdNotEmpty() throws Exception {
         // given
         var response = createTestResponse();
         var pageable = PageRequest.of(0, 2);
-        var projectId = 1L;
+        var projectId = List.of(1L);
 
         when(testService.getAllTests(pageable, projectId, null, null, null))
                 .thenReturn(
@@ -408,7 +408,7 @@ class TestControllerTest {
                         .contentType("application/json")
                         .param("page", "0")
                         .param("size", "2")
-                        .param("projectId", response.getId().toString())
+                        .param("projectIds", response.getId().toString())
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))

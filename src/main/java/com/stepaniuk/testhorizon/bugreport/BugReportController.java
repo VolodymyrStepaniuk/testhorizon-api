@@ -17,6 +17,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -50,12 +51,12 @@ public class BugReportController {
 
     @GetMapping
     public ResponseEntity<PagedModel<BugReportResponse>> getAllBugReports(Pageable pageable,
-                                                                          @Nullable @RequestParam(required = false) Long projectId,
+                                                                          @Nullable @RequestParam(required = false) List<Long> projectIds,
                                                                           @Nullable @RequestParam(required = false) String title,
                                                                           @Nullable @RequestParam(required = false) Long reporterId,
                                                                           @Nullable @RequestParam(required = false) BugReportSeverityName severityName,
                                                                           @Nullable @RequestParam(required = false) BugReportStatusName status) {
 
-        return ResponseEntity.ok(bugReportService.getAllBugReports(pageable, projectId, title, reporterId, severityName, status));
+        return ResponseEntity.ok(bugReportService.getAllBugReports(pageable, projectIds, title, reporterId, severityName, status));
     }
 }
