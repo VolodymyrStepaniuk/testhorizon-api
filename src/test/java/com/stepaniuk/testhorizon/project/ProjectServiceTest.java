@@ -4,11 +4,13 @@ import com.stepaniuk.testhorizon.event.project.ProjectCreatedEvent;
 import com.stepaniuk.testhorizon.event.project.ProjectDeletedEvent;
 import com.stepaniuk.testhorizon.event.project.ProjectEvent;
 import com.stepaniuk.testhorizon.event.project.ProjectUpdatedEvent;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
@@ -58,6 +60,8 @@ class ProjectServiceTest {
     @MockitoBean
     private ProjectStatusRepository projectStatusRepository;
 
+    @MockitoBean
+    private UserInfoService userInfoService;
 
     @Test
     void shouldReturnProjectResponseWhenCreatingProject() {
@@ -65,6 +69,9 @@ class ProjectServiceTest {
         ProjectCreateRequest projectCreateRequest = new ProjectCreateRequest("title", "description",
                 "instructions", "githubUrl");
 
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(projectStatusRepository.findByName(ProjectStatusName.ACTIVE)).thenReturn(Optional.of(new ProjectStatus(1L, ProjectStatusName.ACTIVE)));
         final var receivedEventWrapper = new ProjectCreatedEvent[1];
@@ -80,7 +87,10 @@ class ProjectServiceTest {
 
         // then
         assertNotNull(projectResponse);
-        assertEquals(1L, projectResponse.getOwnerId());
+        assertEquals(1L, projectResponse.getOwner().getId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(projectCreateRequest.getTitle(), projectResponse.getTitle());
         assertEquals(projectCreateRequest.getDescription(), projectResponse.getDescription());
         assertEquals(projectCreateRequest.getInstructions(), projectResponse.getInstructions());
@@ -91,7 +101,7 @@ class ProjectServiceTest {
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
         assertEquals(1L, receivedEvent.getProjectId());
-        assertEquals(projectResponse.getOwnerId(), receivedEvent.getOwnerId());
+        assertEquals(projectResponse.getOwner().getId(), receivedEvent.getOwnerId());
 
         verify(projectRepository, times(1)).save(any());
     }
@@ -113,7 +123,9 @@ class ProjectServiceTest {
     void shouldReturnProjectResponseWhenGettingProjectById() {
         // given
         Project project = getNewProjectWithAllFields();
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
 
         // when
@@ -122,7 +134,10 @@ class ProjectServiceTest {
         // then
         assertNotNull(projectResponse);
         assertEquals(project.getId(), projectResponse.getId());
-        assertEquals(project.getOwnerId(), projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(project.getOwnerId(), projectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(project.getTitle(), projectResponse.getTitle());
         assertEquals(project.getDescription(), projectResponse.getDescription());
         assertEquals(project.getInstructions(), projectResponse.getInstructions());
@@ -146,6 +161,9 @@ class ProjectServiceTest {
     void shouldUpdateAndReturnProjectResponseWhenChangingProjectTitle() {
         // given
         Project projectToUpdate = getNewProjectWithAllFields();
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         var projectUpdateRequest = new ProjectUpdateRequest("newTitle", null, null, null);
         var authInfo = new AuthInfo(1L, List.of());
         when(projectRepository.findById(1L)).thenReturn(java.util.Optional.of(projectToUpdate));
@@ -164,7 +182,10 @@ class ProjectServiceTest {
         // then
         assertNotNull(updatedProjectResponse);
         assertEquals(projectToUpdate.getId(), updatedProjectResponse.getId());
-        assertEquals(projectToUpdate.getOwnerId(), updatedProjectResponse.getOwnerId());
+        assertNotNull(updatedProjectResponse.getOwner());
+        assertEquals(projectToUpdate.getOwnerId(), updatedProjectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), updatedProjectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), updatedProjectResponse.getOwner().getLastName());
         assertEquals(projectUpdateRequest.getTitle(), updatedProjectResponse.getTitle());
         assertEquals(projectToUpdate.getDescription(), updatedProjectResponse.getDescription());
         assertEquals(projectToUpdate.getInstructions(), updatedProjectResponse.getInstructions());
@@ -277,6 +298,7 @@ class ProjectServiceTest {
         // given
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
 
         var projectToFind = new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
                 new ProjectStatus(1L, ProjectStatusName.ACTIVE),
@@ -285,6 +307,7 @@ class ProjectServiceTest {
         var pageable = PageRequest.of(0, 2);
         Specification<Project> specification = Specification.where(null);
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.findAll(specification, pageable)).thenReturn(new PageImpl<>(List.of(projectToFind), pageable, 1));
 
         var projectPageResponse = projectService.getAllProjects(pageable, null, null, null);
@@ -298,7 +321,10 @@ class ProjectServiceTest {
 
         assertNotNull(projectResponse);
         assertEquals(projectToFind.getId(), projectResponse.getId());
-        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(projectToFind.getTitle(), projectResponse.getTitle());
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
@@ -317,12 +343,14 @@ class ProjectServiceTest {
 
         Long ownerId = 1L;
 
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
         var projectToFind = new Project(1L, ownerId, "title", "description", "instructions", "githubUrl",
                 new ProjectStatus(1L, ProjectStatusName.ACTIVE),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
+        when(userInfoService.getUserInfo(ownerId)).thenReturn(userInfo);
         when(projectRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(projectToFind), pageable, 1));
 
         var projectPageResponse = projectService.getAllProjects(pageable, ownerId, null, null);
@@ -336,7 +364,10 @@ class ProjectServiceTest {
 
         assertNotNull(projectResponse);
         assertEquals(projectToFind.getId(), projectResponse.getId());
-        assertEquals(ownerId, projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(ownerId, projectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(projectToFind.getTitle(), projectResponse.getTitle());
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
@@ -354,13 +385,14 @@ class ProjectServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         String title = "title";
-
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
         var projectToFind = new Project(1L, 1L, title, "description", "instructions", "githubUrl",
                 new ProjectStatus(1L, ProjectStatusName.ACTIVE),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(projectToFind), pageable, 1));
 
         var projectPageResponse = projectService.getAllProjects(pageable, null, title, null);
@@ -374,7 +406,10 @@ class ProjectServiceTest {
 
         assertNotNull(projectResponse);
         assertEquals(projectToFind.getId(), projectResponse.getId());
-        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(title, projectResponse.getTitle());
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());
@@ -393,12 +428,14 @@ class ProjectServiceTest {
 
         ProjectStatusName statusName = ProjectStatusName.ACTIVE;
 
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
         var projectToFind = new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
                 new ProjectStatus(1L, statusName),
                 timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(projectToFind), pageable, 1));
         when(projectStatusRepository.findByName(statusName)).thenReturn(Optional.of(projectToFind.getStatus()));
 
@@ -413,7 +450,10 @@ class ProjectServiceTest {
 
         assertNotNull(projectResponse);
         assertEquals(projectToFind.getId(), projectResponse.getId());
-        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(projectToFind.getOwnerId(), projectResponse.getOwner().getId());
+        assertEquals(userInfo.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(userInfo.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(projectToFind.getTitle(), projectResponse.getTitle());
         assertEquals(projectToFind.getDescription(), projectResponse.getDescription());
         assertEquals(projectToFind.getInstructions(), projectResponse.getInstructions());

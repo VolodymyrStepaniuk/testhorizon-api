@@ -9,11 +9,11 @@ import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
-
 import com.stepaniuk.testhorizon.project.status.ProjectStatusRepository;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.annotation.Nullable;
@@ -39,6 +39,7 @@ public class ProjectService {
     private final PageMapper pageMapper;
     private final ProjectStatusRepository projectStatusRepository;
     private final ProjectProducer projectProducer;
+    private final UserInfoService userInfoService;
 
     public ProjectResponse createProject(ProjectCreateRequest projectCreateRequest, Long ownerId, String correlationId) {
         Project project = new Project();
@@ -54,6 +55,7 @@ public class ProjectService {
         );
 
         var savedProject = projectRepository.save(project);
+        var ownerInfo = userInfoService.getUserInfo(ownerId);
 
         projectProducer.send(
                 new ProjectCreatedEvent(
@@ -62,12 +64,12 @@ public class ProjectService {
                 )
         );
 
-        return projectMapper.toResponse(savedProject);
+        return projectMapper.toResponse(savedProject, ownerInfo);
     }
 
     public ProjectResponse getProjectById(Long id) {
         return projectRepository.findById(id)
-                .map(projectMapper::toResponse)
+                .map(project -> projectMapper.toResponse(project, userInfoService.getUserInfo(project.getOwnerId())))
                 .orElseThrow(() -> new NoSuchProjectByIdException(id));
     }
 
@@ -124,6 +126,7 @@ public class ProjectService {
         }
 
         var updatedProject = projectRepository.save(project);
+        var ownerInfo = userInfoService.getUserInfo(updatedProject.getOwnerId());
 
         projectProducer.send(
                 new ProjectUpdatedEvent(
@@ -132,7 +135,7 @@ public class ProjectService {
                 )
         );
 
-        return projectMapper.toResponse(updatedProject);
+        return projectMapper.toResponse(updatedProject, ownerInfo);
     }
 
     public PagedModel<ProjectResponse> getAllProjects(Pageable pageable,
@@ -166,9 +169,8 @@ public class ProjectService {
         var projects = projectRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-                projects.map(
-                        projectMapper::toResponse
-                ), URI.create("/projects")
+                projects.map(project -> projectMapper.toResponse(project, userInfoService.getUserInfo(project.getOwnerId()))),
+                URI.create("/projects")
         );
     }
 

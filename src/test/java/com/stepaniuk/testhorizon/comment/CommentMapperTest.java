@@ -2,7 +2,7 @@ package com.stepaniuk.testhorizon.comment;
 
 import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
-import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ class CommentMapperTest {
 
         Comment comment = new Comment(null, 1L, CommentEntityType.TEST,
                 1L, "Comment content", timeOfCreation, timeOfModification);
-        UserInfo userInfo = new UserInfo("First Name", "Last Name");
+        UserInfo userInfo = new UserInfo(1L,"First Name", "Last Name");
 
         // when
         CommentResponse commentResponse = commentMapper.toResponse(comment, userInfo);
@@ -36,13 +36,15 @@ class CommentMapperTest {
         // then
         assertNotNull(commentResponse);
         assertNull(commentResponse.getId());
-        assertEquals(commentResponse.getEntityType(), comment.getEntityType());
-        assertEquals(commentResponse.getEntityId(), comment.getEntityId());
-        assertEquals(commentResponse.getContent(), comment.getContent());
-        assertEquals(commentResponse.getAuthor().getFirstName(), userInfo.getFirstName());
-        assertEquals(commentResponse.getAuthor().getLastName(), userInfo.getLastName());
-        assertEquals(commentResponse.getCreatedAt(), comment.getCreatedAt());
-        assertEquals(commentResponse.getUpdatedAt(), comment.getUpdatedAt());
+        assertNotNull(commentResponse.getAuthor());
+        assertEquals(comment.getAuthorId(), commentResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), commentResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), commentResponse.getAuthor().getLastName());
+        assertEquals(comment.getEntityType(), commentResponse.getEntityType());
+        assertEquals(comment.getEntityId(), commentResponse.getEntityId());
+        assertEquals(comment.getContent(), commentResponse.getContent());
+        assertEquals(comment.getCreatedAt(), commentResponse.getCreatedAt());
+        assertEquals(comment.getUpdatedAt(), commentResponse.getUpdatedAt());
         assertTrue(commentResponse.hasLinks());
         assertTrue(commentResponse.getLinks().hasLink("self"));
         assertTrue(commentResponse.getLinks().hasLink("update"));

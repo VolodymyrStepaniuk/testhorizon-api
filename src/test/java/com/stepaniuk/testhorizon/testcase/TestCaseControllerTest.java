@@ -1,6 +1,8 @@
 package com.stepaniuk.testhorizon.testcase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseCreateRequest;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseResponse;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
@@ -48,6 +50,7 @@ class TestCaseControllerTest {
 
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @Autowired
     private PageMapper pageMapper;
 
@@ -78,8 +81,11 @@ class TestCaseControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$.author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$.author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.preconditions", is(response.getPreconditions())))
@@ -137,8 +143,11 @@ class TestCaseControllerTest {
         mockMvc.perform(get("/test-cases/" + testCaseId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$.author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$.author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.preconditions", is(response.getPreconditions())))
@@ -191,8 +200,11 @@ class TestCaseControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$.author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$.author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.preconditions", is(response.getPreconditions())))
@@ -363,8 +375,11 @@ class TestCaseControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.testCases[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.testCases[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.testCases[0].preconditions", is(response.getPreconditions())))
@@ -386,7 +401,7 @@ class TestCaseControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, List.of(response.getProjectId()), null, null))
+        when(testCaseService.getAllTestCases(pageable, List.of(response.getProject().getId()), null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -401,8 +416,11 @@ class TestCaseControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.testCases[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.testCases[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.testCases[0].preconditions", is(response.getPreconditions())))
@@ -424,7 +442,7 @@ class TestCaseControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, null, response.getAuthorId(), null))
+        when(testCaseService.getAllTestCases(pageable, null, response.getAuthor().getId(), null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -435,12 +453,15 @@ class TestCaseControllerTest {
                         .contentType("application/json")
                         .param("page", "0")
                         .param("size", "2")
-                        .param("authorId", response.getAuthorId().toString())
+                        .param("authorId", response.getAuthor().getId().toString())
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.testCases[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.testCases[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.testCases[0].preconditions", is(response.getPreconditions())))
@@ -477,8 +498,11 @@ class TestCaseControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.testCases[0].authorId", is(response.getAuthorId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.testCases[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.testCases[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.testCases[0].preconditions", is(response.getPreconditions())))
@@ -498,8 +522,8 @@ class TestCaseControllerTest {
 
         var response = new TestCaseResponse(
                 1L,
-                1L,
-                1L,
+                new ProjectInfo(1L, "Project title"),
+                new UserInfo(1L, "Author name", "Author surname"),
                 "title",
                 "description",
                 "preconditions",

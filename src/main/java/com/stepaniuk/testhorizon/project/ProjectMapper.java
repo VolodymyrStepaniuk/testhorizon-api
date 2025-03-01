@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.project;
 
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import org.mapstruct.*;
 import org.springframework.hateoas.Link;
@@ -8,8 +9,12 @@ import org.springframework.hateoas.Link;
 public interface ProjectMapper {
 
     @Mapping(target = "status", source = "project.status.name")
+    @Mapping(target = "owner.id", source = "userInfo.id")
+    @Mapping(target = "owner.firstName", source = "userInfo.firstName")
+    @Mapping(target = "owner.lastName", source = "userInfo.lastName")
+    @Mapping(target = "id", source = "project.id")
     @BeanMapping(qualifiedByName = "addLinks")
-    ProjectResponse toResponse(Project project);
+    ProjectResponse toResponse(Project project, UserInfo userInfo);
 
     @AfterMapping
     @Named("addLinks")

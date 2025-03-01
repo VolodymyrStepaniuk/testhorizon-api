@@ -7,7 +7,7 @@ import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
 import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
 import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
-import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
@@ -75,6 +75,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.entityType", is(commentResponse.getEntityType().name())))
                 .andExpect(jsonPath("$.entityId", is(commentResponse.getEntityId()), Long.class))
                 .andExpect(jsonPath("$.content", is(commentResponse.getContent())))
+                .andExpect(jsonPath("$.author.id", is(commentResponse.getAuthor().getId()), Long.class))
                 .andExpect(jsonPath("$.author.firstName", is(commentResponse.getAuthor().getFirstName())))
                 .andExpect(jsonPath("$.author.lastName", is(commentResponse.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(commentResponse.getCreatedAt())))
@@ -107,6 +108,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.entityType", is(commentResponse.getEntityType().name())))
                 .andExpect(jsonPath("$.entityId", is(commentResponse.getEntityId()), Long.class))
                 .andExpect(jsonPath("$.content", is(commentResponse.getContent())))
+                .andExpect(jsonPath("$.author.id", is(commentResponse.getAuthor().getId()), Long.class))
                 .andExpect(jsonPath("$.author.firstName", is(commentResponse.getAuthor().getFirstName())))
                 .andExpect(jsonPath("$.author.lastName", is(commentResponse.getAuthor().getLastName())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(commentResponse.getCreatedAt())))
@@ -268,6 +270,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].entityType", is(response.getEntityType().name())))
                 .andExpect(jsonPath("$._embedded.comments[0].entityId", is(response.getEntityId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].content", is(response.getContent())))
+                .andExpect(jsonPath("$._embedded.comments[0].author.id", is(response.getAuthor().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].author.firstName", is(response.getAuthor().getFirstName())))
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -304,6 +307,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].entityType", is(response.getEntityType().name())))
                 .andExpect(jsonPath("$._embedded.comments[0].entityId", is(response.getEntityId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].content", is(response.getContent())))
+                .andExpect(jsonPath("$._embedded.comments[0].author.id", is(response.getAuthor().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].author.firstName", is(response.getAuthor().getFirstName())))
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -342,6 +346,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$._embedded.comments[0].entityType", is(response.getEntityType().name())))
                 .andExpect(jsonPath("$._embedded.comments[0].entityId", is(response.getEntityId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].content", is(response.getContent())))
+                .andExpect(jsonPath("$._embedded.comments[0].author.id", is(response.getAuthor().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.comments[0].author.firstName", is(response.getAuthor().getFirstName())))
                 .andExpect(jsonPath("$._embedded.comments[0].author.lastName", is(response.getAuthor().getLastName())))
                 .andExpect(jsonPath("$._embedded.comments[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -386,7 +391,7 @@ class CommentControllerTest {
                 CommentEntityType.TEST,
                 1L,
                 "Comment content",
-                new UserInfo("firstName", "lastName"),
+                new UserInfo(1L,"firstName", "lastName"),
                 timeOfCreation,
                 timeOfModification
         );

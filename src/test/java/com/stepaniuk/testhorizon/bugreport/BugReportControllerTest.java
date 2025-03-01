@@ -4,16 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
-import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
-import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
+import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -75,8 +77,11 @@ class BugReportControllerTest {
                         .content(objectMapper.writeValueAsString(bugReportCreateRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$.reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$.reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.environment", is(response.getEnvironment())))
@@ -159,8 +164,11 @@ class BugReportControllerTest {
         mockMvc.perform(get("/bug-reports/" + bugReportId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$.reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$.reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$.title", is(response.getTitle())))
                 .andExpect(jsonPath("$.description", is(response.getDescription())))
                 .andExpect(jsonPath("$.environment", is(response.getEnvironment())))
@@ -208,8 +216,11 @@ class BugReportControllerTest {
                         .content(objectMapper.writeValueAsString(bugReportUpdateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(bugReportResponse.getId()), Long.class))
-                .andExpect(jsonPath("$.projectId", is(bugReportResponse.getProjectId()), Long.class))
-                .andExpect(jsonPath("$.reporterId", is(bugReportResponse.getReporterId()), Long.class))
+                .andExpect(jsonPath("$.project.id", is(bugReportResponse.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$.project.title", is(bugReportResponse.getProject().getTitle())))
+                .andExpect(jsonPath("$.reporter.id", is(bugReportResponse.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$.reporter.firstName", is(bugReportResponse.getReporter().getFirstName())))
+                .andExpect(jsonPath("$.reporter.lastName", is(bugReportResponse.getReporter().getLastName())))
                 .andExpect(jsonPath("$.title", is(bugReportResponse.getTitle())))
                 .andExpect(jsonPath("$.description", is(bugReportResponse.getDescription())))
                 .andExpect(jsonPath("$.environment", is(bugReportResponse.getEnvironment())))
@@ -384,8 +395,11 @@ class BugReportControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -421,8 +435,11 @@ class BugReportControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -458,8 +475,11 @@ class BugReportControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -480,7 +500,7 @@ class BugReportControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(bugReportService.getAllBugReports(pageable, null, null, response.getReporterId(), null, null))
+        when(bugReportService.getAllBugReports(pageable, null, null, response.getReporter().getId(), null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/bug-reports"))
@@ -491,12 +511,15 @@ class BugReportControllerTest {
                         .contentType("application/json")
                         .param("page", "0")
                         .param("size", "2")
-                        .param("reporterId", response.getReporterId().toString())
+                        .param("reporterId", response.getReporter().getId().toString())
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -532,8 +555,11 @@ class BugReportControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -569,8 +595,11 @@ class BugReportControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].projectId", is(response.getProjectId()), Long.class))
-                .andExpect(jsonPath("$._embedded.bugReports[0].reporterId", is(response.getReporterId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].environment", is(response.getEnvironment())))
@@ -587,7 +616,9 @@ class BugReportControllerTest {
         var timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        var response = new BugReportResponse(1L, 1L, 1L, "title", "description", "environment",
+        var response = new BugReportResponse(1L, new ProjectInfo(1L, "ProjectTitle"), new UserInfo(
+                1L, "firstName", "lastName"
+        ), "title", "description", "environment",
                 BugReportSeverityName.CRITICAL, BugReportStatusName.OPENED,
                 timeOfCreation, timeOfModification);
 

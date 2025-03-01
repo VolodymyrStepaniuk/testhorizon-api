@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
+import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentEvent;
@@ -8,14 +9,13 @@ import com.stepaniuk.testhorizon.event.comment.CommentUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
-import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
-import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
-import com.stepaniuk.testhorizon.user.User;
-import com.stepaniuk.testhorizon.user.UserRepository;
+import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -33,7 +33,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -56,15 +55,16 @@ class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @MockitoBean
-    private UserRepository userRepository;
+    private UserInfoService userInfoService;
 
     @Test
     void shouldReturnCommentResponseWhenCreatingComment() {
         // given
         CommentCreateRequest commentCreateRequest = new CommentCreateRequest(CommentEntityType.TEST, 1L, "Comment content");
         Long authorId = 1L;
-        User user = getNewUserResponseWithAllFields();
-        when(userRepository.findById(authorId)).thenReturn(java.util.Optional.of(user));
+        UserInfo userInfo = new UserInfo(1L, "First Name", "Last Name");
+
+        when(userInfoService.getUserInfo(authorId)).thenReturn(userInfo);
         when(commentRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         final var receivedEventWrapper = new CommentCreatedEvent[1];
         when(
@@ -79,10 +79,13 @@ class CommentServiceTest {
 
         // then
         assertNotNull(commentResponse);
-        assertEquals(commentResponse.getEntityType(), commentCreateRequest.getEntityType());
-        assertEquals(commentResponse.getEntityId(), commentCreateRequest.getEntityId());
-        assertEquals(commentResponse.getContent(), commentCreateRequest.getContent());
+        assertEquals(commentCreateRequest.getEntityType(), commentResponse.getEntityType());
+        assertEquals(commentCreateRequest.getEntityId(), commentResponse.getEntityId());
+        assertEquals(commentCreateRequest.getContent(), commentResponse.getContent());
         assertNotNull(commentResponse.getAuthor());
+        assertEquals(authorId, commentResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), commentResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), commentResponse.getAuthor().getLastName());
         assertTrue(commentResponse.hasLinks());
 
         var receivedEvent = receivedEventWrapper[0];
@@ -102,10 +105,9 @@ class CommentServiceTest {
         var authInfo = new AuthInfo(1L, List.of());
         CommentUpdateRequest commentUpdateRequest = new CommentUpdateRequest("Updated comment content");
         Comment comment = getNewCommentWithAllFields(commentId);
-        User user = getNewUserResponseWithAllFields();
+        UserInfo userInfo = new UserInfo(1L, "First Name", "Last Name");
 
-        // when
-        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+        when(userInfoService.getUserInfo(userId)).thenReturn(userInfo);
         when(commentRepository.findById(commentId)).thenReturn(java.util.Optional.of(comment));
         when(commentRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
@@ -125,8 +127,10 @@ class CommentServiceTest {
         assertEquals(commentUpdateRequest.getContent(), commentResponse.getContent());
         assertEquals(comment.getEntityType(), commentResponse.getEntityType());
         assertEquals(comment.getEntityId(), commentResponse.getEntityId());
-        assertEquals(user.getFirstName(), commentResponse.getAuthor().getFirstName());
-        assertEquals(user.getLastName(), commentResponse.getAuthor().getLastName());
+        assertNotNull(commentResponse.getAuthor());
+        assertEquals(userId, commentResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), commentResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), commentResponse.getAuthor().getLastName());
         assertEquals(comment.getCreatedAt(), commentResponse.getCreatedAt());
         assertEquals(comment.getUpdatedAt(), commentResponse.getUpdatedAt());
         assertTrue(commentResponse.hasLinks());
@@ -250,12 +254,12 @@ class CommentServiceTest {
     void shouldReturnPagedModelOfCommentResponseWhenGettingAllComments() {
         // given
         var commentToFind = getNewCommentWithAllFields(1L);
-        var user = getNewUserResponseWithAllFields();
+        var userInfo = new UserInfo(1L, "First Name", "Last Name");
 
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
 
         // when
         var comments = commentService.getAllComments(pageable, null);
@@ -273,6 +277,9 @@ class CommentServiceTest {
         assertEquals(commentToFind.getEntityId(), comment.getEntityId());
         assertEquals(commentToFind.getContent(), comment.getContent());
         assertNotNull(comment.getAuthor());
+        assertEquals(userInfo.getId(), comment.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), comment.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), comment.getAuthor().getLastName());
         assertEquals(commentToFind.getCreatedAt(), comment.getCreatedAt());
         assertEquals(commentToFind.getUpdatedAt(), comment.getUpdatedAt());
         assertTrue(comment.hasLinks());
@@ -282,13 +289,13 @@ class CommentServiceTest {
     void shouldReturnPagedModelOfCommentResponseWhenGettingAllCommentsByAuthorId() {
         // given
         var commentToFind = getNewCommentWithAllFields(1L);
-        var user = getNewUserResponseWithAllFields();
+        var userInfo = new UserInfo(1L, "First Name", "Last Name");
         Long authorId = 1L;
 
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
+        when(userInfoService.getUserInfo(authorId)).thenReturn(userInfo);
 
         // when
         var comments = commentService.getAllComments(pageable, authorId);
@@ -305,8 +312,10 @@ class CommentServiceTest {
         assertEquals(commentToFind.getEntityType(), comment.getEntityType());
         assertEquals(commentToFind.getEntityId(), comment.getEntityId());
         assertEquals(commentToFind.getContent(), comment.getContent());
-        assertEquals(user.getFirstName(), comment.getAuthor().getFirstName());
-        assertEquals(user.getLastName(), comment.getAuthor().getLastName());
+        assertNotNull(comment.getAuthor());
+        assertEquals(userInfo.getId(), comment.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), comment.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), comment.getAuthor().getLastName());
         assertEquals(commentToFind.getCreatedAt(), comment.getCreatedAt());
         assertEquals(commentToFind.getUpdatedAt(), comment.getUpdatedAt());
         assertTrue(comment.hasLinks());
@@ -316,14 +325,14 @@ class CommentServiceTest {
     void shouldReturnPagedModelOfCommentResponseWhenGettingCommentsByEntity() {
         // given
         var commentToFind = getNewCommentWithAllFields(1L);
-        var user = getNewUserResponseWithAllFields();
+        var userInfo = new UserInfo(1L, "First Name", "Last Name");
         Long entityId = 1L;
         CommentEntityType entityType = CommentEntityType.TEST;
 
         var pageable = PageRequest.of(0, 2);
 
         when(commentRepository.findByEntityTypeAndEntityId(pageable, entityType, entityId)).thenReturn(new PageImpl<>(List.of(commentToFind), pageable, 1));
-        when(userRepository.findById(any())).thenReturn(java.util.Optional.of(user));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
 
         // when
         var comments = commentService.getCommentsByEntity(pageable, entityId, entityType);
@@ -340,8 +349,10 @@ class CommentServiceTest {
         assertEquals(entityType, comment.getEntityType());
         assertEquals(entityId, comment.getEntityId());
         assertEquals(commentToFind.getContent(), comment.getContent());
-        assertEquals(user.getFirstName(), comment.getAuthor().getFirstName());
-        assertEquals(user.getLastName(), comment.getAuthor().getLastName());
+        assertNotNull(comment.getAuthor());
+        assertEquals(userInfo.getId(), comment.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), comment.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), comment.getAuthor().getLastName());
         assertEquals(commentToFind.getCreatedAt(), comment.getCreatedAt());
         assertEquals(commentToFind.getUpdatedAt(), comment.getUpdatedAt());
         assertTrue(comment.hasLinks());
@@ -385,12 +396,5 @@ class CommentServiceTest {
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         return new Comment(id, 1L, CommentEntityType.TEST, 1L, "Comment content", timeOfCreation, timeOfModification);
-    }
-
-    private static User getNewUserResponseWithAllFields() {
-        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
-        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
-
-        return new User(1L, "John", "Doe", "email@gmail.com", 0, "password", true, true, true, true, Set.of(), timeOfCreation, timeOfModification);
     }
 }

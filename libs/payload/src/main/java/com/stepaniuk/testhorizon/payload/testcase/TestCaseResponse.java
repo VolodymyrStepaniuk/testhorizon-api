@@ -1,5 +1,7 @@
 package com.stepaniuk.testhorizon.payload.testcase;
 
+import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import com.stepaniuk.testhorizon.validation.shared.Description;
 import com.stepaniuk.testhorizon.validation.shared.Id;
@@ -30,13 +32,11 @@ public class TestCaseResponse extends RepresentationModel<TestCaseResponse> {
     @NotNull
     private Long id;
 
-    @Id
     @NotNull
-    private Long projectId;
+    private ProjectInfo project;
 
-    @Id
     @NotNull
-    private Long authorId;
+    private UserInfo author;
 
     @Title
     @NotNull

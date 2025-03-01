@@ -4,10 +4,8 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdExcepti
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverity;
-import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityRepository;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
-import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusRepository;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportCreatedEvent;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportDeletedEvent;
@@ -15,11 +13,18 @@ import com.stepaniuk.testhorizon.event.bugreport.BugReportEvent;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
+import com.stepaniuk.testhorizon.project.Project;
 import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
+import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -68,6 +73,9 @@ class BugReportServiceTest {
     @MockitoBean
     private ProjectRepository projectRepository;
 
+    @MockitoBean
+    private UserInfoService userInfoService;
+
     @Test
     void shouldReturnBugReportResponseWhenCreatingBugReport() {
         // given
@@ -75,7 +83,11 @@ class BugReportServiceTest {
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", bugReportSeverity.getName()
         );
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(projectRepository.existsById(any())).thenReturn(true);
         when(bugReportRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.of(new BugReportStatus(1L, BugReportStatusName.OPENED)));
@@ -94,8 +106,13 @@ class BugReportServiceTest {
 
         // then
         assertNotNull(bugReportResponse);
-        assertEquals(1L, bugReportResponse.getReporterId());
-        assertEquals(bugReportCreateRequest.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(1L, bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportCreateRequest.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportCreateRequest.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportCreateRequest.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportCreateRequest.getEnvironment(), bugReportResponse.getEnvironment());
@@ -106,8 +123,8 @@ class BugReportServiceTest {
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
         assertEquals(1L, receivedEvent.getBugReportId());
-        assertEquals(bugReportResponse.getProjectId(), receivedEvent.getProjectId());
-        assertEquals(bugReportResponse.getReporterId(), receivedEvent.getReporterId());
+        assertEquals(bugReportResponse.getProject().getId(), receivedEvent.getProjectId());
+        assertEquals(bugReportResponse.getReporter().getId(), receivedEvent.getReporterId());
 
         verify(bugReportRepository, times(1)).save(any());
     }
@@ -116,12 +133,13 @@ class BugReportServiceTest {
     void shouldThrowNoSuchBugReportSeverityByNameExceptionWhenCreatingBugReport() {
         // given
         var correlationId = UUID.randomUUID().toString();
+        var project = getNewProjectWithAllFields();
 
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", BugReportSeverityName.HIGH
         );
 
-        when(projectRepository.existsById(any())).thenReturn(true);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.empty());
 
         // when && then
@@ -132,11 +150,12 @@ class BugReportServiceTest {
     void shouldThrowNoSuchBugReportStatusByNameExceptionWhenCreatingBugReport() {
         // given
         var correlationId = UUID.randomUUID().toString();
+        var project = getNewProjectWithAllFields();
         BugReportCreateRequest bugReportCreateRequest = new BugReportCreateRequest(
                 1L, "title", "description", "environment", BugReportSeverityName.HIGH
         );
 
-        when(projectRepository.existsById(any())).thenReturn(true);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportSeverityRepository.findByName(bugReportCreateRequest.getSeverity())).thenReturn(Optional.of(new BugReportSeverity(1L, BugReportSeverityName.HIGH)));
         when(bugReportStatusRepository.findByName(BugReportStatusName.OPENED)).thenReturn(Optional.empty());
 
@@ -148,7 +167,11 @@ class BugReportServiceTest {
     void shouldReturnBugReportResponseWhenGettingBugReportById() {
         // given
         BugReport bugReport = getNewBugReportWithAllFields();
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(bugReport.getProjectId())).thenReturn(Optional.of(project));
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
 
         // when
@@ -157,8 +180,13 @@ class BugReportServiceTest {
         // then
         assertNotNull(bugReportResponse);
         assertEquals(bugReport.getId(), bugReportResponse.getId());
-        assertEquals(bugReport.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReport.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReport.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReport.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReport.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
@@ -184,7 +212,11 @@ class BugReportServiceTest {
         BugReport bugReport = getNewBugReportWithAllFields();
         BugReportUpdateRequest bugReportUpdateRequest = new BugReportUpdateRequest("new title", null, null, null, null);
         var authInfo = new AuthInfo(1L, List.of());
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(projectRepository.findById(bugReport.getProjectId())).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(bugReportRepository.findById(1L)).thenReturn(Optional.of(bugReport));
         when(bugReportRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
 
@@ -202,8 +234,13 @@ class BugReportServiceTest {
         // then
         assertNotNull(bugReportResponse);
         assertEquals(bugReport.getId(), bugReportResponse.getId());
-        assertEquals(bugReport.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReport.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReport.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReport.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportUpdateRequest.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
@@ -337,7 +374,11 @@ class BugReportServiceTest {
 
         var pageable = PageRequest.of(0, 2);
         Specification<BugReport> specification = Specification.where(null);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(bugReportToFind.getProjectId())).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(specification, pageable)).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
 
         // when
@@ -352,8 +393,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -371,7 +417,11 @@ class BugReportServiceTest {
         List<Long> projectIds = List.of(1L);
 
         var pageable = PageRequest.of(0, 2);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(projectIds.get(0))).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
 
         // when
@@ -386,8 +436,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(projectIds.get(0), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(projectIds.get(0), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -405,7 +460,11 @@ class BugReportServiceTest {
         String title = "title";
 
         var pageable = PageRequest.of(0, 2);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
 
         // when
@@ -420,8 +479,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(title, bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -439,7 +503,11 @@ class BugReportServiceTest {
         Long reporterId = 1L;
 
         var pageable = PageRequest.of(0, 2);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
 
         // when
@@ -454,8 +522,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(reporterId, bugReportResponse.getReporterId());
-        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(reporterId, bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -473,7 +546,11 @@ class BugReportServiceTest {
         BugReportSeverityName severityName = BugReportSeverityName.HIGH;
 
         var pageable = PageRequest.of(0, 2);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
         when(bugReportSeverityRepository.findByName(severityName)).thenReturn(Optional.of(new BugReportSeverity(1L, severityName)));
 
@@ -489,8 +566,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -508,7 +590,11 @@ class BugReportServiceTest {
         BugReportStatusName statusName = BugReportStatusName.OPENED;
 
         var pageable = PageRequest.of(0, 2);
+        var userInfo = new UserInfo(1L, "John", "Doe");
+        var project = getNewProjectWithAllFields();
 
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(bugReportRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(bugReportToFind), pageable, 1));
         when(bugReportStatusRepository.findByName(statusName)).thenReturn(Optional.of(new BugReportStatus(1L, statusName)));
 
@@ -524,8 +610,13 @@ class BugReportServiceTest {
 
         assertNotNull(bugReportResponse);
         assertEquals(bugReportToFind.getId(), bugReportResponse.getId());
-        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporterId());
-        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProjectId());
+        assertNotNull(bugReportResponse.getReporter());
+        assertEquals(bugReportToFind.getReporterId(), bugReportResponse.getReporter().getId());
+        assertEquals(userInfo.getFirstName(), bugReportResponse.getReporter().getFirstName());
+        assertEquals(userInfo.getLastName(), bugReportResponse.getReporter().getLastName());
+        assertNotNull(bugReportResponse.getProject());
+        assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
+        assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -557,5 +648,14 @@ class BugReportServiceTest {
 
         return new BugReport(1L, 1L, "title", "description", "environment", 1L,
                 bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
+    }
+
+    private Project getNewProjectWithAllFields() {
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        ProjectStatus status = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
+
+        return new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
+                status, timeOfCreation, timeOfModification);
     }
 }

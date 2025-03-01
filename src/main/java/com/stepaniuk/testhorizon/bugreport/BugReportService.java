@@ -4,10 +4,8 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportByIdExcepti
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByNameException;
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverity;
-
 import com.stepaniuk.testhorizon.bugreport.severity.BugReportSeverityRepository;
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatus;
-
 import com.stepaniuk.testhorizon.bugreport.status.BugReportStatusRepository;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportCreatedEvent;
 import com.stepaniuk.testhorizon.event.bugreport.BugReportDeletedEvent;
@@ -15,11 +13,13 @@ import com.stepaniuk.testhorizon.event.bugreport.BugReportUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportCreateRequest;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportResponse;
 import com.stepaniuk.testhorizon.payload.bugreport.BugReportUpdateRequest;
+import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
 import com.stepaniuk.testhorizon.project.ProjectRepository;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.types.bugreport.BugReportSeverityName;
 import com.stepaniuk.testhorizon.types.bugreport.BugReportStatusName;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
@@ -49,15 +49,16 @@ public class BugReportService {
     private final BugReportSeverityRepository bugReportSeverityRepository;
     private final BugReportProducer bugReportProducer;
     private final ProjectRepository projectRepository;
+    private final UserInfoService userInfoService;
 
     public BugReportResponse createBugReport(BugReportCreateRequest bugReportCreateRequest, Long reporterId, String correlationId) {
         BugReport bugReport = new BugReport();
 
         var projectId = bugReportCreateRequest.getProjectId();
 
-        if (!projectRepository.existsById(projectId)) {
-            throw new NoSuchProjectByIdException(projectId);
-        }
+        var projectInfo = projectRepository.findById(projectId)
+                .map(project -> new ProjectInfo(projectId, project.getTitle()))
+                .orElseThrow(() -> new NoSuchProjectByIdException(projectId));
 
         bugReport.setProjectId(projectId);
         bugReport.setTitle(bugReportCreateRequest.getTitle());
@@ -76,6 +77,7 @@ public class BugReportService {
         );
 
         var savedBugReport = bugReportRepository.save(bugReport);
+        var reporter = userInfoService.getUserInfo(reporterId);
 
         bugReportProducer.send(
                 new BugReportCreatedEvent(
@@ -84,13 +86,18 @@ public class BugReportService {
                 )
         );
 
-        return bugReportMapper.toResponse(savedBugReport);
+        return bugReportMapper.toResponse(savedBugReport, projectInfo, reporter);
     }
 
     public BugReportResponse getBugReportById(Long id) {
-        return bugReportRepository.findById(id)
-                .map(bugReportMapper::toResponse)
+        var bugReport = bugReportRepository.findById(id)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
+        var projectInfo = projectRepository.findById(bugReport.getProjectId())
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .orElseThrow(() -> new NoSuchProjectByIdException(bugReport.getProjectId()));
+        var reporter = userInfoService.getUserInfo(bugReport.getReporterId());
+
+        return bugReportMapper.toResponse(bugReport, projectInfo, reporter);
     }
 
     public void deleteBugReportById(Long id, String correlationId, AuthInfo authInfo) {
@@ -155,6 +162,10 @@ public class BugReportService {
         }
 
         var updatedBugReport = bugReportRepository.save(bugReport);
+        var reporter = userInfoService.getUserInfo(updatedBugReport.getReporterId());
+        var projectInfo = projectRepository.findById(updatedBugReport.getProjectId())
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .orElseThrow(() -> new NoSuchProjectByIdException(updatedBugReport.getProjectId()));
 
         bugReportProducer.send(
                 new BugReportUpdatedEvent(
@@ -163,7 +174,7 @@ public class BugReportService {
                 )
         );
 
-        return bugReportMapper.toResponse(updatedBugReport);
+        return bugReportMapper.toResponse(updatedBugReport, projectInfo, reporter);
     }
 
     public PagedModel<BugReportResponse> getAllBugReports(Pageable pageable,
@@ -214,9 +225,12 @@ public class BugReportService {
         var bugReports = bugReportRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-                bugReports.map(
-                        bugReportMapper::toResponse
-                ), URI.create("/bug-reports")
+                bugReports.map(bugReport -> bugReportMapper.toResponse(bugReport,
+                        projectRepository.findById(bugReport.getProjectId())
+                                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                                .orElseThrow(() -> new NoSuchProjectByIdException(bugReport.getProjectId())),
+                        userInfoService.getUserInfo(bugReport.getReporterId()))),
+                URI.create("/bug-reports")
         );
     }
 
