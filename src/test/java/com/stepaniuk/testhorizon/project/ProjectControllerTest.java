@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.project;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.project.ProjectCreateRequest;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.payload.project.ProjectUpdateRequest;
@@ -48,6 +49,7 @@ class ProjectControllerTest {
 
     @MockitoBean
     private JwtAuthFilter jwtAuthFilter;
+
     @Autowired
     private PageMapper pageMapper;
 
@@ -71,7 +73,9 @@ class ProjectControllerTest {
                         .content(objectMapper.writeValueAsString(projectCreateRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(projectResponse.getId()), Long.class))
-                .andExpect(jsonPath("$.ownerId", is(projectResponse.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.owner.id", is(projectResponse.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$.owner.firstName", is(projectResponse.getOwner().getFirstName())))
+                .andExpect(jsonPath("$.owner.lastName", is(projectResponse.getOwner().getLastName())))
                 .andExpect(jsonPath("$.title", is(projectResponse.getTitle())))
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
@@ -124,7 +128,9 @@ class ProjectControllerTest {
         mockMvc.perform(get("/projects/" + projectId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(projectResponse.getId()), Long.class))
-                .andExpect(jsonPath("$.ownerId", is(projectResponse.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.owner.id", is(projectResponse.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$.owner.firstName", is(projectResponse.getOwner().getFirstName())))
+                .andExpect(jsonPath("$.owner.lastName", is(projectResponse.getOwner().getLastName())))
                 .andExpect(jsonPath("$.title", is(projectResponse.getTitle())))
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
@@ -176,7 +182,9 @@ class ProjectControllerTest {
                         .content(objectMapper.writeValueAsString(projectUpdateRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(projectResponse.getId()), Long.class))
-                .andExpect(jsonPath("$.ownerId", is(projectResponse.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.owner.id", is(projectResponse.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$.owner.firstName", is(projectResponse.getOwner().getFirstName())))
+                .andExpect(jsonPath("$.owner.lastName", is(projectResponse.getOwner().getLastName())))
                 .andExpect(jsonPath("$.title", is(projectResponse.getTitle())))
                 .andExpect(jsonPath("$.description", is(projectResponse.getDescription())))
                 .andExpect(jsonPath("$.instructions", is(projectResponse.getInstructions())))
@@ -338,7 +346,9 @@ class ProjectControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.projects[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.projects[0].ownerId", is(response.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.id", is(response.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.firstName", is(response.getOwner().getFirstName())))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.lastName", is(response.getOwner().getLastName())))
                 .andExpect(jsonPath("$._embedded.projects[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
@@ -374,7 +384,9 @@ class ProjectControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.projects[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.projects[0].ownerId", is(response.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.id", is(response.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.firstName", is(response.getOwner().getFirstName())))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.lastName", is(response.getOwner().getLastName())))
                 .andExpect(jsonPath("$._embedded.projects[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
@@ -410,7 +422,9 @@ class ProjectControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.projects[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.projects[0].ownerId", is(response.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.id", is(response.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.firstName", is(response.getOwner().getFirstName())))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.lastName", is(response.getOwner().getLastName())))
                 .andExpect(jsonPath("$._embedded.projects[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
@@ -446,7 +460,9 @@ class ProjectControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.projects[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.projects[0].ownerId", is(response.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.id", is(response.getOwner().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.firstName", is(response.getOwner().getFirstName())))
+                .andExpect(jsonPath("$._embedded.projects[0].owner.lastName", is(response.getOwner().getLastName())))
                 .andExpect(jsonPath("$._embedded.projects[0].title", is(response.getTitle())))
                 .andExpect(jsonPath("$._embedded.projects[0].description", is(response.getDescription())))
                 .andExpect(jsonPath("$._embedded.projects[0].instructions", is(response.getInstructions())))
@@ -465,7 +481,7 @@ class ProjectControllerTest {
 
         var response = new ProjectResponse(
                 1L,
-                1L,
+                new UserInfo(1L, "firstName", "lastName"),
                 "title",
                 "description",
                 "instructions",

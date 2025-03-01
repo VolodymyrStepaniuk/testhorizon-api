@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.payload.project;
 
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.shared.Title;
@@ -29,9 +30,8 @@ public class ProjectResponse extends RepresentationModel<ProjectResponse> {
     @NotNull
     private Long id;
 
-    @Id
     @NotNull
-    private Long ownerId;
+    private UserInfo owner;
 
     @Title
     @NotNull

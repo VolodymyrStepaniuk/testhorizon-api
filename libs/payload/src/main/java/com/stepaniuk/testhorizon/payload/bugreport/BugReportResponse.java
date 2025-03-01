@@ -1,6 +1,8 @@
 package com.stepaniuk.testhorizon.payload.bugreport;
 
 
+import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.validation.bugreport.Environment;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.shared.Title;
@@ -29,13 +31,11 @@ public class BugReportResponse extends RepresentationModel<BugReportResponse> {
     @NotNull
     private Long id;
 
-    @Id
     @NotNull
-    private Long projectId;
+    private ProjectInfo project;
 
-    @Id
     @NotNull
-    private Long reporterId;
+    private UserInfo reporter;
 
     @Title
     @NotNull

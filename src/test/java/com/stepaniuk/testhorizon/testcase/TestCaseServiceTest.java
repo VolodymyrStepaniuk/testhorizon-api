@@ -4,15 +4,21 @@ import com.stepaniuk.testhorizon.event.testcase.TestCaseCreatedEvent;
 import com.stepaniuk.testhorizon.event.testcase.TestCaseDeletedEvent;
 import com.stepaniuk.testhorizon.event.testcase.TestCaseEvent;
 import com.stepaniuk.testhorizon.event.testcase.TestCaseUpdatedEvent;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseCreateRequest;
 import com.stepaniuk.testhorizon.payload.testcase.TestCaseUpdateRequest;
+import com.stepaniuk.testhorizon.project.Project;
 import com.stepaniuk.testhorizon.project.ProjectRepository;
+import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
+import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCasePriorityByNameException;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriority;
+import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
 import com.stepaniuk.testhorizon.types.testcase.TestCasePriorityName;
 import com.stepaniuk.testhorizon.testcase.priority.TestCasePriorityRepository;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
@@ -61,15 +67,21 @@ class TestCaseServiceTest {
     @MockitoBean
     private ProjectRepository projectRepository;
 
+    @MockitoBean
+    private UserInfoService userInfoService;
+
     @Test
     void shouldReturnTestCaseResponseWhenCreatingTestCase() {
         // given
         var testCaseCreateRequest = new TestCaseCreateRequest(1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"), TestCasePriorityName.LOW);
         var testCasePriority = new TestCasePriority(1L, TestCasePriorityName.LOW);
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
 
-        when(projectRepository.existsById(1L)).thenReturn(true);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(testCasePriorityRepository.findByName(TestCasePriorityName.LOW)).thenReturn(Optional.of(testCasePriority));
         when(testCaseRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         final var receivedEventWrapper = new TestCaseCreatedEvent[1];
         when(
                 testCaseProducer.send(
@@ -83,8 +95,13 @@ class TestCaseServiceTest {
 
         // then
         assertNotNull(testCaseResponse);
-        assertEquals(testCaseCreateRequest.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(1L, testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseCreateRequest.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(userInfo.getId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseCreateRequest.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseCreateRequest.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseCreateRequest.getPreconditions(), testCaseResponse.getPreconditions());
@@ -96,8 +113,8 @@ class TestCaseServiceTest {
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
         assertEquals(1L, receivedEvent.getTestCaseId());
-        assertEquals(testCaseResponse.getProjectId(), receivedEvent.getProjectId());
-        assertEquals(testCaseResponse.getAuthorId(), receivedEvent.getAuthorId());
+        assertEquals(testCaseResponse.getProject().getId(), receivedEvent.getProjectId());
+        assertEquals(testCaseResponse.getAuthor().getId(), receivedEvent.getAuthorId());
 
         verify(testCaseRepository, times(1)).save(any());
     }
@@ -108,7 +125,7 @@ class TestCaseServiceTest {
         var testCaseCreateRequest = new TestCaseCreateRequest(1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"), TestCasePriorityName.HIGH);
         var correlationId = UUID.randomUUID().toString();
 
-        when(projectRepository.existsById(1L)).thenReturn(true);
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(getNewProjectWithAllFields()));
         when(testCasePriorityRepository.findByName(TestCasePriorityName.HIGH)).thenReturn(Optional.empty());
 
         // when && then
@@ -116,10 +133,26 @@ class TestCaseServiceTest {
     }
 
     @Test
+    void shouldThrowNoSuchProjectByIdExceptionWhenCreatingTestCaseWithNonExistingProject() {
+        // given
+        var testCaseCreateRequest = new TestCaseCreateRequest(1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"), TestCasePriorityName.LOW);
+        var correlationId = UUID.randomUUID().toString();
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when && then
+        assertThrows(NoSuchProjectByIdException.class, () -> testCaseService.createTestCase(testCaseCreateRequest, 1L, correlationId));
+    }
+
+    @Test
     void shouldReturnTestCaseResponseWhenGetByExistingId() {
         // given
         TestCase testCaseToFind = getNewTestCaseWithAllFields();
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
 
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToFind));
 
         // when
@@ -128,8 +161,13 @@ class TestCaseServiceTest {
         // then
         assertNotNull(testCaseResponse);
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
@@ -156,7 +194,11 @@ class TestCaseServiceTest {
         TestCase testCaseToUpdate = getNewTestCaseWithAllFields();
         var testCaseUpdateRequest = new TestCaseUpdateRequest("newTitle", null, null, null, null, null);
         var authInfo = new AuthInfo(1L, List.of());
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
 
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testCaseRepository.findById(1L)).thenReturn(Optional.of(testCaseToUpdate));
         when(testCaseRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
         final var receivedEventWrapper = new TestCaseUpdatedEvent[1];
@@ -172,8 +214,13 @@ class TestCaseServiceTest {
         // then
         assertNotNull(testCaseResponse);
         assertEquals(testCaseToUpdate.getId(), testCaseResponse.getId());
-        assertEquals(testCaseToUpdate.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(testCaseToUpdate.getAuthorId(), testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseToUpdate.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToUpdate.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseUpdateRequest.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToUpdate.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToUpdate.getPreconditions(), testCaseResponse.getPreconditions());
@@ -294,9 +341,14 @@ class TestCaseServiceTest {
 
         var testCaseToFind = new TestCase(1L, 1L, 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
                 new TestCasePriority(1L, TestCasePriorityName.LOW), timeOfCreation, timeOfModification);
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
 
         var pageable = PageRequest.of(0, 2);
         Specification<TestCase> specification = Specification.where(null);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
 
         when(testCaseRepository.findAll(specification, pageable)).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
@@ -311,8 +363,13 @@ class TestCaseServiceTest {
         assertEquals(1, testCaseResponses.getContent().size());
 
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
@@ -335,6 +392,11 @@ class TestCaseServiceTest {
                 new TestCasePriority(1L, TestCasePriorityName.LOW), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 1);
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
+
+        when(projectRepository.findById(projectIds.get(0))).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
 
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
@@ -349,8 +411,13 @@ class TestCaseServiceTest {
         assertEquals(1, testCaseResponses.getContent().size());
 
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(projectIds.get(0), testCaseResponse.getProjectId());
-        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(projectIds.get(0), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
@@ -372,8 +439,12 @@ class TestCaseServiceTest {
         var testCaseToFind = new TestCase(1L, 1L, authorId, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
                 new TestCasePriority(1L, TestCasePriorityName.LOW), timeOfCreation, timeOfModification);
 
+        var project = getNewProjectWithAllFields();
+        var userInfo = new UserInfo(authorId, "firstName", "lastName");
         var pageable = PageRequest.of(0, 1);
 
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
@@ -387,8 +458,13 @@ class TestCaseServiceTest {
         assertEquals(1, testCaseResponses.getContent().size());
 
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(authorId, testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(authorId, testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
@@ -410,8 +486,12 @@ class TestCaseServiceTest {
         var testCaseToFind = new TestCase(1L, 1L, 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
                 new TestCasePriority(1L, priorityName), timeOfCreation, timeOfModification);
 
+        var project = getNewProjectWithAllFields();
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
         var pageable = PageRequest.of(0, 1);
 
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testCasePriorityRepository.findByName(priorityName)).thenReturn(Optional.of(testCaseToFind.getPriority()));
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
@@ -426,8 +506,13 @@ class TestCaseServiceTest {
         assertEquals(1, testCaseResponses.getContent().size());
 
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
-        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProjectId());
-        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthorId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
         assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
         assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
         assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
@@ -460,5 +545,14 @@ class TestCaseServiceTest {
         return new TestCase(1L, 1L, 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
                 priority, timeOfCreation, timeOfModification
         );
+    }
+
+    private Project getNewProjectWithAllFields() {
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        ProjectStatus status = new ProjectStatus(1L, ProjectStatusName.ACTIVE);
+
+        return new Project(1L, 1L, "title", "description", "instructions", "githubUrl",
+                status, timeOfCreation, timeOfModification);
     }
 }

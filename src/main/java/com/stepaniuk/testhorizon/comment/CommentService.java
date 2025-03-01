@@ -1,23 +1,20 @@
 package com.stepaniuk.testhorizon.comment;
 
 
+import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
+import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.event.comment.CommentCreatedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentDeletedEvent;
 import com.stepaniuk.testhorizon.event.comment.CommentUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
-import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
-import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
-import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
+import com.stepaniuk.testhorizon.shared.UserInfoService;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
-import com.stepaniuk.testhorizon.user.User;
-import com.stepaniuk.testhorizon.user.UserRepository;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
-import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,8 +38,7 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final PageMapper pageMapper;
     private final CommentProducer commentProducer;
-    private final UserRepository userRepository;
-
+    private final UserInfoService userInfoService;
 
     public CommentResponse createComment(CommentCreateRequest commentCreateRequest, Long authorId, String correlationId) {
         Comment comment = new Comment();
@@ -53,6 +49,7 @@ public class CommentService {
         comment.setContent(commentCreateRequest.getContent());
 
         var savedComment = commentRepository.save(comment);
+        var authorInfo = userInfoService.getUserInfo(authorId);
 
         commentProducer.send(
                 new CommentCreatedEvent(
@@ -61,7 +58,7 @@ public class CommentService {
                 )
         );
 
-        return commentMapper.toResponse(savedComment, getAuthorInfo(authorId));
+        return commentMapper.toResponse(savedComment, authorInfo);
     }
 
 
@@ -69,7 +66,7 @@ public class CommentService {
         var comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NoSuchCommentByIdException(commentId));
 
-        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)){
+        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)) {
             throw new AccessToManageEntityDeniedException("Comment", "/comments");
         }
 
@@ -82,6 +79,7 @@ public class CommentService {
         }
 
         var updatedComment = commentRepository.save(comment);
+        var authorInfo = userInfoService.getUserInfo(comment.getAuthorId());
 
         commentProducer.send(
                 new CommentUpdatedEvent(
@@ -90,14 +88,14 @@ public class CommentService {
                 )
         );
 
-        return commentMapper.toResponse(updatedComment, getAuthorInfo(userId));
+        return commentMapper.toResponse(updatedComment, authorInfo);
     }
 
     public void deleteCommentById(Long id, String correlationId, AuthInfo authInfo) {
         var comment = commentRepository.findById(id)
                 .orElseThrow(() -> new NoSuchCommentByIdException(id));
 
-        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)){
+        if (hasNoAccessToManageComment(comment.getAuthorId(), authInfo)) {
             throw new AccessToManageEntityDeniedException("Comment", "/comments");
         }
 
@@ -111,12 +109,6 @@ public class CommentService {
         );
     }
 
-    private UserInfo getAuthorInfo(Long authorId) {
-       User user = userRepository.findById(authorId)
-                .orElseThrow(() -> new NoSuchUserByIdException(authorId));
-        return new UserInfo(user.getFirstName(), user.getLastName());
-    }
-
     public PagedModel<CommentResponse> getAllComments(Pageable pageable,
                                                       @Nullable Long authorId) {
 
@@ -128,11 +120,11 @@ public class CommentService {
                 ? commentRepository.findAll(specification, pageable)
                 : commentRepository.findAll(pageable);
 
-        var authorInfo = (authorId != null) ? getAuthorInfo(authorId) : null;
+        var authorInfo = (authorId != null) ? userInfoService.getUserInfo(authorId) : null;
 
         return pageMapper.toResponse(
                 comments.map(comment -> commentMapper.toResponse(comment,
-                        (authorInfo != null) ? authorInfo : getAuthorInfo(comment.getAuthorId()))),
+                        (authorInfo != null) ? authorInfo : userInfoService.getUserInfo(comment.getAuthorId()))),
                 URI.create("/comments")
         );
     }
@@ -147,12 +139,12 @@ public class CommentService {
         }
 
         return pageMapper.toResponse(
-                comments.map(comment -> commentMapper.toResponse(comment, getAuthorInfo(comment.getAuthorId()))),
+                comments.map(comment -> commentMapper.toResponse(comment, userInfoService.getUserInfo(comment.getAuthorId()))),
                 URI.create("/comments")
         );
     }
 
-    private  boolean hasNoAccessToManageComment(Long authorId, AuthInfo authInfo){
+    private boolean hasNoAccessToManageComment(Long authorId, AuthInfo authInfo) {
         return !(isOwner(authInfo, authorId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()));
     }
 }

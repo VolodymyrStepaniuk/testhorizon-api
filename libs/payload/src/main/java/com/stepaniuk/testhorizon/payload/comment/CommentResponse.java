@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.payload.comment;
 
 
-import com.stepaniuk.testhorizon.payload.comment.user.UserInfo;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
 import com.stepaniuk.testhorizon.validation.comment.CommentContent;
 import com.stepaniuk.testhorizon.validation.shared.Id;

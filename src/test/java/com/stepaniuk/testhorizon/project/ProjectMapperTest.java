@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.project;
 
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.project.ProjectResponse;
 import com.stepaniuk.testhorizon.project.status.ProjectStatus;
 import com.stepaniuk.testhorizon.types.project.ProjectStatusName;
@@ -29,14 +30,18 @@ class ProjectMapperTest {
 
         Project project = new Project(null, 1L, "Project title", "Project description",
                 "Project instructions", "github.com/user/repo", projectStatus, timeOfCreation, timeOfModification);
+        UserInfo owner = new UserInfo(1L, "firstName", "lastName");
 
         // when
-        ProjectResponse projectResponse = projectMapper.toResponse(project);
+        ProjectResponse projectResponse = projectMapper.toResponse(project, owner);
 
         // then
         assertNotNull(projectResponse);
         assertNull(projectResponse.getId());
-        assertEquals(project.getOwnerId(), projectResponse.getOwnerId());
+        assertNotNull(projectResponse.getOwner());
+        assertEquals(project.getOwnerId(), projectResponse.getOwner().getId());
+        assertEquals(owner.getFirstName(), projectResponse.getOwner().getFirstName());
+        assertEquals(owner.getLastName(), projectResponse.getOwner().getLastName());
         assertEquals(project.getTitle(), projectResponse.getTitle());
         assertEquals(project.getDescription(), projectResponse.getDescription());
         assertEquals(project.getInstructions(), projectResponse.getInstructions());
