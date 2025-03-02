@@ -7,6 +7,7 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportSeverityByN
 import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNameException;
 import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
 import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
+import com.stepaniuk.testhorizon.export.exceptions.NoSuchHandlerFoundForEntity;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -262,6 +263,15 @@ public class GeneralControllerExceptionHandler {
                 "Unable to upload file: " + e.getFileName());
         problemDetail.setTitle("Unable to upload file");
         problemDetail.setInstance(URI.create("/files"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchHandlerFoundForEntity.class})
+    public ProblemDetail handleNoSuchHandlerFoundForEntity(NoSuchHandlerFoundForEntity e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No handler found for entity type: " + e.getEntityType());
+        problemDetail.setTitle("No such handler found for entity");
+        problemDetail.setInstance(URI.create("/export"));
         return problemDetail;
     }
 

@@ -15,7 +15,7 @@ import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -60,7 +60,7 @@ class CommentServiceTest {
     @Test
     void shouldReturnCommentResponseWhenCreatingComment() {
         // given
-        CommentCreateRequest commentCreateRequest = new CommentCreateRequest(CommentEntityType.TEST, 1L, "Comment content");
+        CommentCreateRequest commentCreateRequest = new CommentCreateRequest(EntityType.TEST, 1L, "Comment content");
         Long authorId = 1L;
         UserInfo userInfo = new UserInfo(1L, "First Name", "Last Name");
 
@@ -327,7 +327,7 @@ class CommentServiceTest {
         var commentToFind = getNewCommentWithAllFields(1L);
         var userInfo = new UserInfo(1L, "First Name", "Last Name");
         Long entityId = 1L;
-        CommentEntityType entityType = CommentEntityType.TEST;
+        EntityType entityType = EntityType.TEST;
 
         var pageable = PageRequest.of(0, 2);
 
@@ -362,7 +362,7 @@ class CommentServiceTest {
     void shouldReturnEmptyPagedModelOfCommentResponseWhenGettingCommentsByEntity() {
         // given
         Long entityId = 1L;
-        CommentEntityType entityType = CommentEntityType.TEST;
+        EntityType entityType = EntityType.TEST;
 
         var pageable = PageRequest.of(0, 2);
 
@@ -395,6 +395,6 @@ class CommentServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        return new Comment(id, 1L, CommentEntityType.TEST, 1L, "Comment content", timeOfCreation, timeOfModification);
+        return new Comment(id, 1L, EntityType.TEST, 1L, "Comment content", timeOfCreation, timeOfModification);
     }
 }

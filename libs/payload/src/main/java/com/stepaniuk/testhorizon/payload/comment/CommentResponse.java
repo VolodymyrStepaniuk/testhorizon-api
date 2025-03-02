@@ -2,7 +2,7 @@ package com.stepaniuk.testhorizon.payload.comment;
 
 
 import com.stepaniuk.testhorizon.payload.info.UserInfo;
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import com.stepaniuk.testhorizon.validation.comment.CommentContent;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +26,7 @@ public class CommentResponse extends RepresentationModel<CommentResponse> {
     private Long id;
 
     @NotNull
-    private CommentEntityType entityType;
+    private EntityType entityType;
 
     @Id
     @NotNull

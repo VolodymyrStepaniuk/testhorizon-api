@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.comment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
@@ -59,7 +59,7 @@ class CommentControllerTest {
         // given
         Long userId = 1L;
 
-        CommentCreateRequest commentCreateRequest = new CommentCreateRequest(CommentEntityType.TEST, 1L, "Comment content");
+        CommentCreateRequest commentCreateRequest = new CommentCreateRequest(EntityType.TEST, 1L, "Comment content");
 
         CommentResponse commentResponse = createCommentResponse(1L);
 
@@ -323,7 +323,7 @@ class CommentControllerTest {
         // given
         Long commentId = 1L;
         Long entityId = 1L;
-        CommentEntityType entityType = CommentEntityType.TEST;
+        EntityType entityType = EntityType.TEST;
         var response = createCommentResponse(commentId);
         var pageable = PageRequest.of(0, 2);
 
@@ -361,7 +361,7 @@ class CommentControllerTest {
     void shouldReturnEmptyPageWhenGettingAllCommentsByEntity() throws Exception {
         // given
         Long entityId = 1L;
-        CommentEntityType entityType = CommentEntityType.TEST;
+        EntityType entityType = EntityType.TEST;
         var pageable = PageRequest.of(0, 2);
 
         when(commentService.getCommentsByEntity(pageable, entityId, entityType))
@@ -388,7 +388,7 @@ class CommentControllerTest {
 
         var commentResponse = new CommentResponse(
                 id,
-                CommentEntityType.TEST,
+                EntityType.TEST,
                 1L,
                 "Comment content",
                 new UserInfo(1L,"firstName", "lastName"),

@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;
@@ -26,7 +26,7 @@ class CommentMapperTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        Comment comment = new Comment(null, 1L, CommentEntityType.TEST,
+        Comment comment = new Comment(null, 1L, EntityType.TEST,
                 1L, "Comment content", timeOfCreation, timeOfModification);
         UserInfo userInfo = new UserInfo(1L,"First Name", "Last Name");
 
