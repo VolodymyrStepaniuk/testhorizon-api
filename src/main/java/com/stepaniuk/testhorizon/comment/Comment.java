@@ -1,7 +1,7 @@
 package com.stepaniuk.testhorizon.comment;
 
 
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,7 +35,7 @@ public class Comment {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "entity_type", nullable = false)
-    private CommentEntityType entityType;
+    private EntityType entityType;
 
     @Column(name = "entity_id", nullable = false)
     private Long entityId;

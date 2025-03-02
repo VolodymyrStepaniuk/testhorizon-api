@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.comment;
 
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import com.stepaniuk.testhorizon.testspecific.JpaLevelTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ class CommentRepositoryTest {
     @Test
     void shouldSaveComment() {
         // given
-        Comment commentToSave = new Comment(null, 1L, CommentEntityType.TEST, 1L, "Comment content", Instant.now(), Instant.now());
+        Comment commentToSave = new Comment(null, 1L, EntityType.TEST, 1L, "Comment content", Instant.now(), Instant.now());
 
         // when
         Comment savedComment = commentRepository.save(commentToSave);
@@ -41,7 +41,7 @@ class CommentRepositoryTest {
     @Test
     void shouldThrowExceptionWhenSavingCommentWithoutContent() {
         // given
-        Comment commentToSave = new Comment(null, 1L, CommentEntityType.TEST, 1L, null, Instant.now(), Instant.now());
+        Comment commentToSave = new Comment(null, 1L, EntityType.TEST, 1L, null, Instant.now(), Instant.now());
 
         // when & then
         assertThrows(DataIntegrityViolationException.class, () -> commentRepository.save(commentToSave));
@@ -57,7 +57,7 @@ class CommentRepositoryTest {
         Comment comment = optionalComment.get();
 
         assertEquals(1L, comment.getId());
-        assertEquals(CommentEntityType.TEST, comment.getEntityType());
+        assertEquals(EntityType.TEST, comment.getEntityType());
         assertEquals(1L, comment.getEntityId());
         assertEquals("Comment content", comment.getContent());
         assertEquals(Instant.parse("2024-11-25T17:28:19.266615Z"), comment.getCreatedAt());

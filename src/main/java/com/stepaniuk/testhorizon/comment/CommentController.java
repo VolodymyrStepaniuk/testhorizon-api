@@ -5,7 +5,7 @@ import com.stepaniuk.testhorizon.payload.comment.CommentCreateRequest;
 import com.stepaniuk.testhorizon.payload.comment.CommentResponse;
 import com.stepaniuk.testhorizon.payload.comment.CommentUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +50,7 @@ public class CommentController {
     @GetMapping
     public ResponseEntity<PagedModel<CommentResponse>> getCommentsByEntity(Pageable pageable,
                                                                           @RequestParam Long entityId,
-                                                                          @RequestParam CommentEntityType entityType) {
+                                                                          @RequestParam EntityType entityType) {
         return ResponseEntity.ok(commentService.getCommentsByEntity(pageable, entityId, entityType));
     }
 }

@@ -13,7 +13,7 @@ import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.shared.UserInfoService;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
-import com.stepaniuk.testhorizon.types.comment.CommentEntityType;
+import com.stepaniuk.testhorizon.types.entity.EntityType;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -130,7 +130,7 @@ public class CommentService {
     }
 
 
-    public PagedModel<CommentResponse> getCommentsByEntity(Pageable pageable, Long entityId, CommentEntityType entityType) {
+    public PagedModel<CommentResponse> getCommentsByEntity(Pageable pageable, Long entityId, EntityType entityType) {
 
         var comments = commentRepository.findByEntityTypeAndEntityId(pageable, entityType, entityId);
 
