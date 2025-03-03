@@ -38,7 +38,7 @@ public class TestExportHandler implements EntityExportHandler<TestResponse> {
 
         String dataRow = String.join(",",
                 safeForCsv(test.getProject().getId() != null ? test.getProject().getId().toString() : ""),
-                safeForCsv(test.getTestCaseId() != null ? test.getTestCaseId().toString() : ""),
+                safeForCsv(test.getTestCase().getId() != null ? test.getTestCase().getId().toString() : ""),
                 safeForCsv(test.getTitle()),
                 safeForCsv(test.getDescription()),
                 safeForCsv(test.getInstructions()),
@@ -67,7 +67,7 @@ public class TestExportHandler implements EntityExportHandler<TestResponse> {
                 </test>
                 """.formatted(
                 (test.getProject().getId() != null) ? test.getProject().getId().toString() : "",
-                (test.getTestCaseId() != null) ? test.getTestCaseId() : "",
+                (test.getTestCase().getId() != null) ? test.getTestCase().getId() : "",
                 safeForXml(test.getTitle()),
                 safeForXml(test.getDescription()),
                 safeForXml(test.getInstructions()),

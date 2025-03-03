@@ -4,6 +4,7 @@ import com.stepaniuk.testhorizon.event.test.TestCreatedEvent;
 import com.stepaniuk.testhorizon.event.test.TestDeletedEvent;
 import com.stepaniuk.testhorizon.event.test.TestUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.TestCaseInfo;
 import com.stepaniuk.testhorizon.payload.test.TestCreateRequest;
 import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.payload.test.TestUpdateRequest;
@@ -17,6 +18,8 @@ import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.test.type.TestType;
 import com.stepaniuk.testhorizon.test.type.TestTypeRepository;
+import com.stepaniuk.testhorizon.testcase.TestCaseRepository;
+import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
 import com.stepaniuk.testhorizon.types.test.TestTypeName;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.annotation.Nullable;
@@ -41,23 +44,24 @@ public class TestService {
     private final TestRepository testRepository;
     private final TestTypeRepository testTypeRepository;
     private final ProjectRepository projectRepository;
+    private final TestCaseRepository testCaseRepository;
     private final TestMapper testMapper;
     private final PageMapper pageMapper;
     private final TestProducer testProducer;
     private final UserInfoService userInfoService;
 
-
     public TestResponse createTest(TestCreateRequest testCreateRequest, Long authorId, String correlationId) {
         Test test = new Test();
 
         var projectId = testCreateRequest.getProjectId();
+        var testCaseId = testCreateRequest.getTestCaseId();
 
         var projectInfo = projectRepository.findById(projectId)
                 .map(project -> new ProjectInfo(projectId, project.getTitle()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(projectId));
 
         test.setProjectId(testCreateRequest.getProjectId());
-        test.setTestCaseId(testCreateRequest.getTestCaseId());
+        test.setTestCaseId(testCaseId);
         test.setAuthorId(authorId);
         test.setTitle(testCreateRequest.getTitle());
         test.setDescription(testCreateRequest.getDescription());
@@ -79,7 +83,13 @@ public class TestService {
                 )
         );
 
-        return testMapper.toResponse(savedTest, projectInfo, authorInfo);
+        TestCaseInfo testCaseInfo = null;
+
+        if (testCaseId != null) {
+            testCaseInfo = findTestCaseInfo(testCaseId);
+        }
+
+        return testMapper.toResponse(savedTest, projectInfo, authorInfo, testCaseInfo);
     }
 
     public TestResponse getTestById(Long id) {
@@ -90,7 +100,11 @@ public class TestService {
                 .orElseThrow(() -> new NoSuchProjectByIdException(test.getProjectId()));
         var authorInfo = userInfoService.getUserInfo(test.getAuthorId());
 
-        return testMapper.toResponse(test, projectInfo, authorInfo);
+        var testCaseInfo = test.getTestCaseId() != null
+                ? findTestCaseInfo(test.getTestCaseId())
+                : null;
+
+        return testMapper.toResponse(test, projectInfo, authorInfo, testCaseInfo);
     }
 
     public void deleteTestById(Long id, String correlationId, AuthInfo authInfo) {
@@ -121,10 +135,12 @@ public class TestService {
         }
 
         var testData = new TestUpdatedEvent.Data();
+        TestCaseInfo testCaseInfo = null;
 
         if (testUpdateRequest.getTestCaseId() != null) {
             test.setTestCaseId(testUpdateRequest.getTestCaseId());
             testData.setTestCaseId(testUpdateRequest.getTestCaseId());
+            testCaseInfo = findTestCaseInfo(testUpdateRequest.getTestCaseId());
         }
 
         if (testUpdateRequest.getTitle() != null) {
@@ -169,7 +185,7 @@ public class TestService {
                 )
         );
 
-        return testMapper.toResponse(savedTest, projectInfo, authorInfo);
+        return testMapper.toResponse(savedTest, projectInfo, authorInfo, testCaseInfo);
     }
 
     public PagedModel<TestResponse> getAllTests(Pageable pageable,
@@ -215,10 +231,19 @@ public class TestService {
                         projectRepository.findById(test.getProjectId())
                                 .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
                                 .orElseThrow(() -> new NoSuchProjectByIdException(test.getProjectId())),
-                        userInfoService.getUserInfo(test.getAuthorId())
+                        userInfoService.getUserInfo(test.getAuthorId()),
+                        test.getTestCaseId() != null
+                                ? findTestCaseInfo(test.getTestCaseId())
+                                : null
                 )),
                 URI.create("/tests")
         );
+    }
+
+    private TestCaseInfo findTestCaseInfo(Long testCaseId) {
+        return testCaseRepository.findById(testCaseId)
+                .map(testCase -> new TestCaseInfo(testCase.getId(), testCase.getTitle()))
+                .orElseThrow(() -> new NoSuchTestCaseByIdException(testCaseId));
     }
 
     private boolean hasNoAccessToManageTest(Long ownerId, Long projectId, AuthInfo authInfo) {

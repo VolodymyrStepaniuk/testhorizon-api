@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.rating;
 
 import com.stepaniuk.testhorizon.event.rating.RatingUpdatedEvent;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.rating.RatingResponse;
 import com.stepaniuk.testhorizon.payload.rating.RatingUpdateRequest;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -36,9 +37,9 @@ public class RatingService {
         if (userId.equals(ratedByUserId)) {
             throw new UserCannotChangeOwnRatingException(ratedByUserId);
         }
-        
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchUserByIdException(userId));
+
+        User user = findUserById(userId);
+        UserInfo ratedByUser = findUserInfo(ratedByUserId);
 
         Rating rating = new Rating();
         rating.setUserId(userId);
@@ -58,7 +59,10 @@ public class RatingService {
                 )
         );
 
-        return ratingMapper.toResponse(savedRating);
+        return ratingMapper.toResponse(savedRating,
+                new UserInfo(userId, user.getFirstName(), user.getLastName()),
+                ratedByUser
+        );
     }
 
     public PagedModel<RatingResponse> getRatings(Pageable pageable,
@@ -82,10 +86,22 @@ public class RatingService {
         var ratings = ratingRepository.findAll(specification, pageable);
 
         return pageMapper.toResponse(
-                ratings.map(
-                        ratingMapper::toResponse
-                ), URI.create("/projects")
+                ratings.map(rating -> ratingMapper.toResponse(rating,
+                        findUserInfo(rating.getUserId()),
+                        findUserInfo(rating.getRatedByUserId())
+                )), URI.create("/projects")
         );
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId).orElseThrow(
+                () -> new NoSuchUserByIdException(userId)
+        );
+    }
+
+    private UserInfo findUserInfo(Long userId) {
+        User user = findUserById(userId);
+        return new UserInfo(userId, user.getFirstName(), user.getLastName());
     }
 
 }
