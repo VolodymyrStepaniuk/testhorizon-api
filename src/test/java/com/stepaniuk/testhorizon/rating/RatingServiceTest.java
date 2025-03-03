@@ -60,13 +60,18 @@ class RatingServiceTest {
         Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        User newUser = new User(null, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+        User user = new User(2L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, timeOfModification);
+        User ratedByUser = new User(1L, "Johny", "Doe", "jonhydoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
                 Set.of(), timeOfCreation, timeOfModification);
 
         // when
         when(ratingRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
-        when(userRepository.findById(2L)).thenReturn(Optional.of(newUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(ratedByUser));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+
         final var receivedEventWrapper = new RatingUpdatedEvent[1];
         when(
                 ratingProducer.send(
@@ -79,16 +84,22 @@ class RatingServiceTest {
 
         // then
         assertNotNull(ratingResponse);
-        assertEquals(request.getUserId(), ratingResponse.getUserId());
+        assertNotNull(ratingResponse.getUser());
+        assertEquals(request.getUserId(), ratingResponse.getUser().getId());
+        assertEquals(user.getFirstName(), ratingResponse.getUser().getFirstName());
+        assertEquals(user.getLastName(), ratingResponse.getUser().getLastName());
         assertEquals(request.getRatingPoints(), ratingResponse.getRatingPoints());
         assertEquals(request.getComment(), ratingResponse.getComment());
-        assertEquals(ratedByUserId, ratingResponse.getRatedByUserId());
+        assertNotNull(ratingResponse.getRatedByUser());
+        assertEquals(ratedByUserId, ratingResponse.getRatedByUser().getId());
+        assertEquals(ratedByUser.getFirstName(), ratingResponse.getRatedByUser().getFirstName());
+        assertEquals(ratedByUser.getLastName(), ratingResponse.getRatedByUser().getLastName());
         assertTrue(ratingResponse.hasLinks());
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
-        assertEquals(ratingResponse.getUserId(), receivedEvent.getUserId());
-        assertEquals(ratingResponse.getRatedByUserId(), receivedEvent.getRatedByUserId());
+        assertEquals(ratingResponse.getUser().getId(), receivedEvent.getUserId());
+        assertEquals(ratingResponse.getRatedByUser().getId(), receivedEvent.getRatedByUserId());
         assertEquals(ratingResponse.getRatingPoints(), receivedEvent.getRatingPoints());
     }
 
@@ -125,11 +136,19 @@ class RatingServiceTest {
         Long ratedByUserId = 2L;
 
         Rating ratingToFind = new Rating(1L, userId, ratedByUserId, 5, "comment", timeOfCreation);
+        User user = new User(userId, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
+        User ratedByUser = new User(ratedByUserId, "Johny", "Doe", "jonhydoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
         var pageable = PageRequest.of(0, 2);
 
         Specification<Rating> specification = Specification.where(null);
 
         // when
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(ratedByUserId)).thenReturn(Optional.of(ratedByUser));
         when(ratingRepository.findAll(specification, pageable)).thenReturn(new PageImpl<>(List.of(ratingToFind), pageable, 1));
 
         var ratings = ratingService.getRatings(pageable, null, null);
@@ -143,8 +162,14 @@ class RatingServiceTest {
 
         assertNotNull(ratingResponse);
         assertEquals(ratingToFind.getId(), ratingResponse.getId());
-        assertEquals(ratingToFind.getUserId(), ratingResponse.getUserId());
-        assertEquals(ratingToFind.getRatedByUserId(), ratingResponse.getRatedByUserId());
+        assertNotNull(ratingResponse.getUser());
+        assertEquals(ratingToFind.getUserId(), ratingResponse.getUser().getId());
+        assertEquals(user.getFirstName(), ratingResponse.getUser().getFirstName());
+        assertEquals(user.getLastName(), ratingResponse.getUser().getLastName());
+        assertNotNull(ratingResponse.getRatedByUser());
+        assertEquals(ratingToFind.getRatedByUserId(), ratingResponse.getRatedByUser().getId());
+        assertEquals(ratedByUser.getFirstName(), ratingResponse.getRatedByUser().getFirstName());
+        assertEquals(ratedByUser.getLastName(), ratingResponse.getRatedByUser().getLastName());
         assertEquals(ratingToFind.getRatingPoints(), ratingResponse.getRatingPoints());
         assertEquals(ratingToFind.getComment(), ratingResponse.getComment());
         assertEquals(ratingToFind.getCreatedAt(), ratingResponse.getCreatedAt());
@@ -158,10 +183,19 @@ class RatingServiceTest {
         Long userId = 1L;
         Long ratedByUserId = 2L;
 
+        User user = new User(userId, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
+        User ratedByUser = new User(ratedByUserId, "Johny", "Doe", "jonhydoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
+
         Rating ratingToFind = new Rating(1L, userId, ratedByUserId, 5, "comment", timeOfCreation);
         var pageable = PageRequest.of(0, 2);
 
         // when
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(ratedByUserId)).thenReturn(Optional.of(ratedByUser));
         when(ratingRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(ratingToFind), pageable, 1));
 
         var ratings = ratingService.getRatings(pageable, userId, null);
@@ -175,8 +209,14 @@ class RatingServiceTest {
 
         assertNotNull(ratingResponse);
         assertEquals(ratingToFind.getId(), ratingResponse.getId());
-        assertEquals(userId, ratingResponse.getUserId());
-        assertEquals(ratingToFind.getRatedByUserId(), ratingResponse.getRatedByUserId());
+        assertNotNull(ratingResponse.getUser());
+        assertEquals(userId, ratingResponse.getUser().getId());
+        assertEquals(user.getFirstName(), ratingResponse.getUser().getFirstName());
+        assertEquals(user.getLastName(), ratingResponse.getUser().getLastName());
+        assertNotNull(ratingResponse.getRatedByUser());
+        assertEquals(ratingToFind.getRatedByUserId(), ratingResponse.getRatedByUser().getId());
+        assertEquals(ratedByUser.getFirstName(), ratingResponse.getRatedByUser().getFirstName());
+        assertEquals(ratedByUser.getLastName(), ratingResponse.getRatedByUser().getLastName());
         assertEquals(ratingToFind.getRatingPoints(), ratingResponse.getRatingPoints());
         assertEquals(ratingToFind.getComment(), ratingResponse.getComment());
         assertEquals(ratingToFind.getCreatedAt(), ratingResponse.getCreatedAt());
@@ -190,10 +230,19 @@ class RatingServiceTest {
         Long userId = 1L;
         Long ratedByUserId = 2L;
 
+        User user = new User(userId, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
+        User ratedByUser = new User(ratedByUserId, "Johny", "Doe", "jonhydoe@gmail.com", 120, "Password+123",
+                true, true, true, true,
+                Set.of(), timeOfCreation, Instant.now());
+
         Rating ratingToFind = new Rating(1L, userId, ratedByUserId, 5, "comment", timeOfCreation);
         var pageable = PageRequest.of(0, 2);
 
         // when
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(ratedByUserId)).thenReturn(Optional.of(ratedByUser));
         when(ratingRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(ratingToFind), pageable, 1));
 
         var ratings = ratingService.getRatings(pageable, null, ratedByUserId);
@@ -207,8 +256,14 @@ class RatingServiceTest {
 
         assertNotNull(ratingResponse);
         assertEquals(ratingToFind.getId(), ratingResponse.getId());
-        assertEquals(ratingToFind.getUserId(), ratingResponse.getUserId());
-        assertEquals(ratedByUserId, ratingResponse.getRatedByUserId());
+        assertNotNull(ratingResponse.getUser());
+        assertEquals(ratingToFind.getUserId(), ratingResponse.getUser().getId());
+        assertEquals(user.getFirstName(), ratingResponse.getUser().getFirstName());
+        assertEquals(user.getLastName(), ratingResponse.getUser().getLastName());
+        assertNotNull(ratingResponse.getRatedByUser());
+        assertEquals(ratedByUserId, ratingResponse.getRatedByUser().getId());
+        assertEquals(ratedByUser.getFirstName(), ratingResponse.getRatedByUser().getFirstName());
+        assertEquals(ratedByUser.getLastName(), ratingResponse.getRatedByUser().getLastName());
         assertEquals(ratingToFind.getRatingPoints(), ratingResponse.getRatingPoints());
         assertEquals(ratingToFind.getComment(), ratingResponse.getComment());
         assertEquals(ratingToFind.getCreatedAt(), ratingResponse.getCreatedAt());

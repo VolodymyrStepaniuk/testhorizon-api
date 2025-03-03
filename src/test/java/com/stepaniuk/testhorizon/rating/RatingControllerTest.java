@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.rating;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.rating.RatingResponse;
 import com.stepaniuk.testhorizon.payload.rating.RatingUpdateRequest;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -71,8 +72,12 @@ class RatingControllerTest {
                         .content(objectMapper.writeValueAsString(ratingUpdateRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(ratingResponse.getId()), Long.class))
-                .andExpect(jsonPath("$.userId", is(ratingResponse.getUserId()), Long.class))
-                .andExpect(jsonPath("$.ratedByUserId", is(ratingResponse.getRatedByUserId()), Long.class))
+                .andExpect(jsonPath("$.user.id", is(ratingResponse.getUser().getId()), Long.class))
+                .andExpect(jsonPath("$.user.firstName", is(ratingResponse.getUser().getFirstName())))
+                .andExpect(jsonPath("$.user.lastName", is(ratingResponse.getUser().getLastName())))
+                .andExpect(jsonPath("$.ratedByUser.id", is(ratingResponse.getRatedByUser().getId()), Long.class))
+                .andExpect(jsonPath("$.ratedByUser.firstName", is(ratingResponse.getRatedByUser().getFirstName())))
+                .andExpect(jsonPath("$.ratedByUser.lastName", is(ratingResponse.getRatedByUser().getLastName())))
                 .andExpect(jsonPath("$.ratingPoints", is(ratingResponse.getRatingPoints())))
                 .andExpect(jsonPath("$.comment", is(ratingResponse.getComment())))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(ratingResponse.getCreatedAt())))
@@ -146,8 +151,12 @@ class RatingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.ratings[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].userId", is(response.getUserId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUserId", is(response.getRatedByUserId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.id", is(response.getUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.firstName", is(response.getUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.lastName", is(response.getUser().getLastName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.id", is(response.getRatedByUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.firstName", is(response.getRatedByUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.lastName", is(response.getRatedByUser().getLastName())))
                 .andExpect(jsonPath("$._embedded.ratings[0].ratingPoints", is(response.getRatingPoints())))
                 .andExpect(jsonPath("$._embedded.ratings[0].comment", is(response.getComment())))
                 .andExpect(jsonPath("$._embedded.ratings[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -156,7 +165,7 @@ class RatingControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnPageOfRatingResponsesWhenGettingRatingByUserId() throws Exception{
+    void shouldReturnPageOfRatingResponsesWhenGettingRatingByUserId() throws Exception {
         // given
         Long userId = 1L;
         var response = createRatingResponse();
@@ -179,8 +188,12 @@ class RatingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.ratings[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].userId", is(response.getUserId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUserId", is(response.getRatedByUserId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.id", is(response.getUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.firstName", is(response.getUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.lastName", is(response.getUser().getLastName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.id", is(response.getRatedByUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.firstName", is(response.getRatedByUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.lastName", is(response.getRatedByUser().getLastName())))
                 .andExpect(jsonPath("$._embedded.ratings[0].ratingPoints", is(response.getRatingPoints())))
                 .andExpect(jsonPath("$._embedded.ratings[0].comment", is(response.getComment())))
                 .andExpect(jsonPath("$._embedded.ratings[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
@@ -189,7 +202,7 @@ class RatingControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
-    void shouldReturnPageOfRatingResponsesWhenGettingRatingByRatedByUserId() throws Exception{
+    void shouldReturnPageOfRatingResponsesWhenGettingRatingByRatedByUserId() throws Exception {
         // given
         Long ratedByUserId = 1L;
         var response = createRatingResponse();
@@ -212,18 +225,22 @@ class RatingControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.ratings[0].id", is(response.getId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].userId", is(response.getUserId()), Long.class))
-                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUserId", is(response.getRatedByUserId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.id", is(response.getUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.firstName", is(response.getUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].user.lastName", is(response.getUser().getLastName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.id", is(response.getRatedByUser().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.firstName", is(response.getRatedByUser().getFirstName())))
+                .andExpect(jsonPath("$._embedded.ratings[0].ratedByUser.lastName", is(response.getRatedByUser().getLastName())))
                 .andExpect(jsonPath("$._embedded.ratings[0].ratingPoints", is(response.getRatingPoints())))
                 .andExpect(jsonPath("$._embedded.ratings[0].comment", is(response.getComment())))
                 .andExpect(jsonPath("$._embedded.ratings[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.ratings[0]._links.self.href", is("http://localhost/ratings/1")));
     }
 
-    private RatingResponse createRatingResponse(){
+    private RatingResponse createRatingResponse() {
         var timeOfCreation = Instant.now().plus(Duration.ofHours(10));
 
-        var ratingResponse = new RatingResponse(1L, 1L, 1L,5, "comment", timeOfCreation);
+        var ratingResponse = new RatingResponse(1L, new UserInfo(1L, "firstName", "lastName"), new UserInfo(1L, "firstNamee", "lastNamee"), 5, "comment", timeOfCreation);
 
         ratingResponse.add(Link.of("http://localhost/ratings/1", "self"));
 

@@ -1,6 +1,7 @@
 package com.stepaniuk.testhorizon.test;
 
 import com.stepaniuk.testhorizon.payload.info.ProjectInfo;
+import com.stepaniuk.testhorizon.payload.info.TestCaseInfo;
 import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.payload.test.TestResponse;
 import com.stepaniuk.testhorizon.test.type.TestType;
@@ -32,9 +33,10 @@ class TestMapperTest {
                 "Test instructions", "https://github.com/user/repo", testType, timeOfCreation, timeOfModification);
         var projectInfo = new ProjectInfo(1L, "Project title");
         var authorInfo = new UserInfo(1L, "Author name","Author surname");
+        var testCaseInfo = new TestCaseInfo(1L, "TestCase Title");
 
         // when
-        TestResponse testResponse = testMapper.toResponse(test, projectInfo, authorInfo);
+        TestResponse testResponse = testMapper.toResponse(test, projectInfo, authorInfo, testCaseInfo);
 
         // then
         assertNotNull(testResponse);
@@ -42,7 +44,9 @@ class TestMapperTest {
         assertNotNull(testResponse.getProject());
         assertEquals(test.getProjectId(), testResponse.getProject().getId());
         assertEquals(projectInfo.getTitle(), testResponse.getProject().getTitle());
-        assertEquals(test.getTestCaseId(), testResponse.getTestCaseId());
+        assertNotNull(testResponse.getTestCase());
+        assertEquals(test.getTestCaseId(), testResponse.getTestCase().getId());
+        assertEquals(testCaseInfo.getTitle(), testResponse.getTestCase().getTitle());
         assertNotNull(testResponse.getAuthor());
         assertEquals(test.getAuthorId(), testResponse.getAuthor().getId());
         assertEquals(authorInfo.getFirstName(), testResponse.getAuthor().getFirstName());
