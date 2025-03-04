@@ -75,6 +75,8 @@ s3:
 
 server:
   port: 3010
+  servlet:
+    context-path: /api
 
 springdoc:
   api-docs:

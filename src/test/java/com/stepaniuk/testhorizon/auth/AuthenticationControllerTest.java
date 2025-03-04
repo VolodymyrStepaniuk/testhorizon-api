@@ -8,6 +8,7 @@ import com.stepaniuk.testhorizon.security.auth.AuthenticationController;
 import com.stepaniuk.testhorizon.security.auth.AuthenticationService;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
@@ -398,8 +399,9 @@ class AuthenticationControllerTest {
         // given
         var token = "valid_token";
         var newPassword = "new_password";
+        var confirmPassword = "new_password";
 
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword);
+        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
         doNothing().when(authenticationService).resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
         // when
@@ -416,7 +418,8 @@ class AuthenticationControllerTest {
         // given
         var token = "invalid_token";
         var newPassword = "new_password";
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword);
+        var confirmPassword = "new_password";
+        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
 
         doThrow(new NoSuchPasswordResetTokenException(token))
                 .when(authenticationService)
@@ -440,7 +443,8 @@ class AuthenticationControllerTest {
         // given
         var token = "invalid_token";
         var newPassword = "new_password";
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword);
+        var confirmPassword = "new_password";
+        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
 
         doThrow(new PasswordResetTokenExpiredException(token))
                 .when(authenticationService)
@@ -456,6 +460,31 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Password reset token expired")))
                 .andExpect(jsonPath("$.detail", is("Password reset token expired: " + token)))
+                .andExpect(jsonPath("$.instance", is("/auth/reset-password")));
+    }
+
+    @Test
+    void shouldReturnErrorResponseWhenPasswordsDoNotMatch() throws Exception {
+        // given
+        var token = "valid_token";
+        var newPassword = "new_password";
+        var confirmPassword = "new_password2";
+        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
+
+        doThrow(new PasswordsDoNotMatchException(newPassword, confirmPassword))
+                .when(authenticationService)
+                .resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
+
+        // when
+        mockMvc.perform(post("/auth/reset-password")
+                        .param("token", token)
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(passwordResetConfirmRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.title", is("Passwords do not match")))
+                .andExpect(jsonPath("$.detail", is("Password " + newPassword + " and confirm password " + confirmPassword + " do not match")))
                 .andExpect(jsonPath("$.instance", is("/auth/reset-password")));
     }
 }

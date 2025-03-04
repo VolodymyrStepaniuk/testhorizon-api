@@ -12,6 +12,7 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.user.User;
@@ -386,7 +387,7 @@ class AuthenticationServiceTest {
     @Test
     void shouldResetPasswordSuccessfully() {
         String token = "valid-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword");
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail("existing.email@gmail.com");
@@ -420,7 +421,7 @@ class AuthenticationServiceTest {
     @Test
     void shouldThrowNoSuchPasswordResetTokenExceptionWhenTokenNotFound() {
         String token = "invalid-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword");
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.empty());
@@ -431,7 +432,7 @@ class AuthenticationServiceTest {
     @Test
     void shouldThrowPasswordResetTokenExpiredExceptionWhenTokenIsExpired() {
         String token = "expired-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword");
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail("existing.email@gmail.com");
@@ -445,6 +446,24 @@ class AuthenticationServiceTest {
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
         assertThrows(PasswordResetTokenExpiredException.class, () -> authenticationService.resetPassword(token, request, correlationId));
+    }
+
+    @Test
+    void shouldThrowPasswordMismatchExceptionWhenPasswordsDoNotMatch() {
+        String token = "valid-token";
+        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword2");
+        String correlationId = UUID.randomUUID().toString();
+        User user = new User();
+        user.setEmail("existing.email@gmail.com");
+        user.setEnabled(true);
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setToken(token);
+        resetToken.setUser(user);
+        resetToken.setExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS));
+
+        when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
+        assertThrows(PasswordsDoNotMatchException.class, () -> authenticationService.resetPassword(token, request, correlationId));
     }
 
     private Answer1<User, User> getFakeSave(long id) {
