@@ -13,6 +13,7 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapper;
 import com.stepaniuk.testhorizon.user.UserRepository;
@@ -205,7 +206,12 @@ public class AuthenticationService {
     }
 
     public void resetPassword(String token, PasswordResetConfirmRequest request, String correlationId) {
-        String newPassword = request.getNewPassword();
+        String password = request.getPassword();
+        String confirmPassword = request.getConfirmPassword();
+
+        if (!password.equals(confirmPassword)) {
+            throw new PasswordsDoNotMatchException(password, confirmPassword);
+        }
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new NoSuchPasswordResetTokenException(token));
@@ -215,7 +221,7 @@ public class AuthenticationService {
         }
 
         User user = resetToken.getUser();
-        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
 
         authProducer.send(
@@ -245,10 +251,9 @@ public class AuthenticationService {
 
     private void sendPasswordResetEmail(String email, String token) {
         String subject = "Password Reset";
-        String resetLink = "http://localhost:8080/auth/reset-password?token=" + token;
         String htmlMessage = loadEmailTemplate(
                 "password-reset-template.html",
-                Map.of("resetLink", resetLink)
+                Map.of("resetToken", token)
         );
 
         try {

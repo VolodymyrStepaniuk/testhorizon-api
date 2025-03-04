@@ -15,6 +15,10 @@ public class PasswordResetConfirmRequest {
 
     @Password
     @NotNull
-    private String newPassword;
+    private String password;
+
+    @Password
+    @NotNull
+    private String confirmPassword;
 
 }

@@ -13,6 +13,7 @@ import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameExc
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
@@ -272,6 +273,15 @@ public class GeneralControllerExceptionHandler {
                 "No handler found for entity type: " + e.getEntityType());
         problemDetail.setTitle("No such handler found for entity");
         problemDetail.setInstance(URI.create("/export"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {PasswordsDoNotMatchException.class})
+    public ProblemDetail handlePasswordsDoNotMatchException(PasswordsDoNotMatchException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "Password "+e.getPassword()+" and confirm password "+e.getConfirmPassword()+" do not match");
+        problemDetail.setTitle("Passwords do not match");
+        problemDetail.setInstance(URI.create("/auth/reset-password"));
         return problemDetail;
     }
 
