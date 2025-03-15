@@ -374,7 +374,7 @@ class TestServiceTest {
         when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testRepository.findAll(specification, pageable)).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
 
-        var testResponsePage = testService.getAllTests(pageable, null, null, null, null);
+        var testResponsePage = testService.getAllTests(pageable, null,  null,null, null, null);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -387,6 +387,58 @@ class TestServiceTest {
         assertEquals(testToFind.getId(), testResponse.getId());
         assertNotNull(testResponse.getProject());
         assertEquals(testToFind.getProjectId(), testResponse.getProject().getId());
+        assertEquals(project.getTitle(), testResponse.getProject().getTitle());
+        assertNotNull(testResponse.getTestCase());
+        assertEquals(testToFind.getTestCaseId(), testResponse.getTestCase().getId());
+        assertEquals(testCase.getTitle(), testResponse.getTestCase().getTitle());
+        assertNotNull(testResponse.getAuthor());
+        assertEquals(testToFind.getAuthorId(), testResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testResponse.getAuthor().getLastName());
+        assertEquals(testToFind.getTitle(), testResponse.getTitle());
+        assertEquals(testToFind.getDescription(), testResponse.getDescription());
+        assertEquals(testToFind.getInstructions(), testResponse.getInstructions());
+        assertEquals(testToFind.getGithubUrl(), testResponse.getGithubUrl());
+        assertEquals(testToFind.getType().getName(), testResponse.getType());
+        assertEquals(testToFind.getCreatedAt(), testResponse.getCreatedAt());
+        assertEquals(testToFind.getUpdatedAt(), testResponse.getUpdatedAt());
+        assertTrue(testResponse.hasLinks());
+    }
+
+    @org.junit.jupiter.api.Test
+    void shouldReturnPagedModelWhenGettingTestsByTitle() {
+        // given
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        List<Long> projectIds = List.of(1L);
+
+        TestType type = new TestType(1L, TestTypeName.UNIT);
+        var testToFind = new Test(1L, projectIds.get(0), 1L, 1L, "title", "description", "instructions", "githubUrl", type, timeOfCreation, timeOfModification);
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
+        var testCase = getNewTestCaseWithAllFields();
+        var testTitle = "title";
+
+        var pageable = PageRequest.of(0, 2);
+
+        when(testCaseRepository.findById(testCase.getId())).thenReturn(Optional.of(testCase));
+        when(projectRepository.findById(projectIds.get(0))).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+        when(testRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
+
+        var testResponsePage = testService.getAllTests(pageable, testTitle, null, null, null, null);
+        var testResponse = testResponsePage.getContent().iterator().next();
+
+        //then
+        assertNotNull(testResponsePage);
+        assertNotNull(testResponsePage.getMetadata());
+        assertEquals(1, testResponsePage.getMetadata().getTotalElements());
+        assertEquals(1, testResponsePage.getContent().size());
+
+        assertNotNull(testResponse);
+        assertEquals(testToFind.getId(), testResponse.getId());
+        assertNotNull(testResponse.getProject());
+        assertEquals(projectIds.get(0), testResponse.getProject().getId());
         assertEquals(project.getTitle(), testResponse.getProject().getTitle());
         assertNotNull(testResponse.getTestCase());
         assertEquals(testToFind.getTestCaseId(), testResponse.getTestCase().getId());
@@ -425,7 +477,7 @@ class TestServiceTest {
         when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
         when(testRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
 
-        var testResponsePage = testService.getAllTests(pageable, projectIds, null, null, null);
+        var testResponsePage = testService.getAllTests(pageable, null, projectIds, null, null, null);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -476,7 +528,7 @@ class TestServiceTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(testRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
 
-        var testResponsePage = testService.getAllTests(pageable, null, authorId, null, null);
+        var testResponsePage = testService.getAllTests(pageable, null, null, authorId, null, null);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -527,7 +579,7 @@ class TestServiceTest {
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(testRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(testToFind), pageable, 1));
 
-        var testResponsePage = testService.getAllTests(pageable, null, null, testCaseId, null);
+        var testResponsePage = testService.getAllTests(pageable, null,null, null, testCaseId, null);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -578,7 +630,7 @@ class TestServiceTest {
         when(testTypeRepository.findByName(typeName)).thenReturn(Optional.of(type));
         when(testCaseRepository.findById(testCase.getId())).thenReturn(Optional.of(testCase));
 
-        var testResponsePage = testService.getAllTests(pageable, null, null, null, typeName);
+        var testResponsePage = testService.getAllTests(pageable, null,null, null, null, typeName);
         var testResponse = testResponsePage.getContent().iterator().next();
 
         //then
@@ -618,7 +670,7 @@ class TestServiceTest {
         when(testTypeRepository.findByName(typeName)).thenReturn(Optional.empty());
 
         // when && then
-        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.getAllTests(pageable, null, null, null, typeName));
+        assertThrows(NoSuchTestTypeByNameException.class, () -> testService.getAllTests(pageable, null, null, null,null, typeName));
     }
 
     private Answer1<Test, Test> getFakeSave(long id) {

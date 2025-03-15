@@ -375,7 +375,7 @@ class TestControllerTest {
         var response = createTestResponse();
         var pageable = PageRequest.of(0, 2);
 
-        when(testService.getAllTests(pageable, null, null, null, null))
+        when(testService.getAllTests(pageable, null, null, null, null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/tests"))
@@ -410,13 +410,54 @@ class TestControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
+    void shouldReturnPageOfTestResponsesWhenGettingAllTestsWhenTitleNotNull() throws Exception {
+        // given
+        var response = createTestResponse();
+        var pageable = PageRequest.of(0, 2);
+        var testTitle = "title";
+
+        when(testService.getAllTests(pageable, testTitle, null, null, null, null))
+                .thenReturn(
+                        pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
+                                URI.create("/tests"))
+                );
+
+        // then
+        mockMvc.perform(get("/tests")
+                        .contentType("application/json")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("title", response.getTitle())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.tests[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.tests[0].author.lastName", is(response.getAuthor().getLastName())))
+                .andExpect(jsonPath("$._embedded.tests[0].title", is(response.getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].description", is(response.getDescription())))
+                .andExpect(jsonPath("$._embedded.tests[0].instructions", is(response.getInstructions())))
+                .andExpect(jsonPath("$._embedded.tests[0].githubUrl", is(response.getGithubUrl())))
+                .andExpect(jsonPath("$._embedded.tests[0].type", is(response.getType().name())))
+                .andExpect(jsonPath("$._embedded.tests[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
+                .andExpect(jsonPath("$._embedded.tests[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
+                .andExpect(jsonPath("$._embedded.tests[0]._links.self.href", is("http://localhost/tests/1")))
+                .andExpect(jsonPath("$._embedded.tests[0]._links.update.href", is("http://localhost/tests/1")))
+                .andExpect(jsonPath("$._embedded.tests[0]._links.delete.href", is("http://localhost/tests/1")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestResponsesWhenGettingAllTestsWhenProjectIdNotEmpty() throws Exception {
         // given
         var response = createTestResponse();
         var pageable = PageRequest.of(0, 2);
         var projectId = List.of(1L);
 
-        when(testService.getAllTests(pageable, projectId, null, null, null))
+        when(testService.getAllTests(pageable, null, projectId, null, null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/tests"))
@@ -457,7 +498,7 @@ class TestControllerTest {
         var pageable = PageRequest.of(0, 2);
         var authorId = 1L;
 
-        when(testService.getAllTests(pageable, null, authorId, null, null))
+        when(testService.getAllTests(pageable, null, null, authorId, null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/tests"))
@@ -498,7 +539,7 @@ class TestControllerTest {
         var pageable = PageRequest.of(0, 2);
         var testCaseId = 1L;
 
-        when(testService.getAllTests(pageable, null, null, testCaseId, null))
+        when(testService.getAllTests(pageable, null, null, null, testCaseId, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/tests"))
@@ -539,7 +580,7 @@ class TestControllerTest {
         var pageable = PageRequest.of(0, 2);
         var type = TestTypeName.ACCEPTANCE;
 
-        when(testService.getAllTests(pageable, null, null, null, type))
+        when(testService.getAllTests(pageable, null, null, null, null, type))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/tests"))
