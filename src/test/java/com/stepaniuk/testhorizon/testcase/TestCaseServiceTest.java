@@ -353,7 +353,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findAll(specification, pageable)).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
-        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, null, null);
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, null,null, null, null);
         var testCaseResponse = testCaseResponses.getContent().iterator().next();
 
         //then
@@ -365,6 +365,55 @@ class TestCaseServiceTest {
         assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
+        assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertNotNull(testCaseResponse.getAuthor());
+        assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
+        assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
+        assertEquals(userInfo.getLastName(), testCaseResponse.getAuthor().getLastName());
+        assertEquals(testCaseToFind.getTitle(), testCaseResponse.getTitle());
+        assertEquals(testCaseToFind.getDescription(), testCaseResponse.getDescription());
+        assertEquals(testCaseToFind.getPreconditions(), testCaseResponse.getPreconditions());
+        assertEquals(testCaseToFind.getInputData(), testCaseResponse.getInputData());
+        assertEquals(testCaseToFind.getSteps(), testCaseResponse.getSteps());
+        assertEquals(testCaseToFind.getPriority().getName(), testCaseResponse.getPriority());
+        assertEquals(testCaseToFind.getCreatedAt(), testCaseResponse.getCreatedAt());
+        assertEquals(testCaseToFind.getUpdatedAt(), testCaseResponse.getUpdatedAt());
+        assertTrue(testCaseResponse.hasLinks());
+    }
+
+    @Test
+    void shouldReturnPagedModelWhenGettingAllTestCasesAndTitleNotNull() {
+        // given
+        Instant timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        Instant timeOfModification = Instant.now().plus(Duration.ofHours(20));
+        List<Long> projectIds = List.of(1L);
+
+        var testCaseToFind = new TestCase(1L, projectIds.get(0), 1L, "title", "description", "preconditions", "inputData", List.of("step1", "step2"),
+                new TestCasePriority(1L, TestCasePriorityName.LOW), timeOfCreation, timeOfModification);
+
+        var testCaseTitle = "title";
+        var pageable = PageRequest.of(0, 1);
+        var userInfo = new UserInfo(1L, "firstName", "lastName");
+        var project = getNewProjectWithAllFields();
+
+        when(projectRepository.findById(projectIds.get(0))).thenReturn(Optional.of(project));
+        when(userInfoService.getUserInfo(1L)).thenReturn(userInfo);
+
+        when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
+                new PageImpl<>(List.of(testCaseToFind), pageable, 1));
+        // when
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, testCaseTitle, null, null, null);
+        var testCaseResponse = testCaseResponses.getContent().iterator().next();
+
+        //then
+        assertNotNull(testCaseResponses);
+        assertNotNull(testCaseResponses.getMetadata());
+        assertEquals(1, testCaseResponses.getMetadata().getTotalElements());
+        assertEquals(1, testCaseResponses.getContent().size());
+
+        assertEquals(testCaseToFind.getId(), testCaseResponse.getId());
+        assertNotNull(testCaseResponse.getProject());
+        assertEquals(projectIds.get(0), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
@@ -401,7 +450,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
-        var testCaseResponses = testCaseService.getAllTestCases(pageable, projectIds, null, null);
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, projectIds, null, null);
         var testCaseResponse = testCaseResponses.getContent().iterator().next();
 
         //then
@@ -448,7 +497,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
-        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, authorId, null);
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, null, authorId, null);
         var testCaseResponse = testCaseResponses.getContent().iterator().next();
 
         //then
@@ -496,7 +545,7 @@ class TestCaseServiceTest {
         when(testCaseRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(testCaseToFind), pageable, 1));
         // when
-        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, null, priorityName);
+        var testCaseResponses = testCaseService.getAllTestCases(pageable, null, null,null, priorityName);
         var testCaseResponse = testCaseResponses.getContent().iterator().next();
 
         //then

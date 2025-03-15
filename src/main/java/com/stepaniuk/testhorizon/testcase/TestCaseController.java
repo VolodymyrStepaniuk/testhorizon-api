@@ -49,10 +49,11 @@ public class TestCaseController {
 
     @GetMapping
     public ResponseEntity<PagedModel<TestCaseResponse>> getAllTestCases(Pageable pageable,
+                                                                        @Nullable @RequestParam(required = false) String title,
                                                                         @Nullable @RequestParam(required = false) List<Long> projectIds,
                                                                         @Nullable @RequestParam(required = false) Long authorId,
                                                                         @Nullable @RequestParam(required = false) TestCasePriorityName priority) {
 
-        return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, projectIds, authorId, priority));
+        return ResponseEntity.ok(testCaseService.getAllTestCases(pageable, title, projectIds, authorId, priority));
     }
 }

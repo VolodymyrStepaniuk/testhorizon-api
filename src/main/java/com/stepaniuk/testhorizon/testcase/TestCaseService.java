@@ -173,11 +173,18 @@ public class TestCaseService {
     }
 
     public PagedModel<TestCaseResponse> getAllTestCases(Pageable pageable,
+                                                        String title,
                                                         @Nullable List<Long> projectIds,
                                                         @Nullable Long authorId,
                                                         @Nullable TestCasePriorityName priorityName) {
 
         Specification<TestCase> specification = Specification.where(null);
+
+        if(title != null) {
+            specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder
+                    .like(criteriaBuilder.lower(root.get("title")), "%" + title.toLowerCase() + "%")
+            );
+        }
 
         if (projectIds != null && !projectIds.isEmpty()) {
             specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder

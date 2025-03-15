@@ -361,7 +361,7 @@ class TestCaseControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, null, null, null))
+        when(testCaseService.getAllTestCases(pageable, null,null, null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -395,13 +395,55 @@ class TestCaseControllerTest {
 
     @Test
     @WithJwtToken(userId = 1L)
+    void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenTitleNotNull() throws Exception {
+        // given
+        var response = createResponse();
+        var pageable = PageRequest.of(0, 2);
+        var testCaseTitle = "title";
+
+        // when
+        when(testCaseService.getAllTestCases(pageable, testCaseTitle, null, null, null))
+                .thenReturn(
+                        pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
+                                URI.create("/test-cases"))
+                );
+
+        // then
+        mockMvc.perform(get("/test-cases")
+                        .contentType("application/json")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("title", response.getTitle())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$._embedded.testCases[0].id", is(response.getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.id", is(response.getProject().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.id", is(response.getAuthor().getId()), Long.class))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.firstName", is(response.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].author.lastName", is(response.getAuthor().getLastName())))
+                .andExpect(jsonPath("$._embedded.testCases[0].title", is(response.getTitle())))
+                .andExpect(jsonPath("$._embedded.testCases[0].description", is(response.getDescription())))
+                .andExpect(jsonPath("$._embedded.testCases[0].preconditions", is(response.getPreconditions())))
+                .andExpect(jsonPath("$._embedded.testCases[0].inputData", is(response.getInputData())))
+                .andExpect(jsonPath("$._embedded.testCases[0].steps", is(response.getSteps())))
+                .andExpect(jsonPath("$._embedded.testCases[0].priority", is(response.getPriority().name())))
+                .andExpect(jsonPath("$._embedded.testCases[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
+                .andExpect(jsonPath("$._embedded.testCases[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
+                .andExpect(jsonPath("$._embedded.testCases[0]._links.self.href", is("http://localhost/test-cases/1")))
+                .andExpect(jsonPath("$._embedded.testCases[0]._links.update.href", is("http://localhost/test-cases/1")))
+                .andExpect(jsonPath("$._embedded.testCases[0]._links.delete.href", is("http://localhost/test-cases/1")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
     void shouldReturnPageOfTestCaseResponsesWhenGettingAllTestCasesWhenProjectIdsNotEmpty() throws Exception {
         // given
         var response = createResponse();
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, List.of(response.getProject().getId()), null, null))
+        when(testCaseService.getAllTestCases(pageable, null, List.of(response.getProject().getId()), null, null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -442,7 +484,7 @@ class TestCaseControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, null, response.getAuthor().getId(), null))
+        when(testCaseService.getAllTestCases(pageable, null, null, response.getAuthor().getId(), null))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))
@@ -483,7 +525,7 @@ class TestCaseControllerTest {
         var pageable = PageRequest.of(0, 2);
 
         // when
-        when(testCaseService.getAllTestCases(pageable, null, null, response.getPriority()))
+        when(testCaseService.getAllTestCases(pageable, null,null, null, response.getPriority()))
                 .thenReturn(
                         pageMapper.toResponse(new PageImpl<>(List.of(response), pageable, 1),
                                 URI.create("/test-cases"))

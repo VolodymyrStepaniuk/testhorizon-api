@@ -49,12 +49,13 @@ public class TestController {
 
     @GetMapping
     public ResponseEntity<PagedModel<TestResponse>> getAllTests(Pageable pageable,
+                                                                @Nullable @RequestParam(required = false) String title,
                                                                 @Nullable @RequestParam(required = false) List<Long> projectIds,
                                                                 @Nullable @RequestParam(required = false) Long authorId,
                                                                 @Nullable @RequestParam(required = false) Long testCaseId,
                                                                 @Nullable @RequestParam(required = false) TestTypeName type) {
 
-        return ResponseEntity.ok(testService.getAllTests(pageable, projectIds, authorId, testCaseId, type));
+        return ResponseEntity.ok(testService.getAllTests(pageable, title, projectIds, authorId, testCaseId, type));
     }
 
 }
