@@ -5,6 +5,9 @@ import com.stepaniuk.testhorizon.event.auth.UserRegisteredEvent;
 import com.stepaniuk.testhorizon.event.auth.UserResetPasswordEvent;
 import com.stepaniuk.testhorizon.event.auth.UserVerifiedEvent;
 import com.stepaniuk.testhorizon.payload.auth.*;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetConfirmRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.UpdatePasswordRequest;
 import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.EmailService;
@@ -13,7 +16,8 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapper;
 import com.stepaniuk.testhorizon.user.UserRepository;
@@ -187,8 +191,8 @@ public class AuthenticationService {
         sendVerificationEmail(email, savedEmailCode.getCode());
     }
 
-    public void sendPasswordReset(PasswordResetRequest passwordResetRequest) {
-        String email = passwordResetRequest.getEmail();
+    public void sendEmailPasswordReset(EmailPasswordResetRequest emailPasswordResetRequest) {
+        String email = emailPasswordResetRequest.getEmail();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NoSuchUserByEmailException(email));
@@ -205,12 +209,12 @@ public class AuthenticationService {
         sendPasswordResetEmail(email, token);
     }
 
-    public void resetPassword(String token, PasswordResetConfirmRequest request, String correlationId) {
-        String password = request.getPassword();
+    public void emailResetPassword(String token, EmailPasswordResetConfirmRequest request, String correlationId) {
+        String newPassword = request.getNewPassword();
         String confirmPassword = request.getConfirmPassword();
 
-        if (!password.equals(confirmPassword)) {
-            throw new PasswordsDoNotMatchException(password, confirmPassword);
+        if (!newPassword.equals(confirmPassword)) {
+            throw new PasswordsDoNotMatchException();
         }
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
@@ -221,7 +225,7 @@ public class AuthenticationService {
         }
 
         User user = resetToken.getUser();
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         authProducer.send(
@@ -232,6 +236,32 @@ public class AuthenticationService {
         );
 
         passwordResetTokenRepository.delete(resetToken);
+    }
+
+    public void updatePasswordAuthenticated(Long id, UpdatePasswordRequest request, String correlationId) {
+        String newPassword = request.getNewPassword();
+        String confirmPassword = request.getConfirmPassword();
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new PasswordsDoNotMatchException();
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchUserByIdException(id));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new InvalidOldPasswordException();
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        authProducer.send(
+                new UserResetPasswordEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        user.getEmail()
+                )
+        );
     }
 
     private void sendVerificationEmail(String email, String verificationCode) {

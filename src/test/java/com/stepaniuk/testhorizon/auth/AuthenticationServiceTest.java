@@ -1,7 +1,12 @@
 package com.stepaniuk.testhorizon.auth;
 
 import com.stepaniuk.testhorizon.event.auth.*;
-import com.stepaniuk.testhorizon.payload.auth.*;
+import com.stepaniuk.testhorizon.payload.auth.AuthenticationResponse;
+import com.stepaniuk.testhorizon.payload.auth.LoginRequest;
+import com.stepaniuk.testhorizon.payload.auth.VerificationRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetConfirmRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.UpdatePasswordRequest;
 import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.EmailService;
@@ -12,14 +17,15 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapperImpl;
 import com.stepaniuk.testhorizon.user.UserRepository;
 import com.stepaniuk.testhorizon.user.authority.Authority;
-import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCode;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
@@ -359,35 +365,35 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldReturnVoidWhenSendPasswordReset() throws Exception{
+    void shouldReturnVoidWhenSendEmailPasswordReset() throws Exception {
         String email = "existing.email@gmail.com";
-        PasswordResetRequest request = new PasswordResetRequest(email);
+        EmailPasswordResetRequest request = new EmailPasswordResetRequest(email);
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
-        authenticationService.sendPasswordReset(request);
+        authenticationService.sendEmailPasswordReset(request);
 
         verify(passwordResetTokenRepository, times(1)).save(any(PasswordResetToken.class));
         verify(emailService, times(1)).sendEmail(eq(email), anyString(), anyString());
     }
 
     @Test
-    void shouldThrowNoSuchUserByEmailExceptionWhenSendPasswordReset() {
+    void shouldThrowNoSuchUserByEmailExceptionWhenSendEmailPasswordReset() {
         String email = "nonexistent.email@gmail.com";
-        PasswordResetRequest request = new PasswordResetRequest(email);
+        EmailPasswordResetRequest request = new EmailPasswordResetRequest(email);
 
         when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.sendPasswordReset(request));
+        assertThrows(NoSuchUserByEmailException.class, () -> authenticationService.sendEmailPasswordReset(request));
     }
 
     @Test
-    void shouldResetPasswordSuccessfully() {
+    void shouldEmailResetPasswordSuccessfully() {
         String token = "valid-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
+        EmailPasswordResetConfirmRequest request = new EmailPasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail("existing.email@gmail.com");
@@ -407,7 +413,7 @@ class AuthenticationServiceTest {
                 )
         );
 
-        authenticationService.resetPassword(token, request, correlationId);
+        authenticationService.emailResetPassword(token, request, correlationId);
 
         var receivedEvent = receivedEventWrapper[0];
         assertNotNull(receivedEvent);
@@ -421,18 +427,18 @@ class AuthenticationServiceTest {
     @Test
     void shouldThrowNoSuchPasswordResetTokenExceptionWhenTokenNotFound() {
         String token = "invalid-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
+        EmailPasswordResetConfirmRequest request = new EmailPasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.empty());
 
-        assertThrows(NoSuchPasswordResetTokenException.class, () -> authenticationService.resetPassword(token, request, correlationId));
+        assertThrows(NoSuchPasswordResetTokenException.class, () -> authenticationService.emailResetPassword(token, request, correlationId));
     }
 
     @Test
     void shouldThrowPasswordResetTokenExpiredExceptionWhenTokenIsExpired() {
         String token = "expired-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword");
+        EmailPasswordResetConfirmRequest request = new EmailPasswordResetConfirmRequest("newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail("existing.email@gmail.com");
@@ -445,13 +451,13 @@ class AuthenticationServiceTest {
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
-        assertThrows(PasswordResetTokenExpiredException.class, () -> authenticationService.resetPassword(token, request, correlationId));
+        assertThrows(PasswordResetTokenExpiredException.class, () -> authenticationService.emailResetPassword(token, request, correlationId));
     }
 
     @Test
     void shouldThrowPasswordMismatchExceptionWhenPasswordsDoNotMatch() {
         String token = "valid-token";
-        PasswordResetConfirmRequest request = new PasswordResetConfirmRequest("newPassword", "newPassword2");
+        EmailPasswordResetConfirmRequest request = new EmailPasswordResetConfirmRequest("newPassword", "newPassword2");
         String correlationId = UUID.randomUUID().toString();
         User user = new User();
         user.setEmail("existing.email@gmail.com");
@@ -463,7 +469,80 @@ class AuthenticationServiceTest {
         resetToken.setExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS));
 
         when(passwordResetTokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
-        assertThrows(PasswordsDoNotMatchException.class, () -> authenticationService.resetPassword(token, request, correlationId));
+        assertThrows(PasswordsDoNotMatchException.class, () -> authenticationService.emailResetPassword(token, request, correlationId));
+    }
+
+    @Test
+    void shouldUpdatePasswordAuthenticated() {
+        Long userId = 1L;
+        UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword", "newPassword");
+        String correlationId = UUID.randomUUID().toString();
+
+        User user = new User();
+        user.setId(userId);
+        user.setPassword("oldPassword");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getOldPassword(), user.getPassword())).thenReturn(true);
+        when(passwordEncoder.encode(request.getNewPassword())).thenReturn("encodedNewPassword");
+
+        when(userRepository.save(any())).thenAnswer(answer(getFakeSave(userId)));
+        final var receivedEventWrapper = new UserResetPasswordEvent[1];
+        when(
+                authProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (UserResetPasswordEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
+        authenticationService.updatePasswordAuthenticated(userId, request, correlationId);
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(user.getEmail(), receivedEvent.getEmail());
+        assertEquals("encodedNewPassword", user.getPassword());
+        verify(userRepository, times(1)).save(user);
+    }
+
+    @Test
+    void shouldThrowNoSuchUserByIdExceptionWhenUpdatePasswordAuthenticated() {
+        Long userId = 1L;
+        UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword", "newPassword");
+        String correlationId = UUID.randomUUID().toString();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(NoSuchUserByIdException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
+    }
+
+    @Test
+    void shouldThrowPasswordsDoNotMatchExceptionWhenNewAndConfirmPasswordDoNotMatch() {
+        Long userId = 1L;
+        UpdatePasswordRequest request = new UpdatePasswordRequest("oldPassword", "newPassword", "differentNewPassword");
+        String correlationId = UUID.randomUUID().toString();
+
+        User user = new User();
+        user.setId(userId);
+        user.setPassword("oldPassword");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(PasswordsDoNotMatchException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
+    }
+
+    @Test
+    void shouldThrowInvalidOldPasswordExceptionWhenOldPasswordDoesNotMatch() {
+        Long userId = 1L;
+        UpdatePasswordRequest request = new UpdatePasswordRequest("wrongOldPassword", "newPassword", "newPassword");
+        String correlationId = UUID.randomUUID().toString();
+
+        User user = new User();
+        user.setId(userId);
+        user.setPassword("oldPassword");
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.getOldPassword(), user.getPassword())).thenReturn(false);
+
+        assertThrows(InvalidOldPasswordException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
     }
 
     private Answer1<User, User> getFakeSave(long id) {
