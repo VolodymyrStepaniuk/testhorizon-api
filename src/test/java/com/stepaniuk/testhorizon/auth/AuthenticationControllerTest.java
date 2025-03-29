@@ -11,7 +11,8 @@ import com.stepaniuk.testhorizon.security.auth.AuthenticationController;
 import com.stepaniuk.testhorizon.security.auth.AuthenticationService;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
@@ -474,9 +475,8 @@ class AuthenticationControllerTest {
         var newPassword = "new_password";
         var confirmPassword = "new_password2";
         var passwordResetConfirmRequest = new EmailPasswordResetConfirmRequest(newPassword, confirmPassword);
-        var e = new PasswordsDoNotMatchException("newPassword", "confirmPassword");
 
-        doThrow(e)
+        doThrow(new PasswordsDoNotMatchException())
                 .when(authenticationService)
                 .emailResetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
@@ -489,7 +489,7 @@ class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Passwords do not match")))
-                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.detail", is("New password and confirmation password do not match")))
                 .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 
@@ -534,9 +534,8 @@ class AuthenticationControllerTest {
     void shouldReturnErrorResponseWhenUpdatePasswordAndPasswordsDoNotMatch() throws Exception {
         // given
         var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password2");
-        var e = new PasswordsDoNotMatchException(updatePasswordRequest.getNewPassword(), updatePasswordRequest.getConfirmPassword());
 
-        doThrow(new PasswordsDoNotMatchException(updatePasswordRequest.getNewPassword(), updatePasswordRequest.getConfirmPassword()))
+        doThrow(new PasswordsDoNotMatchException())
                 .when(authenticationService)
                 .updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
 
@@ -547,7 +546,7 @@ class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Passwords do not match")))
-                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.detail", is("New password and confirmation password do not match")))
                 .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 
@@ -556,9 +555,8 @@ class AuthenticationControllerTest {
     void shouldReturnErrorResponseWhenOldPasswordIsIncorrect() throws Exception {
         // given
         var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password");
-        var e = new PasswordsDoNotMatchException("oldPassword","oldPasswordFromRequest");
 
-        doThrow(e)
+        doThrow(new InvalidOldPasswordException())
                 .when(authenticationService)
                 .updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
 
@@ -568,8 +566,8 @@ class AuthenticationControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
-                .andExpect(jsonPath("$.title", is("Passwords do not match")))
-                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.title", is("Invalid old password")))
+                .andExpect(jsonPath("$.detail", is("The old password provided is invalid.")))
                 .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 }

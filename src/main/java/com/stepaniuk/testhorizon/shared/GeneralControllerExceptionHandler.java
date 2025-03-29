@@ -13,7 +13,8 @@ import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameExc
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
@@ -279,8 +280,17 @@ public class GeneralControllerExceptionHandler {
     @ExceptionHandler(value = {PasswordsDoNotMatchException.class})
     public ProblemDetail handlePasswordsDoNotMatchException(PasswordsDoNotMatchException e) {
         var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
-                "Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match");
+                "New password and confirmation password do not match");
         problemDetail.setTitle("Passwords do not match");
+        problemDetail.setInstance(URI.create("/auth/password-reset"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {InvalidOldPasswordException.class})
+    public ProblemDetail handleInvalidOldPasswordException(InvalidOldPasswordException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+                "The old password provided is invalid.");
+        problemDetail.setTitle("Invalid old password");
         problemDetail.setInstance(URI.create("/auth/password-reset"));
         return problemDetail;
     }

@@ -16,7 +16,8 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapper;
 import com.stepaniuk.testhorizon.user.UserRepository;
@@ -213,7 +214,7 @@ public class AuthenticationService {
         String confirmPassword = request.getConfirmPassword();
 
         if (!newPassword.equals(confirmPassword)) {
-            throw new PasswordsDoNotMatchException("newPassword", "confirmPassword");
+            throw new PasswordsDoNotMatchException();
         }
 
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
@@ -242,14 +243,14 @@ public class AuthenticationService {
         String confirmPassword = request.getConfirmPassword();
 
         if (!newPassword.equals(confirmPassword)) {
-            throw new PasswordsDoNotMatchException("newPassword", "confirmPassword");
+            throw new PasswordsDoNotMatchException();
         }
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchUserByIdException(id));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new PasswordsDoNotMatchException("oldPassword","oldPasswordFromRequest");
+            throw new InvalidOldPasswordException();
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));

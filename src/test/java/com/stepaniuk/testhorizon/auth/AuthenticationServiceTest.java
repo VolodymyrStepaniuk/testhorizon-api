@@ -17,7 +17,8 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
-import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordsDoNotMatchException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
@@ -529,7 +530,7 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void shouldThrowPasswordsDoNotMatchExceptionWhenOldPasswordDoesNotMatch() {
+    void shouldThrowInvalidOldPasswordExceptionWhenOldPasswordDoesNotMatch() {
         Long userId = 1L;
         UpdatePasswordRequest request = new UpdatePasswordRequest("wrongOldPassword", "newPassword", "newPassword");
         String correlationId = UUID.randomUUID().toString();
@@ -541,7 +542,7 @@ class AuthenticationServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.getOldPassword(), user.getPassword())).thenReturn(false);
 
-        assertThrows(PasswordsDoNotMatchException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
+        assertThrows(InvalidOldPasswordException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
     }
 
     private Answer1<User, User> getFakeSave(long id) {
