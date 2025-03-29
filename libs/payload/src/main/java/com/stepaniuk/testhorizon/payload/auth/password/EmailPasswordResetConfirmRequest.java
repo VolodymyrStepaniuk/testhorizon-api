@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.payload.auth;
+package com.stepaniuk.testhorizon.payload.auth.password;
 
 import com.stepaniuk.testhorizon.validation.shared.password.Password;
 import jakarta.validation.constraints.NotNull;
@@ -11,11 +11,11 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class PasswordResetConfirmRequest {
+public class EmailPasswordResetConfirmRequest {
 
     @Password
     @NotNull
-    private String password;
+    private String newPassword;
 
     @Password
     @NotNull

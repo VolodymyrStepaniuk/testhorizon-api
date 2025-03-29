@@ -6,12 +6,12 @@ import lombok.Getter;
  */
 @Getter
 public class PasswordsDoNotMatchException extends RuntimeException {
-    private final String password;
-    private final String confirmPassword;
+    private final String firstTypeOfPassword;
+    private final String secondTypeOfPassword;
 
-    public PasswordsDoNotMatchException(String password, String confirmPassword) {
-        super("Password "+password+" and confirm password "+confirmPassword+" do not match");
-        this.password = password;
-        this.confirmPassword = confirmPassword;
+    public PasswordsDoNotMatchException(String firstTypeOfPassword, String secondTypeOfPassword) {
+        super("First password and second password do not match");
+        this.firstTypeOfPassword = firstTypeOfPassword;
+        this.secondTypeOfPassword = secondTypeOfPassword;
     }
 }

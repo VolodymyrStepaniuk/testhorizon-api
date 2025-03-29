@@ -227,7 +227,7 @@ public class GeneralControllerExceptionHandler {
         var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
                 "No password reset token with token: " + e.getToken());
         problemDetail.setTitle("No such password reset token");
-        problemDetail.setInstance(URI.create("/auth/reset-password"));
+        problemDetail.setInstance(URI.create("/auth/password-reset"));
         return problemDetail;
     }
 
@@ -236,7 +236,7 @@ public class GeneralControllerExceptionHandler {
         var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
                 "Password reset token expired: " + e.getToken());
         problemDetail.setTitle("Password reset token expired");
-        problemDetail.setInstance(URI.create("/auth/reset-password"));
+        problemDetail.setInstance(URI.create("/auth/password-reset"));
         return problemDetail;
     }
 
@@ -279,9 +279,9 @@ public class GeneralControllerExceptionHandler {
     @ExceptionHandler(value = {PasswordsDoNotMatchException.class})
     public ProblemDetail handlePasswordsDoNotMatchException(PasswordsDoNotMatchException e) {
         var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
-                "Password "+e.getPassword()+" and confirm password "+e.getConfirmPassword()+" do not match");
+                "Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match");
         problemDetail.setTitle("Passwords do not match");
-        problemDetail.setInstance(URI.create("/auth/reset-password"));
+        problemDetail.setInstance(URI.create("/auth/password-reset"));
         return problemDetail;
     }
 

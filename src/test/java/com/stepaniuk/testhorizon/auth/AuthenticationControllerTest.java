@@ -2,6 +2,9 @@ package com.stepaniuk.testhorizon.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stepaniuk.testhorizon.payload.auth.*;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetConfirmRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.EmailPasswordResetRequest;
+import com.stepaniuk.testhorizon.payload.auth.password.UpdatePasswordRequest;
 import com.stepaniuk.testhorizon.payload.user.UserCreateRequest;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.auth.AuthenticationController;
@@ -12,6 +15,7 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.Passwords
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
+import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.email.exceptions.InvalidVerificationCodeException;
 import com.stepaniuk.testhorizon.user.email.exceptions.VerificationCodeExpiredException;
@@ -363,11 +367,11 @@ class AuthenticationControllerTest {
     @Test
     void shouldSendPasswordReset() throws Exception {
         // given
-        var passwordResetRequest = new PasswordResetRequest("mail@gmail.com");
+        var passwordResetRequest = new EmailPasswordResetRequest("mail@gmail.com");
 
-        doNothing().when(authenticationService).sendPasswordReset(passwordResetRequest);
+        doNothing().when(authenticationService).sendEmailPasswordReset(passwordResetRequest);
 
-        mockMvc.perform(post("/auth/send-reset-password")
+        mockMvc.perform(post("/auth/password-reset/request")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetRequest))
                 )
@@ -377,13 +381,13 @@ class AuthenticationControllerTest {
     @Test
     void shouldReturnErrorResponseWhenUserNotFoundForPasswordReset() throws Exception {
         // given
-        var passwordResetRequest = new PasswordResetRequest("mail@gmail.com");
+        var passwordResetRequest = new EmailPasswordResetRequest("mail@gmail.com");
 
         doThrow(new NoSuchUserByEmailException(passwordResetRequest.getEmail()))
                 .when(authenticationService)
-                .sendPasswordReset(passwordResetRequest);
+                .sendEmailPasswordReset(passwordResetRequest);
 
-        mockMvc.perform(post("/auth/send-reset-password")
+        mockMvc.perform(post("/auth/password-reset/request")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetRequest))
                 )
@@ -401,11 +405,11 @@ class AuthenticationControllerTest {
         var newPassword = "new_password";
         var confirmPassword = "new_password";
 
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
-        doNothing().when(authenticationService).resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
+        var passwordResetConfirmRequest = new EmailPasswordResetConfirmRequest(newPassword, confirmPassword);
+        doNothing().when(authenticationService).emailResetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
         // when
-        mockMvc.perform(post("/auth/reset-password")
+        mockMvc.perform(post("/auth/password-reset/confirm")
                         .param("token", token)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetConfirmRequest))
@@ -419,14 +423,14 @@ class AuthenticationControllerTest {
         var token = "invalid_token";
         var newPassword = "new_password";
         var confirmPassword = "new_password";
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
+        var passwordResetConfirmRequest = new EmailPasswordResetConfirmRequest(newPassword, confirmPassword);
 
         doThrow(new NoSuchPasswordResetTokenException(token))
                 .when(authenticationService)
-                .resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
+                .emailResetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
         // when
-        mockMvc.perform(post("/auth/reset-password")
+        mockMvc.perform(post("/auth/password-reset/confirm")
                         .param("token", token)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetConfirmRequest))
@@ -435,7 +439,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.title", is("No such password reset token")))
                 .andExpect(jsonPath("$.detail", is("No password reset token with token: " + token)))
-                .andExpect(jsonPath("$.instance", is("/auth/reset-password")));
+                .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 
     @Test
@@ -444,14 +448,14 @@ class AuthenticationControllerTest {
         var token = "invalid_token";
         var newPassword = "new_password";
         var confirmPassword = "new_password";
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
+        var passwordResetConfirmRequest = new EmailPasswordResetConfirmRequest(newPassword, confirmPassword);
 
         doThrow(new PasswordResetTokenExpiredException(token))
                 .when(authenticationService)
-                .resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
+                .emailResetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
         // when
-        mockMvc.perform(post("/auth/reset-password")
+        mockMvc.perform(post("/auth/password-reset/confirm")
                         .param("token", token)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetConfirmRequest))
@@ -460,7 +464,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Password reset token expired")))
                 .andExpect(jsonPath("$.detail", is("Password reset token expired: " + token)))
-                .andExpect(jsonPath("$.instance", is("/auth/reset-password")));
+                .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 
     @Test
@@ -469,14 +473,15 @@ class AuthenticationControllerTest {
         var token = "valid_token";
         var newPassword = "new_password";
         var confirmPassword = "new_password2";
-        var passwordResetConfirmRequest = new PasswordResetConfirmRequest(newPassword, confirmPassword);
+        var passwordResetConfirmRequest = new EmailPasswordResetConfirmRequest(newPassword, confirmPassword);
+        var e = new PasswordsDoNotMatchException("newPassword", "confirmPassword");
 
-        doThrow(new PasswordsDoNotMatchException(newPassword, confirmPassword))
+        doThrow(e)
                 .when(authenticationService)
-                .resetPassword(eq(token), eq(passwordResetConfirmRequest), any());
+                .emailResetPassword(eq(token), eq(passwordResetConfirmRequest), any());
 
         // when
-        mockMvc.perform(post("/auth/reset-password")
+        mockMvc.perform(post("/auth/password-reset/confirm")
                         .param("token", token)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(passwordResetConfirmRequest))
@@ -484,7 +489,87 @@ class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status", is(400)))
                 .andExpect(jsonPath("$.title", is("Passwords do not match")))
-                .andExpect(jsonPath("$.detail", is("Password " + newPassword + " and confirm password " + confirmPassword + " do not match")))
-                .andExpect(jsonPath("$.instance", is("/auth/reset-password")));
+                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnVoidWhenUpdatePassword() throws Exception {
+        // given
+        var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password");
+
+        doNothing().when(authenticationService).updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
+
+        mockMvc.perform(post("/auth/password-reset/update")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(updatePasswordRequest))
+                )
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWhenUpdatePasswordAndNoSuchUser() throws Exception {
+        // given
+        var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password");
+
+        doThrow(new NoSuchUserByIdException(1L))
+                .when(authenticationService)
+                .updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
+
+        mockMvc.perform(post("/auth/password-reset/update")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(updatePasswordRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.title", is("No such user")))
+                .andExpect(jsonPath("$.detail", is("No user with id 1")))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWhenUpdatePasswordAndPasswordsDoNotMatch() throws Exception {
+        // given
+        var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password2");
+        var e = new PasswordsDoNotMatchException(updatePasswordRequest.getNewPassword(), updatePasswordRequest.getConfirmPassword());
+
+        doThrow(new PasswordsDoNotMatchException(updatePasswordRequest.getNewPassword(), updatePasswordRequest.getConfirmPassword()))
+                .when(authenticationService)
+                .updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
+
+        mockMvc.perform(post("/auth/password-reset/update")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(updatePasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.title", is("Passwords do not match")))
+                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWhenOldPasswordIsIncorrect() throws Exception {
+        // given
+        var updatePasswordRequest = new UpdatePasswordRequest("old_password", "new_password", "new_password");
+        var e = new PasswordsDoNotMatchException("oldPassword","oldPasswordFromRequest");
+
+        doThrow(e)
+                .when(authenticationService)
+                .updatePasswordAuthenticated(any(), eq(updatePasswordRequest), any());
+
+        mockMvc.perform(post("/auth/password-reset/update")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(updatePasswordRequest))
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.title", is("Passwords do not match")))
+                .andExpect(jsonPath("$.detail", is("Password: "+e.getFirstTypeOfPassword()+" and "+e.getSecondTypeOfPassword()+" do not match")))
+                .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
     }
 }
