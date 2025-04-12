@@ -289,6 +289,50 @@ class S3ServiceTest {
         assertFalse(result.getContent().stream().anyMatch(fileResponse -> fileResponse.getFileUrl().contains("file2.jpg")));
     }
 
+    @Test
+    void shouldReturnFileResponseWhenFileExists() {
+        // given
+        FileEntityType entityType = FileEntityType.TEST;
+        Long entityId = 1L;
+        String fileName = "existingFile.jpg";
+        String folderKey = String.format("%s/%s", entityType, entityId);
+        String filePath = folderKey + "/" + fileName;
+
+        List<S3Object> s3Objects = List.of(
+                S3Object.builder().key(filePath).build()
+        );
+
+        when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
+                .thenReturn(ListObjectsV2Response.builder().contents(s3Objects).build());
+
+        // when
+        FileResponse result = s3Service.getFileByEntityTypeAndId(entityType, entityId, fileName);
+
+        // then
+        assertNotNull(result);
+        assertEquals(String.format("%s/%s/%s", "http://localhost:4566", "testbucket", filePath), result.getFileUrl());
+        assertTrue(result.getFileUrl().contains(fileName));
+    }
+
+    @Test
+    void shouldThrowNoSuchFilesByNamesExceptionWhenFileDoesNotExist() {
+        // given
+        FileEntityType entityType = FileEntityType.TEST;
+        Long entityId = 1L;
+        String fileName = "nonExistingFile.jpg";
+
+        when(s3Client.listObjectsV2(any(ListObjectsV2Request.class)))
+                .thenReturn(ListObjectsV2Response.builder().contents(Collections.emptyList()).build());
+
+        // when & then
+        NoSuchFilesByNamesException exception = assertThrows(
+                NoSuchFilesByNamesException.class,
+                () -> s3Service.getFileByEntityTypeAndId(entityType, entityId, fileName)
+        );
+
+        assertTrue(exception.getMessage().contains(fileName));
+    }
+
     private Answer1<File, File> getFakeSave(UUID id) {
         return file -> {
             file.setId(id);
