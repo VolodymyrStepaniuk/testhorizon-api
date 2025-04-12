@@ -13,6 +13,6 @@ public class FeedbackCreatedEvent extends FeedbackEvent{
     @ConstructorProperties({"timestamp", "eventId", "correlationId", "feedbackId"})
     public FeedbackCreatedEvent(Instant timestamp, String eventId,
                                 String correlationId, Long feedbackId) {
-        super("FeedbackCreateEvent", timestamp, eventId, correlationId, feedbackId);
+        super("FeedbackCreatedEvent", timestamp, eventId, correlationId, feedbackId);
     }
 }

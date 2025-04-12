@@ -13,6 +13,6 @@ public class FeedbackDeletedEvent extends FeedbackEvent{
     @ConstructorProperties({"timestamp", "eventId", "correlationId", "feedbackId"})
     public FeedbackDeletedEvent(Instant timestamp, String eventId,
                                 String correlationId, Long feedbackId) {
-        super("FeedbackDeleteEvent", timestamp, eventId, correlationId, feedbackId);
+        super("FeedbackDeletedEvent", timestamp, eventId, correlationId, feedbackId);
     }
 }
