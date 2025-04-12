@@ -241,4 +241,21 @@ public class S3Service {
                         .build())
                 .contents();
     }
+
+    public FileResponse getFileByEntityTypeAndId(FileEntityType entityType, Long id, String fileName) {
+        String folderKey = buildFolderPath(entityType, id);
+        String filePath = buildFilePath(folderKey, fileName);
+
+        if (s3Client.listObjectsV2(ListObjectsV2Request.builder()
+                        .bucket(bucketName)
+                        .prefix(folderKey)
+                        .build())
+                .contents()
+                .stream()
+                .noneMatch(s3Object -> s3Object.key().equals(filePath))) {
+            throw new NoSuchFilesByNamesException(List.of(fileName));
+        }
+
+        return fileMapper.toResponse(buildFileUrl(filePath));
+    }
 }

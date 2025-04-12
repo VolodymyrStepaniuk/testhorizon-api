@@ -56,4 +56,13 @@ public class FileController {
 
         return ResponseEntity.ok(s3Service.listFiles(entityType, id));
     }
+
+    @GetMapping("/{entityType}/{id}/{fileName}")
+    public ResponseEntity<FileResponse> getFileByEntityTypeAndId(
+            @PathVariable FileEntityType entityType,
+            @PathVariable Long id,
+            @PathVariable String fileName) {
+
+        return ResponseEntity.ok(s3Service.getFileByEntityTypeAndId(entityType, id, fileName));
+    }
 }
