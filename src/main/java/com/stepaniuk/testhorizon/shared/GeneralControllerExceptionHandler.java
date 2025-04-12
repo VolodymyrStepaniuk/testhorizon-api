@@ -8,6 +8,7 @@ import com.stepaniuk.testhorizon.bugreport.exceptions.NoSuchBugReportStatusByNam
 import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchException;
 import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.export.exceptions.NoSuchHandlerFoundForEntity;
+import com.stepaniuk.testhorizon.feedback.exceptions.NoSuchFeedbackFoundByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -295,4 +296,12 @@ public class GeneralControllerExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(value = {NoSuchFeedbackFoundByIdException.class})
+    public ProblemDetail handleNoSuchFeedbackFoundByIdException(NoSuchFeedbackFoundByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No feedback with id " + e.getId());
+        problemDetail.setTitle("No such feedback");
+        problemDetail.setInstance(URI.create("/feedbacks"));
+        return problemDetail;
+    }
 }

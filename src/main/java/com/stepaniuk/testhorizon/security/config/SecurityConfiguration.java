@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PATCH,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/files/delete-folder/**").hasAnyAuthority(AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.GET, "/files/list").hasAnyAuthority(AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET,"/feedbacks").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
