@@ -57,7 +57,7 @@ public class TestService {
         var testCaseId = testCreateRequest.getTestCaseId();
 
         var projectInfo = projectRepository.findById(projectId)
-                .map(project -> new ProjectInfo(projectId, project.getTitle()))
+                .map(project -> new ProjectInfo(projectId, project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(projectId));
 
         test.setProjectId(testCreateRequest.getProjectId());
@@ -96,7 +96,7 @@ public class TestService {
         var test = testRepository.findById(id)
                 .orElseThrow(() -> new NoSuchTestByIdException(id));
         var projectInfo = projectRepository.findById(test.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(test.getProjectId()));
         var authorInfo = userInfoService.getUserInfo(test.getAuthorId());
 
@@ -174,7 +174,7 @@ public class TestService {
 
         var savedTest = testRepository.save(test);
         var projectInfo = projectRepository.findById(savedTest.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(savedTest.getProjectId()));
         var authorInfo = userInfoService.getUserInfo(savedTest.getAuthorId());
 
@@ -236,7 +236,7 @@ public class TestService {
                 tests.map(test -> testMapper.toResponse(
                         test,
                         projectRepository.findById(test.getProjectId())
-                                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                                 .orElseThrow(() -> new NoSuchProjectByIdException(test.getProjectId())),
                         userInfoService.getUserInfo(test.getAuthorId()),
                         test.getTestCaseId() != null

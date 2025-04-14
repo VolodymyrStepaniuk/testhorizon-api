@@ -113,6 +113,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportCreateRequest.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportCreateRequest.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportCreateRequest.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportCreateRequest.getEnvironment(), bugReportResponse.getEnvironment());
@@ -187,6 +188,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReport.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReport.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
@@ -241,6 +243,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReport.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportUpdateRequest.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());
@@ -400,6 +403,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -443,6 +447,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(projectIds.get(0), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -486,6 +491,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(title, bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -529,6 +535,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -573,6 +580,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());
@@ -617,6 +625,7 @@ class BugReportServiceTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReportToFind.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(project.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReportToFind.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReportToFind.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReportToFind.getEnvironment(), bugReportResponse.getEnvironment());

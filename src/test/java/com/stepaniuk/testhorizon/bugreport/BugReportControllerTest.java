@@ -79,6 +79,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$.reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$.reporter.lastName", is(response.getReporter().getLastName())))
@@ -166,6 +167,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$.reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$.reporter.lastName", is(response.getReporter().getLastName())))
@@ -218,6 +220,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$.id", is(bugReportResponse.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(bugReportResponse.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(bugReportResponse.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(bugReportResponse.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.reporter.id", is(bugReportResponse.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$.reporter.firstName", is(bugReportResponse.getReporter().getFirstName())))
                 .andExpect(jsonPath("$.reporter.lastName", is(bugReportResponse.getReporter().getLastName())))
@@ -397,6 +400,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -437,6 +441,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -477,6 +482,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -517,6 +523,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -557,6 +564,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -597,6 +605,7 @@ class BugReportControllerTest {
                 .andExpect(jsonPath("$._embedded.bugReports[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.bugReports[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.id", is(response.getReporter().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.firstName", is(response.getReporter().getFirstName())))
                 .andExpect(jsonPath("$._embedded.bugReports[0].reporter.lastName", is(response.getReporter().getLastName())))
@@ -616,7 +625,7 @@ class BugReportControllerTest {
         var timeOfCreation = Instant.now().plus(Duration.ofHours(10));
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
-        var response = new BugReportResponse(1L, new ProjectInfo(1L, "ProjectTitle"), new UserInfo(
+        var response = new BugReportResponse(1L, new ProjectInfo(1L, "ProjectTitle", 2L), new UserInfo(
                 1L, "firstName", "lastName"
         ), "title", "description", "environment",
                 BugReportSeverityName.CRITICAL, BugReportStatusName.OPENED,

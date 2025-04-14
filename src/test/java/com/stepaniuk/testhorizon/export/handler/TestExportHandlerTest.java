@@ -41,7 +41,7 @@ class TestExportHandlerTest {
     void findByIdShouldReturnTestResponseFromService() {
         // given
         var testResponse = new TestResponse(
-                111L, new ProjectInfo(1L, "Title"), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
+                111L, new ProjectInfo(1L, "Title", 2L), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
                 "https://github.com/demo", TestTypeName.ACCEPTANCE, Instant.now(), Instant.now()
         );
         when(testService.getTestById(10L)).thenReturn(testResponse);
@@ -68,7 +68,7 @@ class TestExportHandlerTest {
     void toCsvShouldReturnHeaderAndData() {
         // given
         var testResponse = new TestResponse(
-                111L, new ProjectInfo(1L, "Title"), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
+                111L, new ProjectInfo(1L, "Title", 2L), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
                 "https://github.com/demo", TestTypeName.ACCEPTANCE, Instant.now(), Instant.now()
         );
         // when
@@ -102,7 +102,7 @@ class TestExportHandlerTest {
     void toXmlShouldReturnCorrectXml() {
         // given
         var testResponse = new TestResponse(
-                111L, new ProjectInfo(1L, "Title"), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
+                111L, new ProjectInfo(1L, "Title", 2L), new TestCaseInfo(1L, "Title"), new UserInfo(1L,"firstName", "lastName"),"Demo test", "Just a test", "Run instructions",
                 "https://github.com/demo", TestTypeName.ACCEPTANCE, Instant.now(), Instant.now()
         );
 

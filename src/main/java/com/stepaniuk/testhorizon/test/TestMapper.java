@@ -14,6 +14,7 @@ public interface TestMapper {
     @Mapping(target = "type", source = "test.type.name")
     @Mapping(target = "project.id", source = "projectInfo.id")
     @Mapping(target = "project.title", source = "projectInfo.title")
+    @Mapping(target = "project.ownerId", source = "projectInfo.ownerId")
     @Mapping(target = "author.id", source = "userInfo.id")
     @Mapping(target = "author.firstName", source = "userInfo.firstName")
     @Mapping(target = "author.lastName", source = "userInfo.lastName")

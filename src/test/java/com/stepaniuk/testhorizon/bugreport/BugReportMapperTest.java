@@ -36,7 +36,7 @@ class BugReportMapperTest {
                 "Bug report environment", 1L,
                 bugReportSeverity, bugReportStatus, timeOfCreation, timeOfModification);
         var userInfo = new UserInfo(1L, "John", "Doe");
-        var projectInfo = new ProjectInfo(1L, "Project title");
+        var projectInfo = new ProjectInfo(1L, "Project title", 2L);
 
         // when
         BugReportResponse bugReportResponse = bugReportMapper.toResponse(bugReport, projectInfo, userInfo);
@@ -47,6 +47,7 @@ class BugReportMapperTest {
         assertNotNull(bugReportResponse.getProject());
         assertEquals(bugReport.getProjectId(), bugReportResponse.getProject().getId());
         assertEquals(projectInfo.getTitle(), bugReportResponse.getProject().getTitle());
+        assertEquals(projectInfo.getOwnerId(), bugReportResponse.getProject().getOwnerId());
         assertEquals(bugReport.getTitle(), bugReportResponse.getTitle());
         assertEquals(bugReport.getDescription(), bugReportResponse.getDescription());
         assertEquals(bugReport.getEnvironment(), bugReportResponse.getEnvironment());

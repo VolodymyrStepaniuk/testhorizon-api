@@ -57,7 +57,7 @@ public class BugReportService {
         var projectId = bugReportCreateRequest.getProjectId();
 
         var projectInfo = projectRepository.findById(projectId)
-                .map(project -> new ProjectInfo(projectId, project.getTitle()))
+                .map(project -> new ProjectInfo(projectId, project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(projectId));
 
         bugReport.setProjectId(projectId);
@@ -93,7 +93,7 @@ public class BugReportService {
         var bugReport = bugReportRepository.findById(id)
                 .orElseThrow(() -> new NoSuchBugReportByIdException(id));
         var projectInfo = projectRepository.findById(bugReport.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(bugReport.getProjectId()));
         var reporter = userInfoService.getUserInfo(bugReport.getReporterId());
 
@@ -164,7 +164,7 @@ public class BugReportService {
         var updatedBugReport = bugReportRepository.save(bugReport);
         var reporter = userInfoService.getUserInfo(updatedBugReport.getReporterId());
         var projectInfo = projectRepository.findById(updatedBugReport.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(updatedBugReport.getProjectId()));
 
         bugReportProducer.send(
@@ -227,7 +227,7 @@ public class BugReportService {
         return pageMapper.toResponse(
                 bugReports.map(bugReport -> bugReportMapper.toResponse(bugReport,
                         projectRepository.findById(bugReport.getProjectId())
-                                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                                 .orElseThrow(() -> new NoSuchProjectByIdException(bugReport.getProjectId())),
                         userInfoService.getUserInfo(bugReport.getReporterId()))),
                 URI.create("/bug-reports")

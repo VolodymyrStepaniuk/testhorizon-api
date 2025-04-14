@@ -41,7 +41,7 @@ class BugReportExportHandlerTest {
     void findByIdShouldReturnBugReportResponseFromService() {
         // given
         BugReportResponse expectedResponse = new BugReportResponse(
-                1L, new ProjectInfo(1L, "Title"), new UserInfo(1L,"firstName","lastName"),"title","Description", "Environment", BugReportSeverityName.LOW, BugReportStatusName.OPENED, Instant.now(), Instant.now()
+                1L, new ProjectInfo(1L, "Title", 2L), new UserInfo(1L,"firstName","lastName"),"title","Description", "Environment", BugReportSeverityName.LOW, BugReportStatusName.OPENED, Instant.now(), Instant.now()
         );
         when(bugReportService.getBugReportById(123L)).thenReturn(expectedResponse);
 
@@ -68,7 +68,7 @@ class BugReportExportHandlerTest {
         // given
         // Припустимо, що BugReportResponse має вкладений ProjectResponse
         BugReportResponse expectedResponse = new BugReportResponse(
-                1L, new ProjectInfo(1L, "Title"), new UserInfo(1L,"firstName","lastName"),"title","Description", "Environment", BugReportSeverityName.LOW, BugReportStatusName.OPENED, Instant.now(), Instant.now()
+                1L, new ProjectInfo(1L, "Title", 2L), new UserInfo(1L,"firstName","lastName"),"title","Description", "Environment", BugReportSeverityName.LOW, BugReportStatusName.OPENED, Instant.now(), Instant.now()
         );
         // when
         String csv = bugReportExportHandler.toCsv(expectedResponse);
@@ -102,7 +102,7 @@ class BugReportExportHandlerTest {
     void toXmlShouldReturnCorrectXml() {
         // given
         BugReportResponse bugReport = new BugReportResponse(
-                1L, new ProjectInfo(1L,"Title"), new UserInfo(1L, "firstName", "lastName"), "UI not responsive",
+                1L, new ProjectInfo(1L,"Title", 2L), new UserInfo(1L, "firstName", "lastName"), "UI not responsive",
                 "On Android 9, the UI layout breaks...", "Android 9", BugReportSeverityName.LOW,
                 BugReportStatusName.OPENED, Instant.now(), Instant.now()
         );
