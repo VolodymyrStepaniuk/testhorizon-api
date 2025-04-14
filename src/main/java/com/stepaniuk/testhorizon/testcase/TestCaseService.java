@@ -52,7 +52,7 @@ public class TestCaseService {
         var projectId = testCaseCreateRequest.getProjectId();
 
         var projectInfo = projectRepository.findById(projectId)
-                .map(project -> new ProjectInfo(projectId, project.getTitle()))
+                .map(project -> new ProjectInfo(projectId, project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(projectId));
 
         testCase.setProjectId(projectId);
@@ -87,7 +87,7 @@ public class TestCaseService {
                 .orElseThrow(() -> new NoSuchTestCaseByIdException(id));
         var authorInfo = userInfoService.getUserInfo(testCase.getAuthorId());
         var projectInfo = projectRepository.findById(testCase.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(testCase.getProjectId()));
 
         return testCaseMapper.toResponse(testCase, projectInfo, authorInfo);
@@ -159,7 +159,7 @@ public class TestCaseService {
         var updatedTestCase = testCaseRepository.save(testCase);
         var authorInfo = userInfoService.getUserInfo(updatedTestCase.getAuthorId());
         var projectInfo = projectRepository.findById(updatedTestCase.getProjectId())
-                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                 .orElseThrow(() -> new NoSuchProjectByIdException(updatedTestCase.getProjectId()));
 
         testCaseProducer.send(
@@ -213,7 +213,7 @@ public class TestCaseService {
                 testCases.map(testCase -> testCaseMapper.toResponse(
                         testCase,
                         projectRepository.findById(testCase.getProjectId())
-                                .map(project -> new ProjectInfo(project.getId(), project.getTitle()))
+                                .map(project -> new ProjectInfo(project.getId(), project.getTitle(), project.getOwnerId()))
                                 .orElseThrow(() -> new NoSuchProjectByIdException(testCase.getProjectId())),
                         userInfoService.getUserInfo(testCase.getAuthorId())
                 )),

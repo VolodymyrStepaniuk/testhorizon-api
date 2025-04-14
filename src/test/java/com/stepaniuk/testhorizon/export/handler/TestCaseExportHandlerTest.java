@@ -43,7 +43,7 @@ class TestCaseExportHandlerTest {
     void findByIdShouldReturnTestCaseResponseFromService() {
         // given
         var testCaseResponse = new TestCaseResponse(
-                1L, new ProjectInfo(1L, "Title"), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
+                1L, new ProjectInfo(1L, "Title", 2L), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
                 "preconditions", "inputData", List.of("Step 1", "Step 2"), TestCasePriorityName.HIGH, Instant.now(), Instant.now()
         );
         when(testCaseService.getTestCaseById(10L)).thenReturn(testCaseResponse);
@@ -70,7 +70,7 @@ class TestCaseExportHandlerTest {
     void toCsvShouldReturnHeaderAndCorrectData() {
         // given
         var testCaseResponse = new TestCaseResponse(
-                1L, new ProjectInfo(1L, "Title"), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
+                1L, new ProjectInfo(1L, "Title", 2L), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
                 "preconditions", "inputData", List.of("Step 1", "Step 2"), TestCasePriorityName.HIGH, Instant.now(), Instant.now()
         );
 
@@ -106,7 +106,7 @@ class TestCaseExportHandlerTest {
     void toXmlShouldReturnCorrectXml() {
         // given
         var testCaseResponse = new TestCaseResponse(
-                1L, new ProjectInfo(1L, "Title"), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
+                1L, new ProjectInfo(1L, "Title", 2L), new UserInfo(1L, "firstName", "lastName"), "MyTitle", "Desc",
                 "preconditions", "inputData", List.of("Step 1", "Step 2"), TestCasePriorityName.HIGH, Instant.now(), Instant.now()
         );
 

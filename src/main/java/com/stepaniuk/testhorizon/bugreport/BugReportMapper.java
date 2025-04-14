@@ -13,6 +13,7 @@ public interface BugReportMapper {
     @Mapping(target = "severity", source = "bugReport.severity.name")
     @Mapping(target = "project.id", source = "projectInfo.id")
     @Mapping(target = "project.title", source = "projectInfo.title")
+    @Mapping(target = "project.ownerId", source = "projectInfo.ownerId")
     @Mapping(target = "reporter.id", source = "userInfo.id")
     @Mapping(target = "reporter.firstName", source = "userInfo.firstName")
     @Mapping(target = "reporter.lastName", source = "userInfo.lastName")

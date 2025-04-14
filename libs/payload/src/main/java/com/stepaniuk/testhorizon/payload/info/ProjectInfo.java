@@ -21,4 +21,8 @@ public class ProjectInfo {
     @Title
     @NotNull
     private final String title;
+
+    @Id
+    @NotNull
+    private final Long ownerId;
 }

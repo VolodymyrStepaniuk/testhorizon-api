@@ -31,7 +31,7 @@ class TestMapperTest {
 
         Test test = new Test(null, 1L, 1L, 1L, "Test title", "Test description",
                 "Test instructions", "https://github.com/user/repo", testType, timeOfCreation, timeOfModification);
-        var projectInfo = new ProjectInfo(1L, "Project title");
+        var projectInfo = new ProjectInfo(1L, "Project title", 2L);
         var authorInfo = new UserInfo(1L, "Author name","Author surname");
         var testCaseInfo = new TestCaseInfo(1L, "TestCase Title");
 
@@ -44,6 +44,7 @@ class TestMapperTest {
         assertNotNull(testResponse.getProject());
         assertEquals(test.getProjectId(), testResponse.getProject().getId());
         assertEquals(projectInfo.getTitle(), testResponse.getProject().getTitle());
+        assertEquals(projectInfo.getOwnerId(), testResponse.getProject().getOwnerId());
         assertNotNull(testResponse.getTestCase());
         assertEquals(test.getTestCaseId(), testResponse.getTestCase().getId());
         assertEquals(testCaseInfo.getTitle(), testResponse.getTestCase().getTitle());

@@ -33,7 +33,7 @@ class TestCaseMapperTest {
         TestCase testCaseToMap = new TestCase(null, 1L, 1L, "TestCase Title", "Description 4",
                 "Preconditions 4", "Input Data 4", List.of("Step 1", "Step 2"), testCasePriority, timeOfCreation, timeOfModification);
         var userInfo = new UserInfo(testCaseToMap.getAuthorId(), "User Name", "User Surname");
-        var projectInfo = new ProjectInfo(testCaseToMap.getProjectId(), "Project Title");
+        var projectInfo = new ProjectInfo(testCaseToMap.getProjectId(), "Project Title", 2L);
 
         // when
         TestCaseResponse testCaseResponse = testCaseMapper.toResponse(testCaseToMap, projectInfo, userInfo);
@@ -44,6 +44,7 @@ class TestCaseMapperTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToMap.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(projectInfo.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(projectInfo.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToMap.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());

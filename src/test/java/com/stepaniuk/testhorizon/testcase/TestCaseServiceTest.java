@@ -98,6 +98,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseCreateRequest.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(userInfo.getId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -164,6 +165,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -217,6 +219,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToUpdate.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToUpdate.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -366,6 +369,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -415,6 +419,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(projectIds.get(0), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -463,6 +468,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(projectIds.get(0), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -510,6 +516,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(authorId, testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());
@@ -558,6 +565,7 @@ class TestCaseServiceTest {
         assertNotNull(testCaseResponse.getProject());
         assertEquals(testCaseToFind.getProjectId(), testCaseResponse.getProject().getId());
         assertEquals(project.getTitle(), testCaseResponse.getProject().getTitle());
+        assertEquals(project.getOwnerId(), testCaseResponse.getProject().getOwnerId());
         assertNotNull(testCaseResponse.getAuthor());
         assertEquals(testCaseToFind.getAuthorId(), testCaseResponse.getAuthor().getId());
         assertEquals(userInfo.getFirstName(), testCaseResponse.getAuthor().getFirstName());

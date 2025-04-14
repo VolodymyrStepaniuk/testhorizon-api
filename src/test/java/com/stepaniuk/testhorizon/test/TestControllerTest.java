@@ -81,6 +81,7 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.id", is(testResponse.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(testResponse.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(testResponse.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(testResponse.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.testCase.id", is(testResponse.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$.testCase.title", is(testResponse.getTestCase().getTitle())))
                 .andExpect(jsonPath("$.author.id", is(testResponse.getAuthor().getId()), Long.class))
@@ -144,6 +145,7 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.id", is(testResponse.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(testResponse.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(testResponse.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(testResponse.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.testCase.id", is(testResponse.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$.testCase.title", is(testResponse.getTestCase().getTitle())))
                 .andExpect(jsonPath("$.author.id", is(testResponse.getAuthor().getId()), Long.class))
@@ -206,6 +208,7 @@ class TestControllerTest {
                 .andExpect(jsonPath("$.id", is(testResponse.getId()), Long.class))
                 .andExpect(jsonPath("$.project.id", is(testResponse.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$.project.title", is(testResponse.getProject().getTitle())))
+                .andExpect(jsonPath("$.project.ownerId", is(testResponse.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.testCase.id", is(testResponse.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$.testCase.title", is(testResponse.getTestCase().getTitle())))
                 .andExpect(jsonPath("$.author.id", is(testResponse.getAuthor().getId()), Long.class))
@@ -391,6 +394,7 @@ class TestControllerTest {
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.id", is(response.getProject().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -432,6 +436,7 @@ class TestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -473,6 +478,7 @@ class TestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -514,6 +520,7 @@ class TestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -555,6 +562,7 @@ class TestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -596,6 +604,7 @@ class TestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$._embedded.tests[0].id", is(response.getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].project.title", is(response.getProject().getTitle())))
+                .andExpect(jsonPath("$._embedded.tests[0].project.ownerId", is(response.getProject().getOwnerId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.id", is(response.getTestCase().getId()), Long.class))
                 .andExpect(jsonPath("$._embedded.tests[0].testCase.title", is(response.getTestCase().getTitle())))
                 .andExpect(jsonPath("$._embedded.tests[0].author.id", is(response.getAuthor().getId()), Long.class))
@@ -619,7 +628,7 @@ class TestControllerTest {
 
         TestResponse testResponse = new TestResponse(
                 1L,
-                new ProjectInfo(1L, "Project title"),
+                new ProjectInfo(1L, "Project title",2L),
                 new TestCaseInfo(1L, "TestCase Title"),
                 new UserInfo(1L, "Author name", "Author surname"),
                 "title",
