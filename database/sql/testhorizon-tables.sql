@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS bug_report_severities
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT bug_report_severities_name_CHECK
+        CONSTRAINT bug_report_severities_name_check
             CHECK ((name)::TEXT = ANY
                    ((ARRAY ['LOW'::CHARACTER VARYING, 'MEDIUM'::CHARACTER VARYING, 'HIGH'::CHARACTER VARYING, 'CRITICAL'::CHARACTER VARYING])::TEXT[]))
 );
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS bug_report_statuses
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT bug_report_statuses_name_CHECK
+        CONSTRAINT bug_report_statuses_name_check
             CHECK ((name)::TEXT = ANY
                    (ARRAY [('OPENED'::CHARACTER VARYING)::TEXT, ('IN_PROGRESS'::CHARACTER VARYING)::TEXT, ('RESOLVED'::CHARACTER VARYING)::TEXT, ('CLOSED'::CHARACTER VARYING)::TEXT]))
 );
@@ -138,7 +138,6 @@ CREATE TABLE IF NOT EXISTS bug_reports
     created_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
     description VARCHAR(255)                NOT NULL,
     environment VARCHAR(255)                NOT NULL,
-    image_urls  TEXT[]                      NOT NULL,
     project_id  BIGINT                      NOT NULL,
     reporter_id BIGINT                      NOT NULL,
     title       VARCHAR(255)                NOT NULL,
@@ -148,8 +147,7 @@ CREATE TABLE IF NOT EXISTS bug_reports
             REFERENCES bug_report_severities,
     status_id   BIGINT
         CONSTRAINT fkou3wbooo529qhiofjax9v9imq
-            REFERENCES bug_report_statuses,
-    video_urls  TEXT[]                      NOT NULL
+            REFERENCES bug_report_statuses
 );
 
 ALTER SEQUENCE bug_reports_id_seq
@@ -167,7 +165,7 @@ CREATE TABLE IF NOT EXISTS project_statuses
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT project_statuses_name_CHECK
+        CONSTRAINT project_statuses_name_check
             CHECK ((name)::TEXT = ANY
                    ((ARRAY ['ACTIVE'::CHARACTER VARYING, 'INACTIVE'::CHARACTER VARYING, 'PAUSED'::CHARACTER VARYING])::TEXT[]))
 );
@@ -189,7 +187,6 @@ CREATE TABLE IF NOT EXISTS projects
     created_at   TIMESTAMP(6) WITH TIME ZONE NOT NULL,
     description  VARCHAR(255)                NOT NULL,
     github_url   VARCHAR(255)                NOT NULL,
-    image_urls   TEXT[]                      NOT NULL,
     instructions VARCHAR(255),
     title        VARCHAR(255)                NOT NULL,
     owner_id     BIGINT                      NOT NULL,
@@ -214,7 +211,7 @@ CREATE TABLE IF NOT EXISTS test_case_priorities
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT test_case_priorities_name_CHECK
+        CONSTRAINT test_case_priorities_name_check
             CHECK ((name)::TEXT = ANY
                    ((ARRAY ['LOW'::CHARACTER VARYING, 'MEDIUM'::CHARACTER VARYING, 'HIGH'::CHARACTER VARYING])::TEXT[]))
 );
@@ -262,7 +259,7 @@ CREATE TABLE IF NOT EXISTS test_types
     id   BIGINT       NOT NULL
         PRIMARY KEY,
     name VARCHAR(255) NOT NULL
-        CONSTRAINT test_types_name_CHECK
+        CONSTRAINT test_types_name_check
             CHECK ((name)::TEXT = ANY
                    ((ARRAY ['UNIT'::CHARACTER VARYING, 'INTEGRATION'::CHARACTER VARYING, 'FUNCTIONAL'::CHARACTER VARYING, 'END_TO_END'::CHARACTER VARYING, 'ACCEPTANCE'::CHARACTER VARYING, 'PERFORMANCE'::CHARACTER VARYING, 'SMOKE'::CHARACTER VARYING])::TEXT[]))
 );
@@ -376,9 +373,29 @@ CREATE TABLE IF NOT EXISTS files
         PRIMARY KEY,
     created_at    TIMESTAMP(6) WITH TIME ZONE NOT NULL,
     entity_id     BIGINT                      NOT NULL,
-    entity_type   VARCHAR(255)                NOT NULL,
+    entity_type   VARCHAR(255)                NOT NULL
+        CONSTRAINT files_entity_type_check
+            CHECK ((entity_type)::TEXT = ANY
+                   ((ARRAY ['USER'::CHARACTER VARYING, 'TEST_CASE'::CHARACTER VARYING, 'TEST'::CHARACTER VARYING, 'PROJECT'::CHARACTER VARYING, 'COMMENT'::CHARACTER VARYING, 'BUG_REPORT'::CHARACTER VARYING])::TEXT[])),
     original_name VARCHAR(255)                NOT NULL
 );
 
 ALTER TABLE files
+    OWNER TO postgres_container;
+
+-- Table: feedbacks
+DROP TABLE IF EXISTS feedbacks;
+
+CREATE TABLE IF NOT EXISTS feedbacks
+(
+    id         BIGINT                      NOT NULL
+        PRIMARY KEY,
+    comment    VARCHAR(255),
+    created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    owner_id   BIGINT                      NOT NULL,
+    rating     INTEGER                     NOT NULL,
+    updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL
+);
+
+ALTER TABLE feedbacks
     OWNER TO postgres_container;

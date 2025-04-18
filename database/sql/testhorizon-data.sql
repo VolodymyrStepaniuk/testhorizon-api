@@ -62,12 +62,11 @@ VALUES (1, NOW(), NOW() + INTERVAL '1 day', 'bsabs-fasvas-feaww', 1),
        (2, NOW(), NOW() + INTERVAL '1 day', 'lsadjk-wjsadn-sadlkw', 2);
 
 -- Insert data into projects table
-INSERT INTO projects (id, created_at, description, github_url, image_urls, instructions, title, owner_id, updated_at,
+INSERT INTO projects (id, created_at, description, github_url, instructions, title, owner_id, updated_at,
                       status_id)
-VALUES (1, NOW(), 'Project 1 Description', 'https://github.com/project1',
-        ARRAY ['https://image1.com', 'https://image2.com'], 'Instructions 1', 'Project 1', 1, NOW(), 1),
+VALUES (1, NOW(), 'Project 1 Description', 'https://github.com/project1', 'Instructions 1', 'Project 1', 1, NOW(), 1),
        (2, NOW(), 'Project 2 Description', 'https://github.com/project2',
-        ARRAY ['https://image3.com', 'https://image4.com'], 'Instructions 2', 'Project 2', 2, NOW(), 2);
+         'Instructions 2', 'Project 2', 2, NOW(), 2);
 
 -- Insert data into test_cases table
 INSERT INTO test_cases (id, author_id, created_at, description, input_data, preconditions, project_id, steps, title,
@@ -84,12 +83,12 @@ VALUES (1, 1, NOW(), 'Test 1 Description', 'https://github.com/test1', 'Instruct
        (2, 2, NOW(), 'Test 2 Description', 'https://github.com/test2', 'Instructions 2', 2, 2, 'Test 2', NOW(), 2);
 
 -- Insert data into bug_reports table
-INSERT INTO bug_reports (id, created_at, description, environment, image_urls, project_id, reporter_id, title,
-                         updated_at, severity_id, status_id, video_urls)
-VALUES (1, NOW(), 'Bug Report 1 Description', 'Environment 1', ARRAY ['https://image5.com', 'https://image6.com'], 1, 1,
-        'Bug Report 1', NOW(), 1, 1, ARRAY ['https://video1.com', 'https://video2.com']),
-       (2, NOW(), 'Bug Report 2 Description', 'Environment 2', ARRAY ['https://image7.com', 'https://image8.com'], 2, 2,
-        'Bug Report 2', NOW(), 2, 2, ARRAY ['https://video3.com', 'https://video4.com']);
+INSERT INTO bug_reports (id, created_at, description, environment, project_id, reporter_id, title,
+                         updated_at, severity_id, status_id)
+VALUES (1, NOW(), 'Bug Report 1 Description', 'Environment 1',  1, 1,
+        'Bug Report 1', NOW(), 1, 1),
+       (2, NOW(), 'Bug Report 2 Description', 'Environment 2',  2, 2,
+        'Bug Report 2', NOW(), 2, 2);
 
 -- Insert data into ratings table
 INSERT INTO ratings (id, comment, created_at, rated_by_user_id, rating_points, user_id)
@@ -104,3 +103,8 @@ VALUES (1, 1, 'Comment 1', NOW(), NOW(), 'PROJECT', 1),
 -- Insert data into files table
 INSERT INTO files (id, created_at, entity_id, entity_type, original_name)
 VALUES ('00000000-0000-0000-0000-000000000001', NOW(), 1, 'TEST', 'file.txt');
+
+-- Insert data into feedbacks table
+INSERT INTO feedbacks(id, comment, created_at, owner_id, rating, updated_at)
+VALUES (1, 'Feedback 1', NOW(), 1, 5, NOW()),
+       (2, 'Feedback 2', NOW(), 2, 4, NOW());
