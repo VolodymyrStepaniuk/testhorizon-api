@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.feedback;
+package com.stepaniuk.testhorizon.notebook.note;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,23 +19,23 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "feedbacks")
-public class Feedback {
+@Table(name = "notes")
+public class Note {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "feedbacks_id_gen")
-    @SequenceGenerator(name = "feedbacks_id_gen", sequenceName = "feedbacks_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notes_id_gen")
+    @SequenceGenerator(name = "notes_id_gen", sequenceName = "notes_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    @Column(name = "notebook_id", nullable = false)
+    private Long notebookId;
 
-    @Column(name = "rating", nullable = false)
-    private Integer rating;
+    @Column(name = "title", nullable = false)
+    private String title;
 
-    @Column(name = "comment", nullable = true)
-    private String comment;
+    @Column(name = "content", nullable = false)
+    private String content;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
@@ -52,8 +52,8 @@ public class Feedback {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Feedback feedback = (Feedback) o;
-        return getId() != null && Objects.equals(getId(), feedback.getId());
+        Note note = (Note) o;
+        return getId() != null && Objects.equals(getId(), note.getId());
     }
 
     @Override
@@ -64,10 +64,10 @@ public class Feedback {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" +
-                "ownerId = " + ownerId + ", " +
-                "rating = " + rating + ", " +
-                "comment = " + comment + ", " +
+                "notebookId = " + notebookId + ", " +
+                "title = " + title + ", " +
+                "content = " + content + ", " +
                 "createdAt = " + createdAt + ", " +
-                "updatedAt = " + updatedAt + ", " + ")";
+                "updatedAt = " + updatedAt + ")";
     }
 }

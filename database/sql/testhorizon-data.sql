@@ -108,3 +108,13 @@ VALUES ('00000000-0000-0000-0000-000000000001', NOW(), 1, 'TEST', 'file.txt');
 INSERT INTO feedbacks(id, comment, created_at, owner_id, rating, updated_at)
 VALUES (1, 'Feedback 1', NOW(), 1, 5, NOW()),
        (2, 'Feedback 2', NOW(), 2, 4, NOW());
+
+-- Insert data into notebooks table
+INSERT INTO notebooks(id, created_at, description, owner_id, title, updated_at)
+VALUES (1, NOW(), 'Notebook 1', 1, 'Notebook Title 1', NOW()),
+       (2, NOW(), 'Notebook 2', 2, 'Notebook Title 2', NOW());
+
+-- Insert data into notes table
+INSERT INTO notes(id, content, created_at, notebook_id, title, updated_at)
+VALUES (1, 'Note 1 Content', NOW(), 1, 'Note 1 Title', NOW()),
+       (2, 'Note 2 Content', NOW(), 2, 'Note 2 Title', NOW());

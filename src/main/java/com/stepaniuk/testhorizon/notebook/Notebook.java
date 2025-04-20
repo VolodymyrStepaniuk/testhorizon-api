@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.feedback;
+package com.stepaniuk.testhorizon.notebook;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,23 +19,23 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "feedbacks")
-public class Feedback {
+@Table(name = "notebooks")
+public class Notebook {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "feedbacks_id_gen")
-    @SequenceGenerator(name = "feedbacks_id_gen", sequenceName = "feedbacks_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notebooks_id_gen")
+    @SequenceGenerator(name = "notebooks_id_gen", sequenceName = "notebooks_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
 
-    @Column(name = "rating", nullable = false)
-    private Integer rating;
+    @Column(name ="title",nullable = false)
+    private String title;
 
-    @Column(name = "comment", nullable = true)
-    private String comment;
+    @Column(name = "description", nullable = true)
+    private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
@@ -52,8 +52,8 @@ public class Feedback {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Feedback feedback = (Feedback) o;
-        return getId() != null && Objects.equals(getId(), feedback.getId());
+        Notebook notebook = (Notebook) o;
+        return getId() != null && Objects.equals(getId(), notebook.getId());
     }
 
     @Override
@@ -65,9 +65,8 @@ public class Feedback {
     public String toString() {
         return getClass().getSimpleName() + "(" +
                 "ownerId = " + ownerId + ", " +
-                "rating = " + rating + ", " +
-                "comment = " + comment + ", " +
+                "title = " + title + ", " +
                 "createdAt = " + createdAt + ", " +
-                "updatedAt = " + updatedAt + ", " + ")";
+                "updatedAt = " + updatedAt + ")";
     }
 }
