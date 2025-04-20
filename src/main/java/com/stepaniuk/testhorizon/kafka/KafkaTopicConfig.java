@@ -69,4 +69,16 @@ public class KafkaTopicConfig {
         return TopicBuilder.name("feedbacks")
                 .build();
     }
+
+    @Bean
+    public NewTopic notebookTopic() {
+        return TopicBuilder.name("notebooks")
+                .build();
+    }
+
+    @Bean
+    public NewTopic testRunTopic() {
+        return TopicBuilder.name("notes")
+                .build();
+    }
 }

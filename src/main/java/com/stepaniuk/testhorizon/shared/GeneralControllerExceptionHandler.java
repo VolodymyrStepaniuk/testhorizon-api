@@ -9,6 +9,8 @@ import com.stepaniuk.testhorizon.comment.exceptions.CommentAuthorMismatchExcepti
 import com.stepaniuk.testhorizon.comment.exceptions.NoSuchCommentByIdException;
 import com.stepaniuk.testhorizon.export.exceptions.NoSuchHandlerFoundForEntity;
 import com.stepaniuk.testhorizon.feedback.exceptions.NoSuchFeedbackFoundByIdException;
+import com.stepaniuk.testhorizon.notebook.exceptions.NoSuchNotebookByIdException;
+import com.stepaniuk.testhorizon.notebook.note.exceptions.NoSuchNoteByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
@@ -302,6 +304,24 @@ public class GeneralControllerExceptionHandler {
                 "No feedback with id " + e.getId());
         problemDetail.setTitle("No such feedback");
         problemDetail.setInstance(URI.create("/feedbacks"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchNotebookByIdException.class})
+    public ProblemDetail handleNoSuchNotebookByIdException(NoSuchNotebookByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No notebook with id " + e.getId());
+        problemDetail.setTitle("No such notebook");
+        problemDetail.setInstance(URI.create("/notebooks"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchNoteByIdException.class})
+    public ProblemDetail handleNoSuchNoteByIdException(NoSuchNoteByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No note with id " + e.getId());
+        problemDetail.setTitle("No such note");
+        problemDetail.setInstance(URI.create("/notes"));
         return problemDetail;
     }
 }

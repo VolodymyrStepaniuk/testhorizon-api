@@ -397,5 +397,50 @@ CREATE TABLE IF NOT EXISTS feedbacks
     updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL
 );
 
+ALTER SEQUENCE feedbacks_id_seq
+    OWNED BY feedbacks.id;
+
 ALTER TABLE feedbacks
+    OWNER TO postgres_container;
+
+-- Table: notebooks
+
+DROP TABLE IF EXISTS notebooks;
+
+CREATE TABLE IF NOT EXISTS notebooks
+(
+    id          BIGINT                      NOT NULL
+        PRIMARY KEY ,
+    created_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    description VARCHAR(255),
+    owner_id    BIGINT                      NOT NULL,
+    title       VARCHAR(255)                NOT NULL,
+    updated_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL
+);
+
+ALTER SEQUENCE notebooks_id_seq
+    OWNED BY notebooks.id;
+
+ALTER TABLE notebooks
+    OWNER TO postgres_container;
+
+-- Table: notes
+
+DROP TABLE IF EXISTS notes;
+
+CREATE TABLE IF NOT EXISTS notes
+(
+    id          BIGINT                      NOT NULL
+        PRIMARY KEY,
+    content     VARCHAR(255)                NOT NULL,
+    created_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    notebook_id BIGINT                      NOT NULL,
+    title       VARCHAR(255)                NOT NULL,
+    updated_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL
+);
+
+ALTER SEQUENCE notes_id_seq
+    OWNED BY notes.id;
+
+ALTER TABLE notes
     OWNER TO postgres_container;
