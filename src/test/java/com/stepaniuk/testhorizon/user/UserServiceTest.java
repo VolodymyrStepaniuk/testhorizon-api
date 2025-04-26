@@ -3,15 +3,19 @@ package com.stepaniuk.testhorizon.user;
 import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
 import com.stepaniuk.testhorizon.event.user.UserEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
+import com.stepaniuk.testhorizon.event.user.UserAuthorityUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
+import com.stepaniuk.testhorizon.user.authority.Authority;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchAuthorityException;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -23,15 +27,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -407,6 +409,87 @@ class UserServiceTest {
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
+    }
+
+    @Test
+    void shouldChangeUserAuthoritySuccessfullyWhenUserIsAdmin() {
+        // given
+        User userToUpdate = getNewUserWithAllFields();
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+        var authorityName = AuthorityName.ADMIN;
+        var authority = new Authority(1L, authorityName);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
+        when(authorityRepository.findByName(authorityName)).thenReturn(Optional.of(authority));
+        when(userRepository.save(any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
+
+        final var receivedEventWrapper = new UserAuthorityUpdatedEvent[1];
+        when(userProducer.send(
+                assertArg(event -> receivedEventWrapper[0] = (UserAuthorityUpdatedEvent) event))).thenAnswer(
+                answer(getFakeSendResult())
+        );
+
+        // when
+        userService.changeUserAuthority(1L, authorityName, authInfo);
+
+        // then
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(userToUpdate.getId(), receivedEvent.getUserId());
+        assertEquals(authorityName, receivedEvent.getAuthorityName());
+
+        verify(userRepository, times(1)).save(argThat(user ->
+                user.getAuthorities().stream()
+                        .anyMatch(authorityNme -> authorityNme.getAuthority().equals(authorityName.name()))
+        ));
+    }
+
+    @Test
+    void shouldThrowAccessToManageEntityDeniedExceptionWhenUserIsNotAdmin() {
+        // given
+        var authInfo = new AuthInfo(1L, List.of());
+        var authorityName = AuthorityName.DEVELOPER;
+
+        // when & then
+        assertThrows(AccessToManageEntityDeniedException.class, 
+            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+            
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowNoSuchUserByIdExceptionWhenChangingAuthorityOfNonExistingUser() {
+        // given
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+        var authorityName = AuthorityName.ADMIN;
+        
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NoSuchUserByIdException.class, 
+            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+            
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldThrowNoSuchAuthorityExceptionWhenAuthorityDoesNotExist() {
+        // given
+        User userToUpdate = getNewUserWithAllFields();
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+        var authorityName = AuthorityName.DEVELOPER;
+        
+        when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
+        when(authorityRepository.findByName(authorityName)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NoSuchAuthorityException.class, 
+            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+            
+        verify(userRepository, never()).save(any());
     }
 
     private Answer1<CompletableFuture<SendResult<String, UserEvent>>, UserEvent> getFakeSendResult() {

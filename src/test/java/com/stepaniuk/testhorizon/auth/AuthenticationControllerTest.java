@@ -15,6 +15,7 @@ import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException
 import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.config.JwtAuthFilter;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
@@ -569,5 +570,98 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.title", is("Invalid old password")))
                 .andExpect(jsonPath("$.detail", is("The old password provided is invalid.")))
                 .andExpect(jsonPath("$.instance", is("/auth/password-reset")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnUserResponseWhenRegisterUserByAdmin() throws Exception {
+        // given
+        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
+        
+        var timeOfCreation = Instant.now().plus(Duration.ofHours(10));
+        var timeOfModification = Instant.now().plus(Duration.ofHours(20));
+
+        var response = new UserResponse(1L, userCreateRequest.getEmail(), userCreateRequest.getFirstName(), userCreateRequest.getLastName(),
+                100, timeOfCreation, timeOfModification);
+
+        response.add(Link.of("http://localhost/users/1", "self"));
+        response.add(Link.of("http://localhost/users/1", "update"));
+        response.add(Link.of("http://localhost/users/1", "delete"));
+
+        when(authenticationService.registerUserByAdmin(eq(userCreateRequest), any(), any())).thenReturn(response);
+
+        mockMvc.perform(post("/auth/admin/register-user")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(response.getId()), Long.class))
+                .andExpect(jsonPath("$.email", is(response.getEmail())))
+                .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
+                .andExpect(jsonPath("$.lastName", is(response.getLastName())))
+                .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
+                .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
+                .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
+                .andExpect(jsonPath("$._links.update.href", is("http://localhost/users/1")))
+                .andExpect(jsonPath("$._links.delete.href", is("http://localhost/users/1")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWhenRegisterUserByAdminWithExistingEmail() throws Exception {
+        // given
+        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
+
+        when(authenticationService.registerUserByAdmin(eq(userCreateRequest), any(), any())).thenThrow(new UserAlreadyExistsException(userCreateRequest.getEmail()));
+
+        mockMvc.perform(post("/auth/admin/register-user")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status", is(409)))
+                .andExpect(jsonPath("$.title", is("User already exists")))
+                .andExpect(jsonPath("$.detail", is("User with email " + userCreateRequest.getEmail() + " already exists")))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWithNoSuchAuthorityExceptionWhenRegisterUserByAdmin() throws Exception {
+        // given
+        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
+
+        when(authenticationService.registerUserByAdmin(eq(userCreateRequest), any(), any())).thenThrow(new NoSuchAuthorityException(userCreateRequest.getAuthorityName()));
+
+        mockMvc.perform(post("/auth/admin/register-user")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.title", is("No such authority")))
+                .andExpect(jsonPath("$.detail", is("No authority with name " + userCreateRequest.getAuthorityName())))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnErrorResponseWhenNonAdminTriesToRegisterUser() throws Exception {
+        // given
+        var userCreateRequest = new UserCreateRequest("mail@gmail.com", "Qwerty@123", "John", "Doe", AuthorityName.TESTER);
+
+        when(authenticationService.registerUserByAdmin(eq(userCreateRequest), any(), any()))
+                .thenThrow(new AccessToManageEntityDeniedException("Auth", "/auth"));
+
+        mockMvc.perform(post("/auth/admin/register-user")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(userCreateRequest))
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage Auth denied")))
+                .andExpect(jsonPath("$.instance", is("/auth")));
     }
 }

@@ -1,5 +1,6 @@
 package com.stepaniuk.testhorizon.user;
 
+import com.stepaniuk.testhorizon.event.user.UserAuthorityUpdatedEvent;
 import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
@@ -8,7 +9,9 @@ import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
+import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchAuthorityException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
@@ -34,6 +39,7 @@ public class UserService {
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final UserProducer userProducer;
+    private final AuthorityRepository authorityRepository;
 
     public UserResponse getUserById(Long id, AuthInfo authInfo) {
         User user = userRepository.findById(id)
@@ -161,7 +167,31 @@ public class UserService {
         );
     }
 
+    public void changeUserAuthority(Long id, AuthorityName authority, AuthInfo authInfo) {
+        if(!hasAuthority(authInfo, AuthorityName.ADMIN.name()))
+            throw new AccessToManageEntityDeniedException("User", "/users");
+
+        var user = userRepository.findById(id)
+                .orElseThrow(() -> new NoSuchUserByIdException(id));
+
+        var userAuthority = authorityRepository.findByName(authority)
+                .orElseThrow(() -> new NoSuchAuthorityException(authority));
+
+        var authorities = new HashSet<>(Set.of(userAuthority));
+
+        user.setAuthorities(authorities);
+        userRepository.save(user);
+
+        userProducer.send(
+                new UserAuthorityUpdatedEvent(
+                        Instant.now(), UUID.randomUUID().toString(), UUID.randomUUID().toString(),
+                        user.getId(), authority
+                )
+        );
+    }
+
     private boolean hasNoAccessToManageUser(Long userId, AuthInfo authInfo) {
         return !(isOwner(authInfo, userId) || hasAuthority(authInfo, AuthorityName.ADMIN.name()));
     }
+
 }

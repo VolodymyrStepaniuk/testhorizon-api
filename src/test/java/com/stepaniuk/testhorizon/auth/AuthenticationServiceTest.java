@@ -17,9 +17,11 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
 import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.User;
@@ -43,12 +45,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -543,6 +547,97 @@ class AuthenticationServiceTest {
         when(passwordEncoder.matches(request.getOldPassword(), user.getPassword())).thenReturn(false);
 
         assertThrows(InvalidOldPasswordException.class, () -> authenticationService.updatePasswordAuthenticated(userId, request, correlationId));
+    }
+
+    @Test
+    void shouldReturnUserResponseWhenRegisterUserByAdmin() {
+        // given
+        UserCreateRequest request = new UserCreateRequest("new.user@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+        Authority authority = new Authority(1L, request.getAuthorityName());
+        String correlationId = UUID.randomUUID().toString();
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(authorityRepository.findByName(request.getAuthorityName())).thenReturn(Optional.of(authority));
+        when(userRepository.save(any())).thenAnswer(answer(getFakeSave(1L)));
+
+        final var receivedEventWrapper = new UserRegisteredEvent[1];
+        when(
+                authProducer.send(
+                        assertArg(event -> receivedEventWrapper[0] = (UserRegisteredEvent) event))).thenAnswer(
+                answer(getFakeSendResult()
+                )
+        );
+
+        // when
+        UserResponse response = authenticationService.registerUserByAdmin(request, authInfo, correlationId);
+
+        // then
+        assertNotNull(response);
+        assertEquals(request.getEmail(), response.getEmail());
+        assertEquals(request.getFirstName(), response.getFirstName());
+        assertEquals(request.getLastName(), response.getLastName());
+        assertEquals(0, response.getTotalRating());
+
+        var receivedEvent = receivedEventWrapper[0];
+        assertNotNull(receivedEvent);
+        assertEquals(response.getEmail(), receivedEvent.getEmail());
+
+        verify(userRepository, times(1)).save(any());
+        
+        // Verify the user is created as enabled directly (unlike regular registration)
+        verify(userRepository).save(argThat(user -> 
+            user.isEnabled() && 
+            user.getEmail().equals(request.getEmail())
+        ));
+    }
+
+    @Test
+    void shouldThrowUserAlreadyExistsExceptionWhenRegisterUserByAdmin() {
+        // given
+        var correlationId = UUID.randomUUID().toString();
+        UserCreateRequest request = new UserCreateRequest("existing.email@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
+
+        // when & then
+        assertThrows(UserAlreadyExistsException.class, () -> 
+            authenticationService.registerUserByAdmin(request, authInfo, correlationId));
+    }
+
+    @Test
+    void shouldThrowNoSuchAuthorityExceptionWhenRegisterUserByAdmin() {
+        // given
+        var correlationId = UUID.randomUUID().toString();
+        UserCreateRequest request = new UserCreateRequest("new.user@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(authorityRepository.findByName(request.getAuthorityName())).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(NoSuchAuthorityException.class, () -> 
+            authenticationService.registerUserByAdmin(request, authInfo, correlationId));
+    }
+
+    @Test
+    void shouldThrowAccessDeniedExceptionWhenNonAdminTriesToRegisterUser() {
+        // given
+        var correlationId = UUID.randomUUID().toString();
+        UserCreateRequest request = new UserCreateRequest("new.user@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
+        var authInfo = new AuthInfo(1L,
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.DEVELOPER.name())));
+
+        // when & then
+        assertThrows(AccessToManageEntityDeniedException.class, () ->
+            authenticationService.registerUserByAdmin(request, authInfo, correlationId));
+        
+        // Verify that no repository calls were made
+        verify(userRepository, never()).existsByEmail(anyString());
     }
 
     private Answer1<User, User> getFakeSave(long id) {

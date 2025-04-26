@@ -43,10 +43,12 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PATCH,"/bug-reports/**","/tests/**","/test-cases/**").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
                         .requestMatchers(HttpMethod.DELETE,"/bug-reports/**","/tests/**","/test-cases/**").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
                         .requestMatchers(HttpMethod.POST,"/projects").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST,"/ratings").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.DEVELOPER.name())
                         .requestMatchers(HttpMethod.PATCH,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/files/delete-folder/**").hasAnyAuthority(AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.GET,"/feedbacks").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/auth/admin/register-user").hasAuthority(AuthorityName.ADMIN.name())
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

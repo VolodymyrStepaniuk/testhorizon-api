@@ -70,4 +70,10 @@ public class AuthenticationController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/admin/register-user")
+    public ResponseEntity<UserResponse> registerUserByAdmin(@Valid @RequestBody UserCreateRequest userCreateRequest, AuthInfo authInfo) {
+        return ResponseEntity.ok(authenticationService.registerUserByAdmin(userCreateRequest, authInfo, UUID.randomUUID().toString()));
+    }
+
+
 }
