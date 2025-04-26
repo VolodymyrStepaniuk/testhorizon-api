@@ -34,7 +34,7 @@ public class Note {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = true)
     private String content;
 
     @Column(name = "created_at", nullable = false, updatable = false)

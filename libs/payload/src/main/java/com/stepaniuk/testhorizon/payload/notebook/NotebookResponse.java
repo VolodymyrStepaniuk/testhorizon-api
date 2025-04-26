@@ -4,6 +4,7 @@ import com.stepaniuk.testhorizon.payload.info.UserInfo;
 import com.stepaniuk.testhorizon.validation.shared.Description;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.shared.Title;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -32,7 +33,7 @@ public class NotebookResponse extends RepresentationModel<NotebookResponse> {
     private String title;
 
     @Description
-    @NotNull
+    @Nullable
     private String description;
 
     @NotNull

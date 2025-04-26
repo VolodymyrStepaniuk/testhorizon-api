@@ -2,6 +2,7 @@ package com.stepaniuk.testhorizon.payload.notebook;
 
 import com.stepaniuk.testhorizon.validation.shared.Description;
 import com.stepaniuk.testhorizon.validation.shared.Title;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,6 @@ public class NotebookCreateRequest {
     private String title;
 
     @Description
-    @NotNull
+    @Nullable
     private String description;
 }
