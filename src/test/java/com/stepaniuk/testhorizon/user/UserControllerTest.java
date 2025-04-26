@@ -8,8 +8,10 @@ import com.stepaniuk.testhorizon.shared.PageMapper;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ControllerLevelUnitTest;
 import com.stepaniuk.testhorizon.testspecific.jwt.WithJwtToken;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchAuthorityException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -573,6 +575,95 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
                 .andExpect(jsonPath("$._embedded.users[0]._links.update.href", is("http://localhost/users/1")))
                 .andExpect(jsonPath("$._embedded.users[0]._links.delete.href", is("http://localhost/users/1")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnNoContentWhenChangingUserAuthority() throws Exception {
+        // given
+        long userId = 1L;
+        var authority = AuthorityName.ADMIN;
+
+        // when & then
+        mockMvc.perform(post("/users/change-authority/" + userId)
+                        .param("authority", authority.name())
+                        .contentType("application/json")
+                )
+                .andExpect(status().isNoContent());
+
+        verify(userService).changeUserAuthority(eq(userId), eq(authority), any());
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnNotFoundWhenChangingAuthorityForNonExistentUser() throws Exception {
+        // given
+        var userId = 2L;
+        var authority = AuthorityName.DEVELOPER;
+
+        // when
+        doThrow(new NoSuchUserByIdException(userId))
+                .when(userService)
+                .changeUserAuthority(eq(userId), eq(authority), any());
+
+        // then
+        mockMvc.perform(post("/users/change-authority/" + userId)
+                        .param("authority", authority.name())
+                        .contentType("application/json")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.title", is("No such user")))
+                .andExpect(jsonPath("$.detail", is("No user with id " + userId)))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnForbiddenWhenNonAdminChangesUserAuthority() throws Exception {
+        // given
+        var userId = 2L;
+        var authority = AuthorityName.ADMIN;
+
+        // when
+        doThrow(new AccessToManageEntityDeniedException("User", "/users"))
+                .when(userService)
+                .changeUserAuthority(eq(userId), eq(authority), any());
+
+        // then
+        mockMvc.perform(post("/users/change-authority/" + userId)
+                        .param("authority", authority.name())
+                        .contentType("application/json")
+                )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status", is(403)))
+                .andExpect(jsonPath("$.title", is("Access denied")))
+                .andExpect(jsonPath("$.detail", is("Access to manage User denied")))
+                .andExpect(jsonPath("$.instance", is("/users")));
+    }
+
+    @Test
+    @WithJwtToken(userId = 1L)
+    void shouldReturnBadRequestWhenAuthorityNotFound() throws Exception {
+        // given
+        var userId = 2L;
+        var authority = AuthorityName.DEVELOPER;
+
+        // when
+        doThrow(new NoSuchAuthorityException(authority))
+                .when(userService)
+                .changeUserAuthority(eq(userId), eq(authority), any());
+
+        // then
+        mockMvc.perform(post("/users/change-authority/" + userId)
+                        .param("authority", authority.name())
+                        .contentType("application/json")
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.title", is("No such authority")))
+                .andExpect(jsonPath("$.detail", is("No authority with name " + authority)))
+                .andExpect(jsonPath("$.instance", is("/users")));
     }
 
     private UserResponse createUserResponse() {

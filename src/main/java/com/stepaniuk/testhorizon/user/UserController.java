@@ -3,6 +3,7 @@ package com.stepaniuk.testhorizon.user;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -71,5 +72,11 @@ public class UserController {
     @GetMapping("/top")
     public ResponseEntity<PagedModel<UserResponse>> getTopUsersByRating(Pageable pageable, AuthInfo authInfo) {
         return ResponseEntity.ok(userService.getTopUsersByRating(pageable, authInfo));
+    }
+
+    @PostMapping("/change-authority/{id}")
+    public ResponseEntity<Void> changeUserAuthority(@PathVariable Long id, @RequestParam AuthorityName authority, AuthInfo authInfo) {
+        userService.changeUserAuthority(id, authority, authInfo);
+        return ResponseEntity.noContent().build();
     }
 }

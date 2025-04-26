@@ -16,8 +16,11 @@ import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetToken;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.PasswordResetTokenRepository;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
+import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.User;
 import com.stepaniuk.testhorizon.user.UserMapper;
 import com.stepaniuk.testhorizon.user.UserRepository;
@@ -38,6 +41,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
 import static com.stepaniuk.testhorizon.shared.EmailTemplateUtility.loadEmailTemplate;
 
 @Service
@@ -165,6 +169,49 @@ public class AuthenticationService {
         } else {
             throw new InvalidVerificationCodeException(email);
         }
+    }
+
+    public UserResponse registerUserByAdmin(UserCreateRequest request, AuthInfo authInfo, String correlationId) {
+
+        if(!hasAuthority(authInfo, AuthorityName.ADMIN.name()))
+            throw new AccessToManageEntityDeniedException("Auth", "/auth");
+
+        String email = request.getEmail();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException(request.getEmail());
+        }
+
+        User newUser = new User();
+        newUser.setEmail(email);
+        newUser.setFirstName(request.getFirstName());
+        newUser.setLastName(request.getLastName());
+        newUser.setTotalRating(0);
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        newUser.setEnabled(true);
+        newUser.setAccountNonExpired(true);
+        newUser.setAccountNonLocked(true);
+        newUser.setCredentialsNonExpired(true);
+
+        var authorityName = request.getAuthorityName();
+
+        var userAuthority = authorityRepository.findByName(authorityName)
+                .orElseThrow(() -> new NoSuchAuthorityException(authorityName));
+
+        var authorities = new HashSet<>(Set.of(userAuthority));
+
+        newUser.setAuthorities(authorities);
+
+        var savedUser = userRepository.save(newUser);
+
+        authProducer.send(
+                new UserRegisteredEvent(
+                        Instant.now(), UUID.randomUUID().toString(), correlationId,
+                        newUser.getEmail()
+                )
+        );
+
+        return userMapper.toResponse(savedUser, authInfo);
     }
 
     public void resendVerificationCode(String email) {
