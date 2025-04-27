@@ -6,5 +6,6 @@ public enum FileEntityType {
     TEST,
     PROJECT,
     COMMENT,
-    BUG_REPORT
+    BUG_REPORT,
+    POST
 }

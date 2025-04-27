@@ -1,4 +1,4 @@
-package com.stepaniuk.testhorizon.validation.note;
+package com.stepaniuk.testhorizon.validation.shared;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
@@ -10,9 +10,9 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Constraint(validatedBy = {})
-@Length(min = 1, max = 1024)
+@Length(min = 1, max = 2048)
 public @interface Content {
-    String message() default "{validation.constraints.note.content}";
+    String message() default "{validation.constraints.shared.content}";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
