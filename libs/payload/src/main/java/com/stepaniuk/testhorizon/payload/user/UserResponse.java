@@ -1,16 +1,22 @@
 package com.stepaniuk.testhorizon.payload.user;
 
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.validation.shared.Email;
 import com.stepaniuk.testhorizon.validation.shared.Id;
+import com.stepaniuk.testhorizon.validation.shared.Rating;
 import com.stepaniuk.testhorizon.validation.user.FirstName;
 import com.stepaniuk.testhorizon.validation.user.LastName;
-import com.stepaniuk.testhorizon.validation.shared.Rating;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor
@@ -33,6 +39,9 @@ public class UserResponse extends RepresentationModel<UserResponse> {
     @Rating
     @NotNull
     private final Integer totalRating;
+    @Size(min = 1)
+    @NotNull
+    private Set<AuthorityName> authorities;
     @NotNull
     private final Instant createdAt;
     @NotNull

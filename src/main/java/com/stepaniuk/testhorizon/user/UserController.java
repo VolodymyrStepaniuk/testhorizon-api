@@ -74,7 +74,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getTopUsersByRating(pageable, authInfo));
     }
 
-    @PostMapping("/change-authority/{id}")
+    @PatchMapping("/change-authority/{id}")
     public ResponseEntity<Void> changeUserAuthority(@PathVariable Long id, @RequestParam AuthorityName authority, AuthInfo authInfo) {
         userService.changeUserAuthority(id, authority, authInfo);
         return ResponseEntity.noContent().build();

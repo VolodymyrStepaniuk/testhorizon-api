@@ -25,6 +25,7 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -72,6 +73,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -120,6 +122,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -170,6 +173,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -303,6 +307,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0].firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$._embedded.users[0].lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$._embedded.users[0].totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$._embedded.users[0].authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$._embedded.users[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
@@ -337,6 +342,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0].firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$._embedded.users[0].lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$._embedded.users[0].totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$._embedded.users[0].authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$._embedded.users[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
@@ -371,6 +377,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0].firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$._embedded.users[0].lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$._embedded.users[0].totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$._embedded.users[0].authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$._embedded.users[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
@@ -404,6 +411,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0].firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$._embedded.users[0].lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$._embedded.users[0].totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$._embedded.users[0].authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$._embedded.users[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
@@ -431,6 +439,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -483,6 +492,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -570,6 +580,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$._embedded.users[0].firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$._embedded.users[0].lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$._embedded.users[0].totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$._embedded.users[0].authorities[0]", is("ADMIN")))
                 .andExpect(jsonPath("$._embedded.users[0].createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0].updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._embedded.users[0]._links.self.href", is("http://localhost/users/1")))
@@ -585,7 +596,7 @@ class UserControllerTest {
         var authority = AuthorityName.ADMIN;
 
         // when & then
-        mockMvc.perform(post("/users/change-authority/" + userId)
+        mockMvc.perform(patch("/users/change-authority/" + userId)
                         .param("authority", authority.name())
                         .contentType("application/json")
                 )
@@ -607,7 +618,7 @@ class UserControllerTest {
                 .changeUserAuthority(eq(userId), eq(authority), any());
 
         // then
-        mockMvc.perform(post("/users/change-authority/" + userId)
+        mockMvc.perform(patch("/users/change-authority/" + userId)
                         .param("authority", authority.name())
                         .contentType("application/json")
                 )
@@ -631,7 +642,7 @@ class UserControllerTest {
                 .changeUserAuthority(eq(userId), eq(authority), any());
 
         // then
-        mockMvc.perform(post("/users/change-authority/" + userId)
+        mockMvc.perform(patch("/users/change-authority/" + userId)
                         .param("authority", authority.name())
                         .contentType("application/json")
                 )
@@ -655,7 +666,7 @@ class UserControllerTest {
                 .changeUserAuthority(eq(userId), eq(authority), any());
 
         // then
-        mockMvc.perform(post("/users/change-authority/" + userId)
+        mockMvc.perform(patch("/users/change-authority/" + userId)
                         .param("authority", authority.name())
                         .contentType("application/json")
                 )
@@ -671,7 +682,7 @@ class UserControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new UserResponse(1L, "email@gmail.com", "firstName",
-                "lastName", 120, timeOfCreation, timeOfModification);
+                "lastName", 120, Set.of(AuthorityName.ADMIN),timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/users/1", "self"));
         response.add(Link.of("http://localhost/users/1", "update"));

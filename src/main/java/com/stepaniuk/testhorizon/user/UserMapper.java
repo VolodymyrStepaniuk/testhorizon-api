@@ -6,13 +6,25 @@ import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import jakarta.annotation.Nullable;
 import org.mapstruct.*;
 import org.springframework.hateoas.Link;
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.stream.Collectors;
 
 import static com.stepaniuk.testhorizon.security.SecurityUtils.hasAuthority;
 import static com.stepaniuk.testhorizon.security.SecurityUtils.isOwner;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR)
+@Mapper(
+        componentModel = "spring",
+        injectionStrategy = InjectionStrategy.CONSTRUCTOR,
+        imports = {Collectors.class, AuthorityName.class, GrantedAuthority.class}
+)
+
 public interface UserMapper {
 
+    @Mapping(target = "authorities", expression = "java(user.getAuthorities().stream()" +
+            ".map(GrantedAuthority::getAuthority)" +
+            ".map(AuthorityName::valueOf)" +
+            ".collect(Collectors.toSet()))")
     @BeanMapping(qualifiedByName = "addLinks")
     UserResponse toResponse(User user, @Nullable AuthInfo authInfo);
 
