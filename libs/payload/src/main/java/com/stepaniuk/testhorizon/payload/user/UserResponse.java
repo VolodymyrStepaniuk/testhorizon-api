@@ -41,7 +41,7 @@ public class UserResponse extends RepresentationModel<UserResponse> {
     private final Integer totalRating;
     @Size(min = 1)
     @NotNull
-    private Set<AuthorityName> authorities;
+    private final Set<AuthorityName> authorities;
     @NotNull
     private final Instant createdAt;
     @NotNull

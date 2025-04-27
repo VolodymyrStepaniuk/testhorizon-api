@@ -30,39 +30,39 @@ public class TestResponse extends RepresentationModel<TestResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private ProjectInfo project;
+    private final ProjectInfo project;
 
     @Nullable
-    private TestCaseInfo testCase;
+    private final TestCaseInfo testCase;
 
     @NotNull
-    private UserInfo author;
+    private final UserInfo author;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Description
     @Nullable
-    private String description;
+    private final String description;
 
     @Instructions
     @Nullable
-    private String instructions;
+    private final String instructions;
 
     @GithubUrl
     @NotNull
-    private String githubUrl;
+    private final String githubUrl;
 
     @NotNull
-    private TestTypeName type;
+    private final TestTypeName type;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

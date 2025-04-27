@@ -23,22 +23,22 @@ import java.time.Instant;
 public class NotebookResponse extends RepresentationModel<NotebookResponse> {
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private UserInfo owner;
+    private final UserInfo owner;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Description
     @Nullable
-    private String description;
+    private final String description;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

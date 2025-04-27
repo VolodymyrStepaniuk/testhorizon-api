@@ -21,22 +21,22 @@ import java.time.Instant;
 public class PostResponse extends RepresentationModel<PostResponse> {
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
     @NotNull
-    private UserInfo owner;
+    private final UserInfo owner;
     @Title
     @NotNull
-    private String title;
+    private final String title;
     @Description
     @NotNull
-    private String description;
+    private final String description;
     @Content
     @NotNull
-    private String content;
+    private final String content;
     @NotNull
-    private PostCategoryName category;
+    private final PostCategoryName category;
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

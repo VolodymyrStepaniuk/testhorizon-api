@@ -24,22 +24,22 @@ public class FeedbackResponse extends RepresentationModel<FeedbackResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @Rating
     @NotNull
-    private Integer rating;
+    private final Integer rating;
 
     @Comment
     @Nullable
-    private String comment;
+    private final String comment;
 
     @NotNull
-    private UserInfo owner;
+    private final UserInfo owner;
 
     @NotNull
     private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

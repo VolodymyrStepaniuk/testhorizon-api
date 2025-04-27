@@ -28,33 +28,33 @@ public class ProjectResponse extends RepresentationModel<ProjectResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private UserInfo owner;
+    private final UserInfo owner;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Description
     @NotNull
-    private String description;
+    private final String description;
 
     @Instructions
     @Nullable
-    private String instructions;
+    private final String instructions;
 
     @GithubUrl
     @NotNull
-    private String githubUrl;
+    private final String githubUrl;
 
     @NotNull
-    private ProjectStatusName status;
+    private final ProjectStatusName status;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

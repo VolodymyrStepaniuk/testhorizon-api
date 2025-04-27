@@ -15,10 +15,10 @@ public class EmailPasswordResetConfirmRequest {
 
     @Password
     @NotNull
-    private String newPassword;
+    private final String newPassword;
 
     @Password
     @NotNull
-    private String confirmPassword;
+    private final String confirmPassword;
 
 }

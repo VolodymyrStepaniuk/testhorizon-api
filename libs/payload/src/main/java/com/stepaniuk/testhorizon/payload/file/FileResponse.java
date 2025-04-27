@@ -18,5 +18,5 @@ public class FileResponse extends RepresentationModel<FileResponse> {
 
     @Url
     @NotNull
-    private String fileUrl;
+    private final String fileUrl;
 }
