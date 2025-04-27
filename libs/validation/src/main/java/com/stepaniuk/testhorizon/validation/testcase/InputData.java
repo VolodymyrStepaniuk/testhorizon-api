@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Constraint(validatedBy = {})
-@Length(min = 1, max = 512)
+@Length(min = 1, max = 1024)
 public @interface InputData {
     String message() default "{validation.constraints.testcase.inputData}";
     Class<?>[] groups() default {};

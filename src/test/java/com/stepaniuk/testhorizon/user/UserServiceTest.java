@@ -1,21 +1,21 @@
 package com.stepaniuk.testhorizon.user;
 
+import com.stepaniuk.testhorizon.event.user.UserAuthorityUpdatedEvent;
 import com.stepaniuk.testhorizon.event.user.UserDeletedEvent;
 import com.stepaniuk.testhorizon.event.user.UserEvent;
 import com.stepaniuk.testhorizon.event.user.UserUpdatedEvent;
-import com.stepaniuk.testhorizon.event.user.UserAuthorityUpdatedEvent;
 import com.stepaniuk.testhorizon.payload.user.UserUpdateRequest;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
-import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.shared.PageMapperImpl;
+import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
 import com.stepaniuk.testhorizon.testspecific.ServiceLevelUnitTest;
 import com.stepaniuk.testhorizon.types.user.AuthorityName;
 import com.stepaniuk.testhorizon.user.authority.Authority;
 import com.stepaniuk.testhorizon.user.authority.AuthorityRepository;
 import com.stepaniuk.testhorizon.user.email.EmailCodeRepository;
+import com.stepaniuk.testhorizon.user.exceptions.NoSuchAuthorityException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByEmailException;
 import com.stepaniuk.testhorizon.user.exceptions.NoSuchUserByIdException;
-import com.stepaniuk.testhorizon.user.exceptions.NoSuchAuthorityException;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -75,6 +75,8 @@ class UserServiceTest {
         assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -107,6 +109,8 @@ class UserServiceTest {
         assertEquals(userToFind.getFirstName(), userResponse.getFirstName());
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -126,7 +130,7 @@ class UserServiceTest {
     void shouldUpdateAndReturnUserResponseWhenChangingFirstName() {
         // given
         User userToUpdate = getNewUserWithAllFields();
-        var userUpdateRequest = new UserUpdateRequest(null, "Jane", null );
+        var userUpdateRequest = new UserUpdateRequest(null, "Jane", null);
         var authInfo = new AuthInfo(1L, List.of());
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
@@ -147,6 +151,8 @@ class UserServiceTest {
         assertEquals(userUpdateRequest.getFirstName(), userResponse.getFirstName());
         assertEquals(userToUpdate.getLastName(), userResponse.getLastName());
         assertEquals(userToUpdate.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToUpdate.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToUpdate.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToUpdate.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -244,7 +250,7 @@ class UserServiceTest {
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
         Specification<User> specification = Specification.where(null);
@@ -266,6 +272,8 @@ class UserServiceTest {
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -280,7 +288,7 @@ class UserServiceTest {
 
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
@@ -301,6 +309,8 @@ class UserServiceTest {
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -316,7 +326,7 @@ class UserServiceTest {
         var authInfo = new AuthInfo(1L, List.of());
         var userToFind = new User(1L, "John", "Doe", email, 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
@@ -337,6 +347,8 @@ class UserServiceTest {
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -351,7 +363,7 @@ class UserServiceTest {
         var fullName = "John Doe";
         var userToFind = new User(1L, "John", "Doe", "", 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
@@ -372,6 +384,8 @@ class UserServiceTest {
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -385,14 +399,14 @@ class UserServiceTest {
         var authInfo = new AuthInfo(1L, List.of());
         var userToFind = new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var pageable = PageRequest.of(0, 2);
 
         when(userRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(
                 new PageImpl<>(List.of(userToFind), pageable, 1));
         // when
-        var userResponses = userService.getTopUsersByRating(pageable,authInfo);
+        var userResponses = userService.getTopUsersByRating(pageable, authInfo);
         var userResponse = userResponses.getContent().iterator().next();
 
         //then
@@ -406,6 +420,8 @@ class UserServiceTest {
         assertEquals(userToFind.getLastName(), userResponse.getLastName());
         assertEquals(userToFind.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToFind.getEmail(), userResponse.getEmail());
+        assertEquals(AuthorityName.valueOf(userToFind.getAuthorities().iterator().next().getAuthority()),
+                userResponse.getAuthorities().iterator().next());
         assertEquals(userToFind.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToFind.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());
@@ -452,9 +468,9 @@ class UserServiceTest {
         var authorityName = AuthorityName.DEVELOPER;
 
         // when & then
-        assertThrows(AccessToManageEntityDeniedException.class, 
-            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
-            
+        assertThrows(AccessToManageEntityDeniedException.class,
+                () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -464,13 +480,13 @@ class UserServiceTest {
         var authInfo = new AuthInfo(1L,
                 Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
         var authorityName = AuthorityName.ADMIN;
-        
+
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(NoSuchUserByIdException.class, 
-            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
-            
+        assertThrows(NoSuchUserByIdException.class,
+                () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -481,14 +497,14 @@ class UserServiceTest {
         var authInfo = new AuthInfo(1L,
                 Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
         var authorityName = AuthorityName.DEVELOPER;
-        
+
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
         when(authorityRepository.findByName(authorityName)).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(NoSuchAuthorityException.class, 
-            () -> userService.changeUserAuthority(1L, authorityName, authInfo));
-            
+        assertThrows(NoSuchAuthorityException.class,
+                () -> userService.changeUserAuthority(1L, authorityName, authInfo));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -504,6 +520,6 @@ class UserServiceTest {
 
         return new User(1L, "John", "Doe", "johndoe@gmail.com", 120, "Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L, AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
     }
 }

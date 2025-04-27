@@ -23,25 +23,25 @@ import java.time.Instant;
 public class CommentResponse extends RepresentationModel<CommentResponse> {
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private EntityType entityType;
+    private final EntityType entityType;
 
     @Id
     @NotNull
-    private Long entityId;
+    private final Long entityId;
 
     @CommentContent
     @NotNull
-    private String content;
+    private final String content;
 
     @NotNull
-    private UserInfo author;
+    private final UserInfo author;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

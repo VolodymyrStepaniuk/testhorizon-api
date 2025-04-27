@@ -1,0 +1,2 @@
+INSERT INTO posts(id, content, created_at, description, owner_id, title, updated_at, category_id)
+VALUES (1, 'Content of post 1', '2024-11-25T17:28:19.266615Z', 'Description', 1, 'Post 1', '2024-11-25T17:28:19.266615Z', 1);

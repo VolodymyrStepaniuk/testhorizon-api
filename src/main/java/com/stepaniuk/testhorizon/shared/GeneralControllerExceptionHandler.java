@@ -11,15 +11,17 @@ import com.stepaniuk.testhorizon.export.exceptions.NoSuchHandlerFoundForEntity;
 import com.stepaniuk.testhorizon.feedback.exceptions.NoSuchFeedbackFoundByIdException;
 import com.stepaniuk.testhorizon.notebook.exceptions.NoSuchNotebookByIdException;
 import com.stepaniuk.testhorizon.notebook.note.exceptions.NoSuchNoteByIdException;
+import com.stepaniuk.testhorizon.post.exceptions.NoSuchPostByIdException;
+import com.stepaniuk.testhorizon.post.exceptions.NoSuchPostCategoryByNameException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectByIdException;
 import com.stepaniuk.testhorizon.project.exceptions.NoSuchProjectStatusByNameException;
 import com.stepaniuk.testhorizon.rating.exceptions.UserCannotChangeOwnRatingException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.NoSuchPasswordResetTokenException;
 import com.stepaniuk.testhorizon.security.auth.passwordreset.exception.PasswordResetTokenExpiredException;
 import com.stepaniuk.testhorizon.security.exceptions.InvalidOldPasswordException;
+import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.security.exceptions.PasswordsDoNotMatchException;
 import com.stepaniuk.testhorizon.shared.exceptions.AccessToManageEntityDeniedException;
-import com.stepaniuk.testhorizon.security.exceptions.InvalidTokenException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestByIdException;
 import com.stepaniuk.testhorizon.test.exceptions.NoSuchTestTypeByNameException;
 import com.stepaniuk.testhorizon.testcase.exceptions.NoSuchTestCaseByIdException;
@@ -322,6 +324,24 @@ public class GeneralControllerExceptionHandler {
                 "No note with id " + e.getId());
         problemDetail.setTitle("No such note");
         problemDetail.setInstance(URI.create("/notes"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchPostByIdException.class})
+    public ProblemDetail handleNoSuchPostByIdException(NoSuchPostByIdException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No post with id " + e.getPostId());
+        problemDetail.setTitle("No such post");
+        problemDetail.setInstance(URI.create("/posts"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(value = {NoSuchPostCategoryByNameException.class})
+    public ProblemDetail handleNoSuchPostCategoryByNameException(NoSuchPostCategoryByNameException e) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                "No post category with name " + e.getPostCategoryName());
+        problemDetail.setTitle("No such post category");
+        problemDetail.setInstance(URI.create("/posts"));
         return problemDetail;
     }
 }

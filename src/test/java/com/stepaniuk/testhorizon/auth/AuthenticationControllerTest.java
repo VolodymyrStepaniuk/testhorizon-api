@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 
 import static com.stepaniuk.testhorizon.testspecific.hamcrest.TemporalStringMatchers.instantComparesEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -64,7 +65,7 @@ class AuthenticationControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new UserResponse(1L, userCreateRequest.getEmail(), userCreateRequest.getFirstName(), userCreateRequest.getLastName(),
-                100, timeOfCreation, timeOfModification);
+                100, Set.of(AuthorityName.DEVELOPER),timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/users/1", "self"));
         response.add(Link.of("http://localhost/users/1", "update"));
@@ -82,6 +83,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("DEVELOPER")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
@@ -582,7 +584,7 @@ class AuthenticationControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new UserResponse(1L, userCreateRequest.getEmail(), userCreateRequest.getFirstName(), userCreateRequest.getLastName(),
-                100, timeOfCreation, timeOfModification);
+                100, Set.of(AuthorityName.TESTER),timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/users/1", "self"));
         response.add(Link.of("http://localhost/users/1", "update"));
@@ -600,6 +602,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
+                .andExpect(jsonPath("$.authorities[0]", is("TESTER")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))

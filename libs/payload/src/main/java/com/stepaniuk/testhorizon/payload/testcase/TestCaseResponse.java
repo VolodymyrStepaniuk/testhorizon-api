@@ -30,40 +30,40 @@ public class TestCaseResponse extends RepresentationModel<TestCaseResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private ProjectInfo project;
+    private final ProjectInfo project;
 
     @NotNull
-    private UserInfo author;
+    private final UserInfo author;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Description
     @NotNull
-    private String description;
+    private final String description;
 
     @Preconditions
     @NotNull
-    private String preconditions;
+    private final String preconditions;
 
     @InputData
     @NotNull
-    private String inputData;
+    private final String inputData;
 
     @NotNull
     @Size(min = 1)
-    private List<@Step String> steps;
+    private final List<@Step String> steps;
 
     @NotNull
-    private TestCasePriorityName priority;
+    private final TestCasePriorityName priority;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

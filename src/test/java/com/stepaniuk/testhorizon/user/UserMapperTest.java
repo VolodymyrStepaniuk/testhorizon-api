@@ -3,6 +3,8 @@ package com.stepaniuk.testhorizon.user;
 import com.stepaniuk.testhorizon.payload.user.UserResponse;
 import com.stepaniuk.testhorizon.security.authinfo.AuthInfo;
 import com.stepaniuk.testhorizon.testspecific.MapperLevelUnitTest;
+import com.stepaniuk.testhorizon.types.user.AuthorityName;
+import com.stepaniuk.testhorizon.user.authority.Authority;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -29,7 +31,7 @@ class UserMapperTest {
 
         User userToMap = new User(null, "John", "Doe", "johndoe@gmail.com", 19,"Password+123",
                 true, true, true, true,
-                Set.of(), timeOfCreation, timeOfModification);
+                Set.of(new Authority(1L,AuthorityName.ADMIN)), timeOfCreation, timeOfModification);
 
         var authInfo = new AuthInfo(1L, List.of());
         // when
@@ -42,6 +44,7 @@ class UserMapperTest {
         assertEquals(userToMap.getTotalRating(), userResponse.getTotalRating());
         assertEquals(userToMap.getFirstName(), userResponse.getFirstName());
         assertEquals(userToMap.getLastName(), userResponse.getLastName());
+        assertEquals(Set.of(AuthorityName.ADMIN), userResponse.getAuthorities());
         assertEquals(userToMap.getCreatedAt(), userResponse.getCreatedAt());
         assertEquals(userToMap.getUpdatedAt(), userResponse.getUpdatedAt());
         assertTrue(userResponse.hasLinks());

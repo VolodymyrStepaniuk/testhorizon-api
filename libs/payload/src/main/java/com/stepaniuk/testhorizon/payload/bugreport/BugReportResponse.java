@@ -29,35 +29,35 @@ public class BugReportResponse extends RepresentationModel<BugReportResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @NotNull
-    private ProjectInfo project;
+    private final ProjectInfo project;
 
     @NotNull
-    private UserInfo reporter;
+    private final UserInfo reporter;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Description
     @NotNull
-    private String description;
+    private final String description;
 
     @Environment
     @NotNull
-    private String environment;
+    private final String environment;
 
     @NotNull
-    private BugReportSeverityName severity;
+    private final BugReportSeverityName severity;
 
     @NotNull
-    private BugReportStatusName status;
+    private final BugReportStatusName status;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }

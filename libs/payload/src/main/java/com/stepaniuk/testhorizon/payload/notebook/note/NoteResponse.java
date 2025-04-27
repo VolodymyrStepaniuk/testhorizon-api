@@ -1,6 +1,6 @@
 package com.stepaniuk.testhorizon.payload.notebook.note;
 
-import com.stepaniuk.testhorizon.validation.note.Content;
+import com.stepaniuk.testhorizon.validation.shared.Content;
 import com.stepaniuk.testhorizon.validation.shared.Id;
 import com.stepaniuk.testhorizon.validation.shared.Title;
 import jakarta.annotation.Nullable;
@@ -23,23 +23,23 @@ public class NoteResponse extends RepresentationModel<NoteResponse> {
 
     @Id
     @NotNull
-    private Long id;
+    private final Long id;
 
     @Id
     @NotNull
-    private Long notebookId;
+    private final Long notebookId;
 
     @Title
     @NotNull
-    private String title;
+    private final String title;
 
     @Content
     @Nullable
-    private String content;
+    private final String content;
 
     @NotNull
-    private Instant createdAt;
+    private final Instant createdAt;
 
     @NotNull
-    private Instant updatedAt;
+    private final Instant updatedAt;
 }
