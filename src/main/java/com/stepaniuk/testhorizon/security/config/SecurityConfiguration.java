@@ -27,6 +27,44 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
+    private static final String[] PUBLIC_MATCHERS = {
+            "/auth/**",
+            "/docs/**",
+            "/actuator/**",
+            "/feedbacks",
+            "/posts",
+            "/posts/**",
+            "/comments"
+    };
+
+    private static final String[] ADMIN_ONLY_MATCHERS = {
+            "/users/**",
+            "/files/delete-folder/**",
+            "/auth/admin/register-user"
+    };
+
+    private static final String[] PROJECT_WRITE_MATCHERS = {
+            "/projects"
+    };
+    private static final String[] PROJECT_MODIFY_MATCHERS = {
+            "/projects/**"
+    };
+
+    private static final String[] TESTER_CREATE_MATCHERS = {
+            "/bug-reports",
+            "/tests",
+            "/test-cases"
+    };
+    private static final String[] TESTER_MODIFY_MATCHERS = {
+            "/bug-reports/**",
+            "/tests/**",
+            "/test-cases/**"
+    };
+
+    private static final String[] RATING_MATCHERS = {
+            "/ratings"
+    };
+
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthFilter jwtAuthenticationFilter;
 
@@ -35,26 +73,38 @@ public class SecurityConfiguration {
         http
                 .cors(withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/auth/**", "/docs/**", "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/users/**").hasAnyAuthority(AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, "/users/**").hasAnyAuthority(AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.POST,"/bug-reports","/tests","/test-cases").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
-                        .requestMatchers(HttpMethod.PATCH,"/bug-reports/**","/tests/**","/test-cases/**").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
-                        .requestMatchers(HttpMethod.DELETE,"/bug-reports/**","/tests/**","/test-cases/**").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
-                        .requestMatchers(HttpMethod.POST,"/projects").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.POST,"/ratings").hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.DEVELOPER.name())
-                        .requestMatchers(HttpMethod.PATCH,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE,"/projects/**").hasAnyAuthority(AuthorityName.DEVELOPER.name(),AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, "/files/delete-folder/**").hasAnyAuthority(AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.GET,"/feedbacks").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/auth/admin/register-user").hasAuthority(AuthorityName.ADMIN.name())
-                        .requestMatchers(HttpMethod.GET,"/posts").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/posts/**").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/comments").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                        // Public
+                        .requestMatchers(PUBLIC_MATCHERS).permitAll()
+
+                        // Admin only
+                        .requestMatchers(HttpMethod.PATCH, ADMIN_ONLY_MATCHERS).hasAuthority(AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, ADMIN_ONLY_MATCHERS).hasAuthority(AuthorityName.ADMIN.name())
+
+                        // Tester & Admin can create and modify bug-reports, tests, test-cases
+                        .requestMatchers(HttpMethod.POST, TESTER_CREATE_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
+                        .requestMatchers(HttpMethod.PATCH, TESTER_MODIFY_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
+                        .requestMatchers(HttpMethod.DELETE, TESTER_MODIFY_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.ADMIN.name(), AuthorityName.TESTER.name())
+
+                        // Developer & Admin on projects
+                        .requestMatchers(HttpMethod.POST, PROJECT_WRITE_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.PATCH, PROJECT_MODIFY_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, PROJECT_MODIFY_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+
+                        // Ratings: Developer & Admin
+                        .requestMatchers(HttpMethod.POST, RATING_MATCHERS)
+                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+
+                        // everything else needs authentication
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
+                .sessionManagement(sess -> sess
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider)

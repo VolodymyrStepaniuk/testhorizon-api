@@ -444,3 +444,46 @@ ALTER SEQUENCE notes_id_seq
 
 ALTER TABLE notes
     OWNER TO postgres_container;
+
+-- Table: post_categories
+DROP TABLE IF EXISTS post_categories;
+
+CREATE TABLE IF NOT EXISTS post_categories
+(
+    id   BIGINT       NOT NULL
+        primary key,
+    name VARCHAR(255) NOT NULL
+        CONSTRAINT post_categories_name_check
+            CHECK ((name)::TEXT = ANY
+                   ((ARRAY ['QUALITY_ASSURANCE'::CHARACTER VARYING, 'AUTOMATION_QA'::CHARACTER VARYING, 'MANUAL_TESTING'::CHARACTER VARYING, 'PERFORMANCE_TESTING'::CHARACTER VARYING, 'SECURITY_TESTING'::CHARACTER VARYING, 'TEST_MANAGEMENT'::CHARACTER VARYING])::TEXT[]))
+);
+
+ALTER SEQUENCE post_categories_id_seq
+    OWNED BY post_categories.id;
+
+ALTER TABLE post_categories
+    OWNER TO postgres_container;
+
+-- Table: posts
+DROP TABLE IF EXISTS posts;
+
+CREATE TABLE IF NOT EXISTS posts
+(
+    id          BIGINT                      NOT NULL
+        PRIMARY KEY ,
+    content     TEXT                        NOT NULL,
+    created_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    description VARCHAR(255)                NOT NULL,
+    owner_id    BIGINT                      NOT NULL,
+    title       VARCHAR(255)                NOT NULL,
+    updated_at  TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+    category_id BIGINT
+        constraint fkgj3uskfyllrt5ip3ag8xc8lfx
+            references post_categories
+);
+
+ALTER SEQUENCE posts_id_seq
+    OWNED BY posts.id;
+
+ALTER TABLE posts
+    OWNER TO postgres_container;

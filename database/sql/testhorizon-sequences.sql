@@ -248,3 +248,29 @@ CREATE SEQUENCE IF NOT EXISTS notes_id_seq
 
 ALTER SEQUENCE notes_id_seq
     OWNER TO postgres_container;
+
+-- SEQUENCE: post_categories_id_seq
+DROP SEQUENCE IF EXISTS post_categories_id_seq;
+
+CREATE SEQUENCE IF NOT EXISTS post_categories_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+ALTER SEQUENCE post_categories_id_seq
+    OWNER TO postgres_container;
+
+-- SEQUENCE: posts_id_seq
+DROP SEQUENCE IF EXISTS posts_id_seq;
+
+CREATE SEQUENCE IF NOT EXISTS posts_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+
+ALTER SEQUENCE posts_id_seq
+    OWNER TO postgres_container;
