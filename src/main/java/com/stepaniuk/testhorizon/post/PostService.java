@@ -67,10 +67,12 @@ public class PostService {
     }
 
     public PostResponse getPostById(Long postId) {
+        var post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchPostByIdException(postId));
+
         return postMapper.toResponse(
-                postRepository.findById(postId)
-                        .orElseThrow(() -> new NoSuchPostByIdException(postId)),
-                userInfoService.getUserInfo(postId)
+                post,
+                userInfoService.getUserInfo(post.getOwnerId())
         );
     }
 

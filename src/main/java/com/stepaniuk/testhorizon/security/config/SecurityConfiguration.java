@@ -49,6 +49,9 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/files/delete-folder/**").hasAnyAuthority(AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.GET,"/feedbacks").permitAll()
                         .requestMatchers(HttpMethod.POST,"/auth/admin/register-user").hasAuthority(AuthorityName.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET,"/posts").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/comments").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
