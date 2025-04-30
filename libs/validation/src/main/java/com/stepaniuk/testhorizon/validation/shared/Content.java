@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Constraint(validatedBy = {})
-@Length(min = 1, max = 2048)
+@Length(min = 1)
 public @interface Content {
     String message() default "{validation.constraints.shared.content}";
     Class<?>[] groups() default {};
