@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS authorities
     name VARCHAR(255) NOT NULL
         CONSTRAINT authorities_name_check
             CHECK ((name)::TEXT = ANY
-                   ((ARRAY ['DEVELOPER'::CHARACTER VARYING, 'TESTER'::CHARACTER VARYING, 'ADMIN'::CHARACTER VARYING])::TEXT[]))
+                   ((ARRAY ['MENTOR'::CHARACTER VARYING, 'TESTER'::CHARACTER VARYING, 'ADMIN'::CHARACTER VARYING])::TEXT[]))
 );
 
 ALTER SEQUENCE authorities_id_seq
