@@ -91,15 +91,15 @@ public class SecurityConfiguration {
 
                         // Developer & Admin on projects
                         .requestMatchers(HttpMethod.POST, PROJECT_WRITE_MATCHERS)
-                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .hasAnyAuthority(AuthorityName.MENTOR.name(), AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.PATCH, PROJECT_MODIFY_MATCHERS)
-                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .hasAnyAuthority(AuthorityName.MENTOR.name(), AuthorityName.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, PROJECT_MODIFY_MATCHERS)
-                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .hasAnyAuthority(AuthorityName.MENTOR.name(), AuthorityName.ADMIN.name())
 
                         // Ratings: Developer & Admin
                         .requestMatchers(HttpMethod.POST, RATING_MATCHERS)
-                        .hasAnyAuthority(AuthorityName.DEVELOPER.name(), AuthorityName.ADMIN.name())
+                        .hasAnyAuthority(AuthorityName.MENTOR.name(), AuthorityName.ADMIN.name())
 
                         // everything else needs authentication
                         .anyRequest().authenticated()

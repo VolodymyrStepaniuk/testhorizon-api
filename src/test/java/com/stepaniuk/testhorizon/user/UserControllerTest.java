@@ -610,7 +610,7 @@ class UserControllerTest {
     void shouldReturnNotFoundWhenChangingAuthorityForNonExistentUser() throws Exception {
         // given
         var userId = 2L;
-        var authority = AuthorityName.DEVELOPER;
+        var authority = AuthorityName.MENTOR;
 
         // when
         doThrow(new NoSuchUserByIdException(userId))
@@ -658,7 +658,7 @@ class UserControllerTest {
     void shouldReturnBadRequestWhenAuthorityNotFound() throws Exception {
         // given
         var userId = 2L;
-        var authority = AuthorityName.DEVELOPER;
+        var authority = AuthorityName.MENTOR;
 
         // when
         doThrow(new NoSuchAuthorityException(authority))
