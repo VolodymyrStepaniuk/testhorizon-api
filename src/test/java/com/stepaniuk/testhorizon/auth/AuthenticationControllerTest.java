@@ -83,7 +83,7 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.firstName", is(response.getFirstName())))
                 .andExpect(jsonPath("$.lastName", is(response.getLastName())))
                 .andExpect(jsonPath("$.totalRating", is(response.getTotalRating())))
-                .andExpect(jsonPath("$.authorities[0]", is("DEVELOPER")))
+                .andExpect(jsonPath("$.authorities[0]", is("MENTOR")))
                 .andExpect(jsonPath("$.createdAt", instantComparesEqualTo(response.getCreatedAt())))
                 .andExpect(jsonPath("$.updatedAt", instantComparesEqualTo(response.getUpdatedAt())))
                 .andExpect(jsonPath("$._links.self.href", is("http://localhost/users/1")))
