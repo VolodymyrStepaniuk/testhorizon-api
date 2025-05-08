@@ -465,7 +465,7 @@ class UserServiceTest {
     void shouldThrowAccessToManageEntityDeniedExceptionWhenUserIsNotAdmin() {
         // given
         var authInfo = new AuthInfo(1L, List.of());
-        var authorityName = AuthorityName.DEVELOPER;
+        var authorityName = AuthorityName.MENTOR;
 
         // when & then
         assertThrows(AccessToManageEntityDeniedException.class,
@@ -496,7 +496,7 @@ class UserServiceTest {
         User userToUpdate = getNewUserWithAllFields();
         var authInfo = new AuthInfo(1L,
                 Collections.singleton(new SimpleGrantedAuthority(AuthorityName.ADMIN.name())));
-        var authorityName = AuthorityName.DEVELOPER;
+        var authorityName = AuthorityName.MENTOR;
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(userToUpdate));
         when(authorityRepository.findByName(authorityName)).thenReturn(Optional.empty());

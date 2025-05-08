@@ -630,7 +630,7 @@ class AuthenticationServiceTest {
         var correlationId = UUID.randomUUID().toString();
         UserCreateRequest request = new UserCreateRequest("new.user@gmail.com", "password", "John", "Doe", AuthorityName.TESTER);
         var authInfo = new AuthInfo(1L,
-                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.DEVELOPER.name())));
+                Collections.singleton(new SimpleGrantedAuthority(AuthorityName.MENTOR.name())));
 
         // when & then
         assertThrows(AccessToManageEntityDeniedException.class, () ->

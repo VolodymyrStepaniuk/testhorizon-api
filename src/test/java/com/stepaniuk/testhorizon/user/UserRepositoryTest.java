@@ -27,7 +27,7 @@ class UserRepositoryTest {
 
     @Test
     void shouldSaveUser() {
-        Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
+        Authority authority = new Authority(1L, AuthorityName.MENTOR);
         // given
         User userToSave = new User(null, "John", "Doe", "johndoe@gmail.com", 100,"Password+123",
                 true, true, true, true,
@@ -52,7 +52,7 @@ class UserRepositoryTest {
 
     @Test
     void shouldThrowExceptionWhenSavingUserWithoutEmail() {
-        Authority authority = new Authority(1L, AuthorityName.DEVELOPER);
+        Authority authority = new Authority(1L, AuthorityName.MENTOR);
         // given
         User userToSave = new User(null, "John", "Doe", null, 10,null,
                 true, true, true, true,

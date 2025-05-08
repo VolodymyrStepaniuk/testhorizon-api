@@ -49,18 +49,18 @@ class AuthorityRepositoryTest {
         // then
         assertNotNull(authority);
         assertEquals(1L, authority.getId());
-        assertEquals(AuthorityName.DEVELOPER, authority.getName());
+        assertEquals(AuthorityName.MENTOR, authority.getName());
     }
 
     @Test
     void shouldReturnAuthorityWhenFindByName() {
         // when
-        Authority authority = authorityRepository.findByName(AuthorityName.DEVELOPER).orElseThrow();
+        Authority authority = authorityRepository.findByName(AuthorityName.MENTOR).orElseThrow();
 
         // then
         assertNotNull(authority);
         assertEquals(1L, authority.getId());
-        assertEquals(AuthorityName.DEVELOPER, authority.getName());
+        assertEquals(AuthorityName.MENTOR, authority.getName());
     }
 
     @Test

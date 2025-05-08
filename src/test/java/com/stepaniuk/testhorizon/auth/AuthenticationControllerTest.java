@@ -65,7 +65,7 @@ class AuthenticationControllerTest {
         var timeOfModification = Instant.now().plus(Duration.ofHours(20));
 
         var response = new UserResponse(1L, userCreateRequest.getEmail(), userCreateRequest.getFirstName(), userCreateRequest.getLastName(),
-                100, Set.of(AuthorityName.DEVELOPER),timeOfCreation, timeOfModification);
+                100, Set.of(AuthorityName.MENTOR),timeOfCreation, timeOfModification);
 
         response.add(Link.of("http://localhost/users/1", "self"));
         response.add(Link.of("http://localhost/users/1", "update"));
